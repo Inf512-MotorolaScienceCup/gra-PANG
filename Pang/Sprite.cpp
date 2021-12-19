@@ -63,18 +63,23 @@ void Block::draw() {
 
 // Ball
 void Ball::draw() {
-	DrawTextureRec(spriteSheet, stand, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
-	if (cooldown % 5 == 0) {
-		if (stand.x < 80.0 * 10) stand.x += 80.0;
-		else stand.x = 0.0;
+	if (state == State::ACTIVE) {
+		DrawTextureRec(spriteSheet, stand, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
+		if (cooldown % 5 == 0) {
+			if (stand.x < 80.0 * 10) stand.x += 80.0;
+			else stand.x = 0.0;
+		}
+		cooldown++;
+		if (cooldown == 5) cooldown = 0;
 	}
-	cooldown++;
-	if (cooldown == 5) cooldown = 0;
+	else if (state == State::FINISHING) {
+		drawFinish();
+	}
 }
+
 
 void Ball::move() {
 	if (state != State::ACTIVE) {
-		drawFinish();
 		return;
 	}
 
@@ -101,17 +106,16 @@ void Ball::move() {
 }
 
 void Ball::drawFinish() {
-	std::cout << "Explosion" << std::endl;
+	//std::cout << "Cooldown: " << cooldown << std::endl;
 
-	for (cooldown = 0; standExplode.x < spriteExplode.width;) {
-		if (cooldown % 20 == 0) {
-			DrawTextureRec(spriteExplode, standExplode, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
-			standExplode.x += 100;
-		}
-		cooldown++;
-	}
+	DrawTextureRec(spriteExplode, standExplode, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
+	if (cooldown % 5 == 0)
+		standExplode.x += 100;
 
-	state = State::FINISHED;
+	if (cooldown == 45)
+		state = State::FINISHED;
+
+	cooldown++;
 }
 
 void Ball::duality() {
@@ -119,30 +123,31 @@ void Ball::duality() {
 	if (sprite) {
 		if (sprite->type == Sprite::Type::WEAPON) {
 			Kind newKind;
-			switch (kind) {
-			case Kind::BALL1:
-				newKind = Kind::BALL2;
-				game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
-				game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
-				game->AddScore(1);
-				break;
-			case Kind::BALL2:
-				newKind = Kind::BALL3;
-				game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
-				game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
-				game->AddScore(2);
-				break;
-			case Kind::BALL3:
-				newKind = Kind::BALL4;
-				game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
-				game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
-				game->AddScore(3);
-				break;
-			default:
-				game->AddScore(4);
-				break;
-			}
+				switch (kind) {
+				case Kind::BALL1:
+					newKind = Kind::BALL2;
+					game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
+					game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
+					game->AddScore(1);
+					break;
+				case Kind::BALL2:
+					newKind = Kind::BALL3;
+					game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
+					game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
+					game->AddScore(2);
+					break;
+				case Kind::BALL3:
+					newKind = Kind::BALL4;
+					game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
+					game->sprites.push_back(Ball::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
+					game->AddScore(3);
+					break;
+				default:
+					game->AddScore(4);
+					break;
+				}
 			state = State::FINISHING;
+			cooldown = 0;
 		}
 	}
 }
