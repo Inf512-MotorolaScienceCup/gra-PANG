@@ -1,29 +1,45 @@
 #pragma once
 
 #include <vector>
+#include <map>
+
 #include "raylib.h"
 
-class Sprite;
+#include "Menu.h"
+#include "Sprite.h"
 
 class Game {
 public:
-	const float screenWidth = 800;
-	const float screenHeight = 450;
-	const float wallThickness = 20;
-	const float ballRadius = 40;
+    const float screenWidth = 1280;
+    const float screenHeight = 720;
+    const float wallThickness = 70;
+    const float ballRadius = 40;
 
-	std::vector<Sprite*> sprites;
+    Game();
+    ~Game();
 
-	Game();
-	~Game();
-	void Spawn();
-	void DrawSprites();
-	void MoveSprites();
-	static bool isCollision(const Sprite* s1, const Sprite* s2);
-	Rectangle getPlayerPosition();
-	void AddScore(int);
-	int mainLoop();
+    void Spawn();
+    void Draw();
+    void Update();
+    void DrawSprites();
+    void MoveSprites();
+    void CheckCollision();
 
-	int score = 0;
+    Rectangle getPlayerPosition();
+
+    void AddScore(int);
+    int MainLoop();
+    void OnMenu(std::string name);
+
+    std::vector<Sprite*> sprites;
+    std::map<Sprite::Type, std::vector<Sprite*>> spriteMap;
+    Player* player;
+    Weapon* weapon;
+
+    int score = 0;
+    bool pause = false;
+    bool quitSelected = false;
+    int frameCounter = 0;
+    Menu menu;
 };
 
