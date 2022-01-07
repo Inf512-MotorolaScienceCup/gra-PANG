@@ -27,8 +27,13 @@ list(APPEND game_resources ${resources})
 
 add_executable(pang ${game_sources})
 target_link_libraries(pang raylib)
-target_link_libraries(pang glfw3)
-target_link_libraries(pang dl)
-target_link_libraries(pang pthread)
+
+# Windows
+target_link_libraries(pang winmm.lib)
+
+# Linux
+#target_link_libraries(pang glfw3)
+#target_link_libraries(pang dl)
+#target_link_libraries(pang pthread)
 
 file(COPY ${game_resources} DESTINATION "res/")

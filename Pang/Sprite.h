@@ -12,16 +12,17 @@ public:
         PLAYER,
         BLOCK,
         ENEMY,
-        WEAPON
+        WEAPON,
+        LADDER
     } type;
 
-  enum class Direction {
-    NONE,
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT
-  } direction = Direction::NONE;
+    enum class Direction {
+        NONE,
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT
+    } direction = Direction::NONE;
 
     enum class State {
         ACTIVE,
@@ -36,31 +37,31 @@ public:
     explicit Sprite(Game* game, const Position& position, Type type)
         : game(game), position(position), type(type), collision(false), state(State::ACTIVE) {
     }
-  virtual ~Sprite() {}
-  virtual void Draw() = 0;
-  virtual void Move(){};
-  virtual void Collision(Sprite* sprite) {};
+    virtual ~Sprite() {}
+    virtual void Draw() = 0;
+    virtual void Move(){};
+    virtual void Collision(Sprite* sprite) {};
 };
 
 bool IsCollision(const Sprite *s1, const Sprite *s2);
 
 class Player : public Sprite {
 public:
-    Player(Game* game, float x, float y, float width, float height, Color color, float speed)
+    Player(Game* game, float x, float y, float width, float height, Color color, Vector2 speed)
         : Sprite(game, Position(x, y, width, height), Type::PLAYER), color(color), speed(speed) {
         spriteSheet = LoadTexture("res/spritesheet.png");
         moveRightRec = { 0.0f, 11 * 64.0f, 64.0f, 64.0f };
         moveLeftRec  = { 0.0f, 9 * 64.0f,  64.0f, 64.0f };
         standRec     = { 0.0f, 2 * 64.0f,  64.0f, 64.0f };
-    moveUpRec    = { 0.0f, 8 * 64.0f,  64.0f, 64.0f };
-    moveDownRec  = { 0.0f, 10 * 64.0f, 64.0f, 64.0f };
-    hurtRec      = { 0.0f, 20 * 64.0f, 64.0f, 64.0f };
+        moveUpRec    = { 0.0f, 8 * 64.0f,  64.0f, 64.0f };
+        moveDownRec  = { 0.0f, 10 * 64.0f, 64.0f, 64.0f };
+        hurtRec      = { 0.0f, 20 * 64.0f, 64.0f, 64.0f };
   }
     virtual void Draw();
     virtual void Move();
-  virtual void Collision(Sprite*);
+    virtual void Collision(Sprite*);
 
-  float speed;
+    Vector2 speed;
 
 private:
     Color color;
@@ -68,10 +69,13 @@ private:
     Rectangle moveRightRec;
     Rectangle moveLeftRec;
     Rectangle standRec;
-  Rectangle moveUpRec;
-  Rectangle moveDownRec;
-  Rectangle hurtRec;
-  int cooldown = 0;
+    Rectangle moveUpRec;
+    Rectangle moveDownRec;
+    Rectangle hurtRec;
+    int cooldown = 0;
+    bool climbing = false;
+    int zone = 10;
+    bool collision = false;
 };
 
 class Block : public Sprite {
@@ -115,12 +119,30 @@ public:
         : game(game), Sprite(game, Position(x, y, radius), Type::ENEMY), color(WHITE), sizeX(radius * 2), sizeY(radius * 2), kind(kind) {
         stand = { 0.0f, 0.0f, sizeX, sizeY };
         standExplode = { 0.0f, 0.0f, sizeX + 20, sizeY };
-        speedX *= heading;
         rad = radius;
+        switch (kind) {
+        case BALL1:
+            speed.x = 7;
+            maxSpeedY = 21;
+            break;
+        case BALL2:
+            speed.x = 6;
+            maxSpeedY = 19;
+            break;
+        case BALL3:
+            speed.x = 5;
+            maxSpeedY = 17;
+            break;
+        case BALL4:
+            speed.x = 4;
+            maxSpeedY = 15;
+            break;
+        }
+        speed.x *= heading;
     }
     virtual void Draw();
     virtual void Move();
-  virtual void Collision(Sprite*);
+    virtual void Collision(Sprite*);
 
     void DrawFinish();
     void duality();
@@ -135,10 +157,9 @@ private:
     Rectangle standExplode;
     Color color;
     int rad;
-    float speedX = 5;
-    float speedY = -15;
+    Vector2 speed;
     int cooldown = 0;
-    const float maxSpeedY = 20;
+    float maxSpeedY;
     float sizeX;
     float sizeY;
     Kind kind;
@@ -154,6 +175,7 @@ public:
     void init();
     virtual void Draw();
     virtual void Move();
+    virtual void Collision(Sprite*);
 
 private:
     Color color;
@@ -162,4 +184,14 @@ private:
     int cooldown = 0;
 };
 
+class Ladder : public Sprite {
+public:
+    Ladder(Game* game, float x, float y, float width, float height, Color color)
+        : Sprite(game, Position(x, y, width, height), Type::LADDER), color(color) {
+    }
+    virtual void Draw();
+
+private:
+    Color color;
+};
 

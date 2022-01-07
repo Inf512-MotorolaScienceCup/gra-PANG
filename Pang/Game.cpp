@@ -27,7 +27,7 @@ void Game::CheckCollision() {
     // Collision Player<->Enemy
     for (auto enemy : spriteMap[Sprite::Type::ENEMY]) {
         if (IsCollision(player, enemy)) {
-        // std::cout << "PLAYER collided with ENEMY:" << std::endl;
+            // std::cout << "PLAYER collided with ENEMY:" << std::endl;
             player->Collision(enemy);
         }
     }
@@ -35,28 +35,44 @@ void Game::CheckCollision() {
     // Collision Player<->Block
     for (auto block : spriteMap[Sprite::Type::BLOCK]) {
         if (IsCollision(player, block)) {
-        // std::cout << "PLAYER collided with BLOCK:" << std::endl;
-        player->Collision(block);
+            // std::cout << "PLAYER collided with BLOCK:" << std::endl;
+            player->Collision(block);
+        }
+    }
+
+    // Collision  Player<->Ladder
+    for (auto ladder : spriteMap[Sprite::Type::LADDER]) {
+        if (IsCollision(player, ladder)) {
+            // std::cout << "PLAYER collided with LADDER:" << std::endl;
+            player->Collision(ladder);
         }
     }
 
     // Collision Weapon<->Enemy
     for (auto enemy : spriteMap[Sprite::Type::ENEMY]) {
         if (IsCollision(weapon, enemy)) {
-            std::cout << "WEAPON collided with ENEMY:" << std::endl;
-            // FIXME: Now implemented in Enemy::checkCollision
+            // std::cout << "WEAPON collided with ENEMY:" << std::endl;
             weapon->Collision(enemy);
             enemy->Collision(weapon);
         }
     }
+
+    // Collision Weapon<->Block
+    for (auto block : spriteMap[Sprite::Type::BLOCK]) {
+        if (IsCollision(weapon, block)) {
+            // std::cout << "WEAPON collided with BLOCK:" << std::endl;
+            weapon->Collision(block);
+        }
+    }
+
     // Collision Enemy<->Block
     for (auto enemy : spriteMap[Sprite::Type::ENEMY]) {
         for (auto block : spriteMap[Sprite::Type::BLOCK]) {
-        if (IsCollision(enemy, block)) {
-            // std::cout << "ENEMY collided with BLOCK:" << std::endl;
-            // FIXME: Now implemented in Enemy::checkCollision
-            enemy->Collision(block);
-        }
+            if (IsCollision(enemy, block)) {
+                // std::cout << "ENEMY collided with BLOCK:" << std::endl;
+                // FIXME: Now implemented in Enemy::checkCollision
+                enemy->Collision(block);
+            }
         }
     }
 }
@@ -68,6 +84,12 @@ Rectangle Game::getPlayerPosition() {
         }
     }
     return { 0, 0, 0, 0 };
+}
+
+void Game::AddSprite(float x, float y, Enemy::Kind kind, int heading) {
+    Sprite* s = Enemy::create(this, x, y, kind, heading);
+    spriteMap[Sprite::Type::ENEMY].push_back(s);
+    sprites.push_back(s);
 }
 
 void Game::AddScore(int score) {
@@ -99,8 +121,15 @@ void Game::Spawn() {
     s = new Block(this, 200, 400, 150, wallThickness, RED);
     spriteMap[Sprite::Type::BLOCK].push_back(s);
     sprites.push_back(s);
+    s = new Block(this, 550, 400, 150, wallThickness, RED);
+    spriteMap[Sprite::Type::BLOCK].push_back(s);
+    sprites.push_back(s);
 
-    s = Enemy::create(this, 300, 200, Enemy::Kind::BALL1, 1);
+    s = new Ladder(this, 700, 390, 30, 200, ORANGE);
+    spriteMap[Sprite::Type::LADDER].push_back(s);
+    sprites.push_back(s);
+
+    s = Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1);
     spriteMap[Sprite::Type::ENEMY].push_back(s);
     sprites.push_back(s);
     // s = Enemy::create(this, 100, 200, Enemy::Kind::BALL1, 1);
@@ -110,7 +139,7 @@ void Game::Spawn() {
     weapon = new Weapon(this, 0, 0, 20, 0, PURPLE);
     sprites.push_back(weapon);
 
-    player = new Player(this, 400, screenHeight - wallThickness - 64, 64, 64, BLACK, 0);
+    player = new Player(this, 400, screenHeight - wallThickness - 64, 35, 64, BLACK, {0, 0});
     sprites.push_back(player);
 }
 
@@ -143,23 +172,23 @@ void Game::Update() {
     frameCounter++;
 
     if (GetKeyPressed() == KEY_ESCAPE)
-    pause = !pause;
+        pause = !pause;
 
     if (pause) {
-    menu.Update();
+        menu.Update();
     } else {
-    MoveSprites();
+        MoveSprites();
     }
 }
 
 void Game::OnMenu(std::string name) {
     std::cout << "Menu selected:" << name << std::endl;
     if (name == "Continue") {
-    pause = false;
+        pause = false;
     } else if (name == "Break") {
     } else if (name == "Restart") {
     } else if (name == "Quit") {
-    quitSelected = true;
+        quitSelected = true;
     }
 }
 
@@ -173,9 +202,9 @@ int Game::MainLoop() {
     Spawn();
 
     while (!WindowShouldClose() && !quitSelected) {
-    Update();
-    CheckCollision();
-    Draw();
+        Update();
+        CheckCollision();
+        Draw();
     }
 
     // De-Initialization
