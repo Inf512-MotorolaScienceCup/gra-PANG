@@ -6,26 +6,25 @@ Texture2D Enemy::spriteSheet[NUM_KINDS];
 Texture2D Enemy::spriteExplode;
 
 bool IsCollision(const Sprite *s1, const Sprite *s2) {
-  bool collision = false;
+    bool collision = false;
 
-  if (s2->state != Enemy::State::FINISHED) {
-      if (s1->position.type == Position::Type::RECTANGLE) {
-          if (s2->position.type == Position::Type::RECTANGLE) {
-              collision = CheckCollisionRecs(s1->position.hitBox(), s2->position.hitBox());
-          }
-          else {
-              collision = CheckCollisionCircleRec(s2->position.center, s2->position.radius, s1->position.hitBox());
-          }
-      }
-      else {
-          if (s2->position.type == Position::Type::RECTANGLE) {
-              collision = CheckCollisionCircleRec(s1->position.center, s1->position.radius, s2->position.hitBox());
-          }
-          else {
-              collision = CheckCollisionCircles(s1->position.center, s1->position.radius,
-                  s2->position.center, s2->position.radius);
-          }
-      }
+    if (s1->state != Sprite::State::FINISHED && s2->state != Sprite::State::FINISHED) {
+        if (s1->position.type == Position::Type::RECTANGLE) {
+            if (s2->position.type == Position::Type::RECTANGLE) {
+                collision = CheckCollisionRecs(s1->position.hitBox(), s2->position.hitBox());
+            }
+            else {
+                collision = CheckCollisionCircleRec(s2->position.center, s2->position.radius, s1->position.hitBox());
+            }
+        }
+        else {
+            if (s2->position.type == Position::Type::RECTANGLE) {
+                collision = CheckCollisionCircleRec(s1->position.center, s1->position.radius, s2->position.hitBox());
+            }
+            else {
+                collision = CheckCollisionCircles(s1->position.center, s1->position.radius, s2->position.center, s2->position.radius);
+            }
+        }
   }
   return collision;
 }
@@ -125,7 +124,7 @@ void Player::Move() {
         direction = Direction::NONE;
     }
 
-    if (!climbing && IsKeyDown(KEY_SPACE)) {
+    if (!climbing && IsKeyPressed(KEY_SPACE)) {
         game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height);
     }
 
@@ -405,6 +404,7 @@ Weapon::Weapon(Game *game, float x, float y, float width, float height, Color co
 }
 void Weapon::init() {
     position.rectangle.height = 0;
+    position.hbRectangle.height = 0;
 }
 
 void Weapon::Draw() {
@@ -417,6 +417,8 @@ void Weapon::Move() {
     if (state != State::FINISHED && cooldown++ % 5 == 0) {
         position.rectangle.height += speedY;
         position.rectangle.y -= speedY;
+
+        position.hbRectangle.height += speedY;
     }
 }
 

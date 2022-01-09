@@ -26,7 +26,7 @@ void Game::MoveSprites() {
 
 void Game::CheckCollision() {
     // Collision Player<->Enemy
-    for (auto enemy : spriteMap[Sprite::Type::ENEMY]) {
+    for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
         if (IsCollision(player, enemy)) {
         // std::cout << "PLAYER collided with ENEMY:" << std::endl;
             player->Collision(enemy);
@@ -34,24 +34,24 @@ void Game::CheckCollision() {
     }
 
     // Collision Player<->Block
-    for (auto block : spriteMap[Sprite::Type::BLOCK]) {
+    for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
         if (IsCollision(player, block)) {
         // std::cout << "PLAYER collided with BLOCK:" << std::endl;
-        player->Collision(block);
+            player->Collision(block);
         }
     }
 
     // Collision Player<->Ladder
-    for (auto ladder : spriteMap[Sprite::Type::LADDER]) {
-        if (IsCollision(ladder, player)) {
-            std::cout << "PLAYER collided with LADDER:" << std::endl;
+    for (auto& ladder : spriteMap[Sprite::Type::LADDER]) {
+        if (IsCollision(player, ladder)) {
+            // std::cout << "PLAYER collided with LADDER:" << std::endl;
             player->Collision(ladder);
         }
     }
 
     // Collision Weapon<->Enemy
-    for (auto weapon : spriteMap[Sprite::Type::WEAPON]) {
-        for (auto enemy : spriteMap[Sprite::Type::ENEMY]) {
+    for (auto& weapon : spriteMap[Sprite::Type::WEAPON]) {
+        for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
             if (IsCollision(weapon, enemy)) {
                 std::cout << "WEAPON collided with ENEMY:" << std::endl;
                 // FIXME: Now implemented in Enemy::checkCollision
@@ -60,7 +60,7 @@ void Game::CheckCollision() {
                 auto& v = spriteMap[Sprite::Type::ENEMY];
                 size_t numEnemies = 0;
                 for_each(v.begin(), v.end(), [&](Sprite* sprite) { if (sprite->type == Sprite::Type::ENEMY && sprite->state == Sprite::State::ACTIVE) numEnemies += 1; });
-                std::cout << "Enemy Left:" << spriteMap[Sprite::Type::ENEMY].size() << " / " << numEnemies << std::endl;
+                // std::cout << "Enemy Left:" << spriteMap[Sprite::Type::ENEMY].size() << " / " << numEnemies << std::endl;
                 if (numEnemies <= 0) {
                     ChangeState(State::LEVEL_FINISHED);
                 }
@@ -69,18 +69,19 @@ void Game::CheckCollision() {
     }
 
     // Collision Weapon<->Block
-    for (auto weapon : spriteMap[Sprite::Type::WEAPON]) {
-        for (auto block : spriteMap[Sprite::Type::BLOCK]) {
+    for (auto& weapon : spriteMap[Sprite::Type::WEAPON]) {
+        for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
             if (IsCollision(weapon, block)) {
                 // std::cout << "WEAPON collided with BLOCK:" << std::endl;
                 weapon->Collision(block);
+                break;
             }
         }
     }
 
     // Collision Enemy<->Block
-    for (auto enemy : spriteMap[Sprite::Type::ENEMY]) {
-        for (auto block : spriteMap[Sprite::Type::BLOCK]) {
+    for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
+        for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
         if (IsCollision(enemy, block)) {
             // std::cout << "ENEMY collided with BLOCK:" << std::endl;
             // FIXME: Now implemented in Enemy::checkCollision
@@ -91,7 +92,7 @@ void Game::CheckCollision() {
 }
 
 Rectangle Game::getPlayerPosition() {
-    for (auto sprite : sprites) {
+    for (auto& sprite : sprites) {
         if (sprite->type == Sprite::Type::PLAYER) {
             return sprite->position.rectangle;
         }
