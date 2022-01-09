@@ -18,25 +18,9 @@ public:
     void Draw();
     void Update();
 
-private:
-    std::vector<MenuItem> graphics;
-    Game* game;
-    int position = 0;
-    Rectangle bgRec;
-};
+    std::string selected;
 
-class MainMenu {
-    struct MenuItem {
-        std::string name;
-        Rectangle rec;
-    };
-
-public:
-    MainMenu(Game* game, std::vector<std::string> items);
-    void Draw();
-    void Update();
-
-private:
+  private:
     std::vector<MenuItem> graphics;
     Game* game;
     int position = 0;
