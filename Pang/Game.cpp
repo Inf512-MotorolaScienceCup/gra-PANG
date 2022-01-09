@@ -20,7 +20,14 @@ void Game::MoveSprites() {
         sprites[i]->Move();
     }
     auto removed = remove_if(sprites.begin(), sprites.end(), [](Sprite* sprite) { return sprite->state == Sprite::State::FINISHED; });
-    sprites.erase(removed, sprites.end());
+    std::for_each(removed, sprites.end(), [&](Sprite* s) { 
+        printf("REMOVE sprite:%d\n", s->type);
+        auto& v = spriteMap[s->type];
+        auto vRemoved = remove_if(v.begin(), v.end(), [&](Sprite* sprite) { return sprite == s; });
+        v.erase(vRemoved, vRemoved);
+        delete s;
+    });
+    sprites.erase(removed, removed);
 }
 
 void Game::CheckCollision() {
@@ -49,19 +56,23 @@ void Game::CheckCollision() {
     }
 
     // Collision Weapon<->Enemy
-    for (auto enemy : spriteMap[Sprite::Type::ENEMY]) {
-        if (IsCollision(weapon, enemy)) {
-            // std::cout << "WEAPON collided with ENEMY:" << std::endl;
-            weapon->Collision(enemy);
-            enemy->Collision(weapon);
+    for (auto weapon : spriteMap[Sprite::Type::WEAPON]) {
+        for (auto enemy : spriteMap[Sprite::Type::ENEMY]) {
+            if (IsCollision(weapon, enemy)) {
+                // std::cout << "WEAPON collided with ENEMY:" << std::endl;
+                weapon->Collision(enemy);
+                enemy->Collision(weapon);
+            }
         }
     }
 
     // Collision Weapon<->Block
-    for (auto block : spriteMap[Sprite::Type::BLOCK]) {
-        if (IsCollision(weapon, block)) {
-            // std::cout << "WEAPON collided with BLOCK:" << std::endl;
-            weapon->Collision(block);
+    for (auto weapon : spriteMap[Sprite::Type::WEAPON]) {
+        for (auto block : spriteMap[Sprite::Type::BLOCK]) {
+            if (IsCollision(weapon, block)) {
+                // std::cout << "WEAPON collided with BLOCK:" << std::endl;
+                weapon->Collision(block);
+            }
         }
     }
 
@@ -86,10 +97,18 @@ Rectangle Game::getPlayerPosition() {
     return { 0, 0, 0, 0 };
 }
 
-void Game::AddSprite(float x, float y, Enemy::Kind kind, int heading) {
+void Game::AddEnemy(float x, float y, Enemy::Kind kind, int heading) {
     Sprite* s = Enemy::create(this, x, y, kind, heading);
     spriteMap[Sprite::Type::ENEMY].push_back(s);
     sprites.push_back(s);
+}
+
+void Game::AddWeapon(float x, float y) {
+    auto w = spriteMap.find(Sprite::Type::WEAPON);
+    if (w != spriteMap.end() && !w->second.empty()) return;
+    weapon = new Weapon(this, x, y, 20, 0, PURPLE);
+    spriteMap[Sprite::Type::WEAPON].push_back(weapon);
+    sprites.push_back(weapon);
 }
 
 void Game::AddScore(int score) {
@@ -136,8 +155,8 @@ void Game::Spawn() {
     // spriteMap[Sprite::Type::ENEMY].push_back(s);
     // sprites.push_back(s);
 
-    weapon = new Weapon(this, 0, 0, 20, 0, PURPLE);
-    sprites.push_back(weapon);
+    // weapon = new Weapon(this, 0, 0, 20, 0, PURPLE);
+    // sprites.push_back(weapon);
 
     player = new Player(this, 400, screenHeight - wallThickness - 64, 35, 64, BLACK, {0, 0});
     sprites.push_back(player);

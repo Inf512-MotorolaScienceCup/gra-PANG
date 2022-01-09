@@ -72,6 +72,7 @@ void Player::Draw() {
 
 void Player::Move() {
     speed.x = 0;
+
     if (!climbing)
         speed.y++;
     else
@@ -93,6 +94,10 @@ void Player::Move() {
         speed.y = 5;
     } else {
         direction = Direction::NONE;
+    }
+
+    if (!climbing && IsKeyDown(KEY_SPACE)) {
+        game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height);
     }
 
     position.rectangle.x += speed.x;
@@ -175,8 +180,6 @@ void Enemy::Draw() {
     else if (state == State::FINISHING) {
         DrawFinish();
     }
-
-
 }
 
 void Enemy::Move() {
@@ -193,13 +196,13 @@ void Enemy::Move() {
         if (spriteX->type == Sprite::Type::BLOCK) {
             if (speed.x > 0) {
                 position.center.x = spriteX->position.rectangle.x - position.radius - 1;
-                printf("spriteX 1\n");
+                // printf("spriteX 1\n");
             } else {
                 position.center.x = spriteX->position.rectangle.x + spriteX->position.rectangle.width + position.radius + 1;
-                printf("spriteX 2\n");
+                // printf("spriteX 2\n");
             }
             speed.x *= -1;
-            printf("center:%f speedX:%f\n", position.center.x, speed.x);
+            // printf("center:%f speedX:%f\n", position.center.x, speed.x);
         }
     }
 
@@ -210,13 +213,13 @@ void Enemy::Move() {
             if (speed.y > 0) {
                 speed.y = -maxSpeedY;
                 position.center.y = spriteY->position.rectangle.y - position.radius - 1;
-                printf("spriteY 1\n");
+                // printf("spriteY 1\n");
             } else {
                 speed.y = maxSpeedY / 2;
                 position.center.y = spriteY->position.rectangle.y + spriteY->position.rectangle.height + position.radius + 1;
-                printf("spriteY 2\n");
+                // printf("spriteY 2\n");
             }
-            printf("center:%f speedY:%f\n", position.center.y, speed.y);
+            // printf("center:%f speedY:%f\n", position.center.y, speed.y);
         }
     }
     duality();
@@ -279,22 +282,22 @@ void Enemy::duality() {
             switch (kind) {
             case Kind::BALL1:
                 newKind = Kind::BALL2;
-                game->AddSprite(sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1);
-                game->AddSprite(sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1);
+                game->AddEnemy(sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1);
+                game->AddEnemy(sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1);
                 //game->sprites.push_back(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
                 //game->sprites.push_back(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
                 game->AddScore(1);
                 break;
             case Kind::BALL2:
                 newKind = Kind::BALL3;
-                game->AddSprite(sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1);
-                game->AddSprite(sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1);
+                game->AddEnemy(sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1);
+                game->AddEnemy(sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1);
                 game->AddScore(2);
                 break;
             case Kind::BALL3:
                 newKind = Kind::BALL4;
-                game->AddSprite(sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1);
-                game->AddSprite(sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1);
+                game->AddEnemy(sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1);
+                game->AddEnemy(sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1);
                 game->AddScore(3);
                 break;
             default:
@@ -322,42 +325,23 @@ Sprite* Enemy::checkCollision() {
 }
 
 // Weapon
-void Weapon::init() {
-    position.rectangle.height = 0;
-    position.rectangle.y = 0;
-}
-
 void Weapon::Draw() {
-    if (active) {
+    if (state == State::ACTIVE) {
         DrawRectangleRec(position.rectangle, color);
     }
 }
 
 void Weapon::Move() {
-    if (IsKeyPressed(KEY_SPACE)) {
-        if (!active) {
-            Rectangle pos = game->getPlayerPosition();
-            position.rectangle.x = pos.x;
-            position.rectangle.y = pos.y + pos.height;
-            active = true;
-        }
-    }
-
-    if (active && cooldown++ % 5 == 0) {
-        if (position.rectangle.height < 400) {
-            position.rectangle.height += speedY;
-            position.rectangle.y -= speedY;
-        } else {
-            active = false;
-            init();
-        }
+    if (state == State::ACTIVE && cooldown++ % 5 == 0) {
+        position.rectangle.height += speedY;
+        position.rectangle.y -= speedY;
     }
 }
 
 void Weapon::Collision(Sprite *sprite) {
     if (sprite->type == Sprite::Type::BLOCK || sprite->type == Sprite::Type::ENEMY) {
-        active = false;
-        init();
+        state = State::FINISHED;
+        //Player::weapon -= 1;
     }
 }
 

@@ -27,7 +27,8 @@ public:
 
     Rectangle getPlayerPosition();
 
-    void AddSprite(float, float, Enemy::Kind, int);
+    void AddEnemy(float, float, Enemy::Kind, int);
+    void AddWeapon(float, float);
     void AddScore(int);
     int MainLoop();
     void OnMenu(std::string name);

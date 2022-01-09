@@ -61,9 +61,10 @@ public:
     virtual void Move();
     virtual void Collision(Sprite*);
 
-    Vector2 speed;
+    int weapon = 0;
 
 private:
+    Vector2 speed;
     Color color;
     Texture2D spriteSheet;
     Rectangle moveRightRec;
@@ -170,16 +171,13 @@ class Weapon : public Sprite {
 public:
     Weapon(Game* game, float x, float y, float width, float height, Color color)
         : Sprite(game, Position(x, y, width, height), Type::WEAPON), color(color) {
-        init();
     }
-    void init();
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
 
 private:
     Color color;
-    bool active = false;
     const float speedY = 20;
     int cooldown = 0;
 };
