@@ -49,12 +49,20 @@ void Game::CheckCollision() {
         }
     }
 
+    // Collision Player<->Pickup
+    for (auto& pickup : spriteMap[Sprite::Type::PICKUP]) {
+        if (IsCollision(player, pickup)) {
+            // std::cout << "PLAYER collided with LADDER:" << std::endl;
+            player->Collision(pickup);
+            pickup->Collision(player);
+        }
+    }
+
     // Collision Weapon<->Enemy
     for (auto& weapon : spriteMap[Sprite::Type::WEAPON]) {
         for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
             if (IsCollision(weapon, enemy)) {
                 std::cout << "WEAPON collided with ENEMY:" << std::endl;
-                // FIXME: Now implemented in Enemy::checkCollision
                 weapon->Collision(enemy);
                 enemy->Collision(weapon);
                 auto& v = spriteMap[Sprite::Type::ENEMY];
@@ -72,7 +80,6 @@ void Game::CheckCollision() {
     for (auto& weapon : spriteMap[Sprite::Type::WEAPON]) {
         for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
             if (IsCollision(weapon, block)) {
-                // std::cout << "WEAPON collided with BLOCK:" << std::endl;
                 weapon->Collision(block);
                 break;
             }
@@ -82,11 +89,9 @@ void Game::CheckCollision() {
     // Collision Enemy<->Block
     for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
         for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
-        if (IsCollision(enemy, block)) {
-            // std::cout << "ENEMY collided with BLOCK:" << std::endl;
-            // FIXME: Now implemented in Enemy::checkCollision
-            enemy->Collision(block);
-        }
+            if (IsCollision(enemy, block)) {
+                enemy->Collision(block);
+            }
         }
     }
 }
@@ -106,12 +111,37 @@ void Game::AddEnemy(float x, float y, Enemy::Kind kind, int heading) {
     sprites.push_back(s);
 }
 
-void Game::AddWeapon(float x, float y) {
+void Game::AddWeapon(float x, float y, int type) {
     //auto w = spriteMap.find(Sprite::Type::WEAPON);
     //if (w != spriteMap.end() && !w->second.empty()) return;
-    weapon = new Weapon(this, x, y, 20, 0, PURPLE);
-    spriteMap[Sprite::Type::WEAPON].push_back(weapon);
-    sprites.push_back(weapon);
+    switch (type) {
+    case 1:
+        weapon = new Weapon(this, x, y, 20, 0, PURPLE, Weapon::Kind::WEAPON1);
+        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
+        sprites.push_back(weapon);
+        break;
+    case 2:
+        weapon = new Weapon(this, x, y, 20, 0, PURPLE, Weapon::Kind::WEAPON2);
+        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
+        sprites.push_back(weapon);
+        break;
+    }
+}
+
+void Game::PickAction(Pickup::Kind kind) {
+    switch (kind) {
+    case Pickup::Kind::BOOST:
+        break;
+    case Pickup::Kind::DOUBLE:
+        break;
+    case Pickup::Kind::TIME:
+        break;
+    case Pickup::Kind::WEAPON:
+        weaponType = 2;
+        shootingLeft = 10;
+        std::cout << "Pickup" << std::endl;
+        break;
+    }
 }
 
 void Game::AddScore(int score) {
@@ -148,7 +178,9 @@ void Game::SpawnLevel() {
             // distanceToGround must be properly calculated
             Spawn(new Ladder(this, 200, 395, 4, 25));
 
-            Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
+            Spawn(new Pickup(this, 700, 600, 50, 50, RED, Pickup::Kind::WEAPON));
+
+            //Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
             //Spawn(Enemy::create(this, 500, 400, Enemy::Kind::BALL1, 1));
 
             levelTime = 30;

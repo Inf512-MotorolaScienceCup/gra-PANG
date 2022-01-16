@@ -43,7 +43,6 @@ Player::Player(Game *game, Position position, Color color)
     moveLeftRec = {0.0f, 9 * 64.0f, 64.0f, 64.0f};
     standRec = {0.0f, 2 * 64.0f, 64.0f, 64.0f};
     moveUpRec = {0.0f, 8 * 64.0f, 64.0f, 64.0f};
-    moveDownRec = {0.0f, 10 * 64.0f, 64.0f, 64.0f};
     hurtRec = {0.0f, 20 * 64.0f, 64.0f, 64.0f};
 }
 
@@ -74,16 +73,10 @@ void Player::Draw() {
             moveLeftRec.x = (moveLeftRec.x < 64.0 * 8) ? moveLeftRec.x + 64 : 0;
         }
         cooldown++;
-    } else if (direction == Direction::UP) {
+    } else if (direction == Direction::UP || direction == Direction::DOWN) {
         DrawTextureRec(spriteSheet, moveUpRec, {position.rectangle.x, position.rectangle.y}, WHITE);
         if (cooldown % 5 == 0) {
             moveUpRec.x = (moveUpRec.x < 64.0 * 8) ? moveUpRec.x + 64 : 0;
-        }
-        cooldown++;
-    } else if (direction == Direction::DOWN) {
-        DrawTextureRec(spriteSheet, moveDownRec, {position.rectangle.x, position.rectangle.y}, WHITE);
-        if (cooldown % 5 == 0) {
-            moveDownRec.x = (moveDownRec.x < 64.0 * 8) ? moveDownRec.x + 64 : 0;
         }
         cooldown++;
     } else if (climbing) {
@@ -125,7 +118,13 @@ void Player::Move() {
     }
 
     if (!climbing && IsKeyPressed(KEY_SPACE)) {
-        game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height);
+        if (game->shootingLeft > 0) {
+            game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height, game->weaponType);
+            game->shootingLeft--;
+        } else if (game->shootingLeft == 0) {
+            game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height, 1);
+            game->shootingLeft--;
+        }
     }
 
     position.rectangle.x += speed.x;
@@ -134,7 +133,7 @@ void Player::Move() {
 
 void Player::Collision(Sprite *sprite) {
     if (sprite->type == Sprite::Type::BLOCK && !climbing) {
-        collision = CheckCollisionRecs({ position.rectangle.x, position.rectangle.y - speed.y, position.rectangle.width, position.rectangle.height }, sprite->position.rectangle);
+        collision = CheckCollisionRecs({ position.rectangle.x + position.hbRectangle.x, position.rectangle.y + position.hbRectangle.y - speed.y, position.hbRectangle.width, position.hbRectangle.height }, sprite->position.rectangle);
         if (collision) {
             if (speed.x > 0) {
                 position.rectangle.x = sprite->position.rectangle.x - position.hbRectangle.width - position.hbRectangle.x;
@@ -273,67 +272,32 @@ void Enemy::Move() {
     speed.y++;
 
     position.center.x += speed.x;
-    auto spriteX = checkCollision();
-    if (spriteX) {
-        if (spriteX->type == Sprite::Type::BLOCK) {
-            if (speed.x > 0) {
-        position.center.x = spriteX->position.rectangle.x - position.radius - 1;
-      } else {
-        position.center.x = spriteX->position.rectangle.x + spriteX->position.rectangle.width + position.radius + 1;
-      }
-            speed.x *= -1;
-        }
-    }
     position.center.y += speed.y;
-    auto spriteY = checkCollision();
-    if (spriteY && spriteY != spriteX) {
-        if (spriteY->type == Sprite::Type::BLOCK) {
-            if (speed.y > 0) {
-                speed.y = -maxSpeedY;
-                position.center.y = spriteY->position.rectangle.y - position.radius - 1;
-      } else {
-                speed.y = maxSpeedY / 2;
-                position.center.y = spriteY->position.rectangle.y + spriteY->position.rectangle.height + position.radius + 1;
-      }
-    }
-    }
-    duality();
 }
 
 void Enemy::Collision(Sprite* sprite) {
-  // if (sprite->type == Sprite::Type::BLOCK) {
-  //   if (speedX > 0) {
-  //     if (position.center.x >= sprite->position.rectangle.x - position.radius) {
-  //       speedX *= -1;
-  //       position.center.x = sprite->position.rectangle.x - position.radius;
-  //       printf("spriteX 1\n");
-  //     }
-  //   } else {
-  //     if (position.center.x <= sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius) {
-  //       speedX *= -1;
-  //       position.center.x = sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius;
-  //       printf("spriteX 2\n");
-  //     }
-  //   }
-  //   printf("center:%f speedX:%f\n", position.center.x, speedX);
-
-  //   if (speedY > 0) {
-  //     if (position.center.y > sprite->position.rectangle.y - position.radius) {
-  //       speedY = -maxSpeedY;
-  //       position.center.y = sprite->position.rectangle.y - position.radius;
-  //       printf("spriteY 1\n");
-  //     }
-  //   } else {
-  //     if (position.center.y <= sprite->position.rectangle.y + sprite->position.rectangle.height + position.radius) {
-  //       speedY = maxSpeedY / 2;
-  //       position.center.y = sprite->position.rectangle.y + sprite->position.rectangle.height + position.radius;
-  //       printf("spriteY 2\n");
-  //     }
-  //   }
-
-  //   printf("center:%f speedY:%f\n", position.center.y, speedY);
-  // }
-  // duality();
+    if (sprite->type == Sprite::Type::BLOCK) {
+        collision = CheckCollisionCircleRec({position.center.x, position.center.y - speed.y}, position.radius, sprite->position.hitBox());
+        if (collision) {
+            if (speed.x > 0) {
+                speed.x *= -1;
+                position.center.x = sprite->position.rectangle.x - position.radius;
+            } else {
+                speed.x *= -1;
+                position.center.x = sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius;
+            }
+        } else {
+            if (speed.y > 0) {
+                speed.y = -maxSpeedY;
+                position.center.y = sprite->position.rectangle.y - position.radius;
+            } else {
+                speed.y = maxSpeedY / 2;
+                position.center.y = sprite->position.rectangle.y + sprite->position.rectangle.height + position.radius;
+            }
+        }
+    } else if (sprite->type == Sprite::Type::WEAPON) {
+        duality(sprite);
+    }
 }
 
 void Enemy::DrawFinish() {
@@ -349,11 +313,8 @@ void Enemy::DrawFinish() {
     cooldown++;
 }
 
-void Enemy::duality() {
-    auto sprite = checkCollision();
-    if (sprite) {
-        if (sprite->type == Sprite::Type::WEAPON) {
-            Kind newKind;
+void Enemy::duality(Sprite* sprite) {
+    Kind newKind;
             switch (kind) {
             case Kind::BALL1:
                 newKind = Kind::BALL2;
@@ -379,8 +340,6 @@ void Enemy::duality() {
             }
             state = State::FINISHING;
             cooldown = 0;
-        }
-    }
 }
 
 Sprite* Enemy::checkCollision() {
@@ -398,8 +357,8 @@ Sprite* Enemy::checkCollision() {
 }
 
 // Weapon
-Weapon::Weapon(Game *game, float x, float y, float width, float height, Color color)
-    : Sprite(game, Position(x, y, width, height), Type::WEAPON), color(color) {
+Weapon::Weapon(Game *game, float x, float y, float width, float height, Color color, Kind kind)
+    : Sprite(game, Position(x, y, width, height), Type::WEAPON), color(color), kind(kind) {
     init();
 }
 void Weapon::init() {
@@ -415,17 +374,32 @@ void Weapon::Draw() {
 
 void Weapon::Move() {
     if (state != State::FINISHED && cooldown++ % 5 == 0) {
-        position.rectangle.height += speedY;
-        position.rectangle.y -= speedY;
-
-        position.hbRectangle.height += speedY;
+        switch (kind) {
+        case Kind::WEAPON1:
+            position.rectangle.height += speedY;
+            position.hbRectangle.height += speedY;
+            position.rectangle.y -= speedY;
+            break;
+        case Kind::WEAPON2:
+            if (position.rectangle.height < 30) {
+                position.rectangle.height += speedY;
+                position.hbRectangle.height += speedY;
+            }
+            position.rectangle.y -= speedY;
+            break;
+        case Kind::WEAPON3:
+            break;
+        case Kind::WEAPON4:
+            break;
+        }
     }
 }
 
 void Weapon::Collision(Sprite *sprite) {
     if (sprite->type == Sprite::Type::BLOCK || sprite->type == Sprite::Type::ENEMY) {
         state = State::FINISHED;
-        //Player::weapon -= 1;
+        if (kind == Kind::WEAPON1 && game->shootingLeft < 0)
+            game->shootingLeft++;
     }
 }
 
@@ -440,5 +414,40 @@ Ladder::Ladder(Game *game, float x, float y, int numElements, float distanceToGr
 void Ladder::Draw() {
     for (int i = 0; i < numElements; i++) {
         DrawTexture(*texture, position.rectangle.x, position.rectangle.y + i * texture->height, WHITE);
-  }
+    }
+}
+
+//Pickup
+Pickup::Pickup(Game *game, float x, float y, float width, float height, Color color, Kind kind)
+    : Sprite(game, Position(x, y, width, height), Type::PICKUP), color(color), kind(kind) {
+}
+
+void Pickup::Draw() {
+    if (state == State::ACTIVE) {
+        DrawRectangle(position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height, color);
+    }
+}
+
+void Pickup::Move() {
+
+}
+
+void Pickup::Collision(Sprite *sprite) {
+    if (sprite->type == Type::PLAYER) {
+        switch (kind) {
+        case BOOST:
+            game->PickAction(kind);
+            break;
+        case TIME:
+            game->PickAction(kind);
+            break;
+        case DOUBLE:
+            game->PickAction(kind);
+            break;
+        case WEAPON:
+            game->PickAction(kind);
+            break;
+        }
+        state = State::FINISHED;
+    }
 }

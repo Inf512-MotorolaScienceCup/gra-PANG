@@ -79,8 +79,9 @@ public:
   Rectangle getPlayerPosition();
 
   void AddEnemy(float, float, Enemy::Kind, int);
-  void AddWeapon(float, float);
+  void AddWeapon(float, float, int);
   void AddScore(int);
+  void PickAction(Pickup::Kind);
   int MainLoop();
   void LoadTextures();
 
@@ -101,5 +102,9 @@ public:
   std::time_t endLevelTime;
   int levelTime;
   int elapsedLevelTime;
+
+
+  short int weaponType = 0;
+  int shootingLeft = 0;
 };
 

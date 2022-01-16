@@ -14,7 +14,8 @@ public:
         BLOCK,
         ENEMY,
         WEAPON,
-        LADDER
+        LADDER,
+        PICKUP
     } type;
 
     enum class Direction {
@@ -60,7 +61,6 @@ private:
     Rectangle moveLeftRec;
     Rectangle standRec;
     Rectangle moveUpRec;
-    Rectangle moveDownRec;
     Rectangle hurtRec;
     int cooldown = 0;
     bool climbing = false;
@@ -70,14 +70,14 @@ private:
 
 class Block : public Sprite {
 public:
-  enum class Type {
-    WALL,
-    PLATFORM_1,
-    PLATFORM_2
-  };
+    enum class Type {
+        WALL,
+        PLATFORM_1,
+        PLATFORM_2
+    };
 
-  Block(Game *game, float x, float y, float width, float height, Block::Type type);
-  virtual void Draw();
+    Block(Game *game, float x, float y, float width, float height, Block::Type type);
+    virtual void Draw();
 
 private:
     Type type;
@@ -103,7 +103,7 @@ public:
     virtual void Collision(Sprite*);
 
     void DrawFinish();
-    void duality();
+    void duality(Sprite*);
 
     Sprite* checkCollision();
 
@@ -122,11 +122,19 @@ private:
     float sizeY;
     Kind kind;
     int frameNumber = 0;
+    bool collision = false;
 };
 
 class Weapon : public Sprite {
 public:
-    Weapon(Game* game, float x, float y, float width, float height, Color color);
+    enum Kind {
+        WEAPON1,
+        WEAPON2,
+        WEAPON3,
+        WEAPON4
+    };
+
+    Weapon(Game* game, float x, float y, float width, float height, Color color, Kind kind);
     void init();
     virtual void Draw();
     virtual void Move();
@@ -134,6 +142,7 @@ public:
 
 private:
     Color color;
+    Kind kind;
     const float speedY = 20;
     int cooldown = 0;
 };
@@ -148,4 +157,24 @@ public:
 private:
     Texture2D* texture;
     int numElements;
+};
+
+class Pickup : public Sprite {
+public:
+    enum Kind {
+        BOOST,
+        TIME,
+        DOUBLE,
+        WEAPON
+    };
+
+    Pickup(Game *game, float x, float y, float width, float height, Color color, Kind kind);
+
+    virtual void Draw();
+    virtual void Move();
+    virtual void Collision(Sprite*);
+
+private:
+    Color color;
+    Kind kind;
 };
