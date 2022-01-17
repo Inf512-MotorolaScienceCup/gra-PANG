@@ -81,6 +81,7 @@ void Game::CheckCollision() {
         for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
             if (IsCollision(weapon, block)) {
                 weapon->Collision(block);
+                block->Collision(weapon);
                 break;
             }
         }
@@ -94,8 +95,18 @@ void Game::CheckCollision() {
             }
         }
     }
+
+    // Collision Pickup<->Block
+    for (auto& pickup : spriteMap[Sprite::Type::PICKUP]) {
+        for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
+            if (IsCollision(pickup, block)) {
+                pickup->Collision(block);
+            }
+        }
+    }
 }
 
+/*
 Rectangle Game::getPlayerPosition() {
     for (auto& sprite : sprites) {
         if (sprite->type == Sprite::Type::PLAYER) {
@@ -104,6 +115,7 @@ Rectangle Game::getPlayerPosition() {
     }
     return { 0, 0, 0, 0 };
 }
+*/
 
 void Game::AddEnemy(float x, float y, Enemy::Kind kind, int heading) {
     Sprite* s = Enemy::create(this, x, y, kind, heading);
@@ -121,26 +133,104 @@ void Game::AddWeapon(float x, float y, int type) {
         sprites.push_back(weapon);
         break;
     case 2:
-        weapon = new Weapon(this, x, y, 20, 0, PURPLE, Weapon::Kind::WEAPON2);
+        weapon = new Weapon(this, x, y, 15, 0, PURPLE, Weapon::Kind::WEAPON2);
+        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
+        sprites.push_back(weapon);
+        break;
+    case 3:
+        weapon = new Weapon(this, x, y, 20, 0, PURPLE, Weapon::Kind::WEAPON3);
+        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
+        sprites.push_back(weapon);
+        break;
+    case 4:
+        weapon = new Weapon(this, x, y, 40, 10, PURPLE, Weapon::Kind::WEAPON4);
         spriteMap[Sprite::Type::WEAPON].push_back(weapon);
         sprites.push_back(weapon);
         break;
     }
 }
 
+void Game::AddPickup(float x, float y) {
+    int chance = GetRandomValue(1, 3);
+    if (chance == 1) {
+        int kindNum = GetRandomValue(1, 4);
+        Sprite* s;
+        switch (kindNum) {
+        case 1:
+            s = new Pickup(this, x, y, 20, 20, RED, Pickup::Kind::BOOST);
+            spriteMap[Sprite::Type::PICKUP].push_back(s);
+            sprites.push_back(s);
+            break;
+        case 2:
+            s = new Pickup(this, x, y, 20, 20, RED, Pickup::Kind::DOUBLE);
+            spriteMap[Sprite::Type::PICKUP].push_back(s);
+            sprites.push_back(s);
+            break;
+        case 3:
+            s = new Pickup(this, x, y, 20, 20, RED, Pickup::Kind::TIME);
+            spriteMap[Sprite::Type::PICKUP].push_back(s);
+            sprites.push_back(s);
+            break;
+        case 4:
+            s = new Pickup(this, x, y, 20, 20, RED, Pickup::Kind::WEAPON);
+            spriteMap[Sprite::Type::PICKUP].push_back(s);
+            sprites.push_back(s);
+            break;
+        }
+    }
+}
+
 void Game::PickAction(Pickup::Kind kind) {
     switch (kind) {
     case Pickup::Kind::BOOST:
+        speedBoost = 2;
+        timeLeft[0] = std::time(nullptr);
         break;
     case Pickup::Kind::DOUBLE:
+        multiWeapon = 1;
+        timeLeft[1] = std::time(nullptr);
         break;
     case Pickup::Kind::TIME:
+        stopTime = true;
+        timeLeft[2] = std::time(nullptr);
         break;
     case Pickup::Kind::WEAPON:
-        weaponType = 2;
-        shootingLeft = 10;
-        std::cout << "Pickup" << std::endl;
+        weaponType = GetRandomValue(2, 4);
+        switch (weaponType) {
+        case 2:
+            shootingLeft = 15;
+            break;
+        default:
+            shootingLeft = 5;
+            break;
+        }
         break;
+    }
+}
+
+void Game::CheckTime() {
+    std::time_t now = std::time(nullptr);
+    for (int i = 0; i < 4; i++) {
+        if (timeLeft[i] + 5 <= now) {
+            switch (i) {
+            case 0:
+                speedBoost = 1;
+                timeLeft[i] = 0;
+                break;
+            case 1:
+                multiWeapon = 0;
+                timeLeft[i] = 0;
+                break;
+            case 2:
+                stopTime = false;
+                timeLeft[i] = 0;
+                break;
+            case 3:
+                break;
+            default:
+                break;
+            }
+        }
     }
 }
 
@@ -171,14 +261,14 @@ void Game::Spawn(Sprite* sprite) {
 void Game::SpawnLevel() {
     switch (level) {
         case 1:
-            Spawn(new Block(this, 500, 500, 150, wallThickness, Block::Type::PLATFORM_1));
-            Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Type::PLATFORM_2));
+            Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 450, 500, 150, wallThickness, Block::Kind::PLATFORM_2));
 
             // y value must always be 5-10 points lower than block value
             // distanceToGround must be properly calculated
             Spawn(new Ladder(this, 200, 395, 4, 25));
 
-            Spawn(new Pickup(this, 700, 600, 50, 50, RED, Pickup::Kind::WEAPON));
+            Spawn(new Pickup(this, 360, 600, 15, 15, RED, Pickup::Kind::DOUBLE));
 
             //Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
             //Spawn(Enemy::create(this, 500, 400, Enemy::Kind::BALL1, 1));
@@ -186,10 +276,10 @@ void Game::SpawnLevel() {
             levelTime = 30;
             break;
         case 2:
-            Spawn(new Block(this, 100, 500, 150, wallThickness, Block::Type::PLATFORM_1));
-            Spawn(new Block(this, 500, 500, 150, wallThickness, Block::Type::PLATFORM_1));
-            Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Type::PLATFORM_2));
-            Spawn(new Block(this, 700, 400, 150, wallThickness, Block::Type::PLATFORM_2));
+            Spawn(new Block(this, 100, 500, 150, wallThickness, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 500, 500, 150, wallThickness, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 700, 400, 150, wallThickness, Block::Kind::PLATFORM_2));
 
             Spawn(new Ladder(this, 200, 400, 4, 25));
 
@@ -202,11 +292,11 @@ void Game::SpawnLevel() {
 }
 
 void Game::Spawn() {
-    Spawn(new Block(this, 0, 0, screenWidth, wallThickness, Block::Type::WALL));
-    Spawn(new Block(this, 0, panelHeight + wallThickness, screenWidth, wallThickness, Block::Type::WALL));
-    Spawn(new Block(this, 0, screenHeight - wallThickness, screenWidth, wallThickness, Block::Type::WALL));
-    Spawn(new Block(this, 0, 0, wallThickness, screenHeight, Block::Type::WALL));
-    Spawn(new Block(this, screenWidth - wallThickness, 0, wallThickness, screenHeight, Block::Type::WALL));
+    Spawn(new Block(this, 0, 0, screenWidth, wallThickness, Block::Kind::WALL));
+    Spawn(new Block(this, 0, panelHeight + wallThickness, screenWidth, wallThickness, Block::Kind::WALL));
+    Spawn(new Block(this, 0, screenHeight - wallThickness, screenWidth, wallThickness, Block::Kind::WALL));
+    Spawn(new Block(this, 0, 0, wallThickness, screenHeight, Block::Kind::WALL));
+    Spawn(new Block(this, screenWidth - wallThickness, 0, wallThickness, screenHeight, Block::Kind::WALL));
 
     SpawnLevel();
 
@@ -215,6 +305,9 @@ void Game::Spawn() {
 
     player = new Player(this, {400, screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54}, BLACK);
     sprites.push_back(player);
+
+    shootingLeft = 0;
+    speedBoost = 1;
 
     endLevelTime = std::time(nullptr) + levelTime;
 }
@@ -335,6 +428,11 @@ void Game::Update() {
             }
         }
         MoveSprites();
+        for (int i = 0; i < 4; i++) {
+            if (timeLeft != 0) {
+                CheckTime();
+            }
+        }
     } else if (state == State::MAIN_MENU) {
         mainMenu.Update();
     }

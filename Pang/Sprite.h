@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <ctime>
 
 #include "Utils.h"
 #include "raylib.h"
@@ -52,6 +53,7 @@ public:
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
+    void Shooting();
 
 private:
     Vector2 speed;
@@ -70,18 +72,20 @@ private:
 
 class Block : public Sprite {
 public:
-    enum class Type {
+    enum class Kind {
         WALL,
         PLATFORM_1,
         PLATFORM_2
     };
 
-    Block(Game *game, float x, float y, float width, float height, Block::Type type);
+    Block(Game *game, float x, float y, float width, float height, Kind type);
     virtual void Draw();
+    virtual void Collision(Sprite*);
 
 private:
-    Type type;
+    Kind kind;
     Color color;
+    short int health = 2;
 };
 
 class Enemy : public Sprite {
@@ -135,16 +139,19 @@ public:
     };
 
     Weapon(Game* game, float x, float y, float width, float height, Color color, Kind kind);
-    void init();
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
+    void checkTime();
 
 private:
     Color color;
     Kind kind;
     const float speedY = 20;
     int cooldown = 0;
+    bool stopMoving;
+    int overlap;
+    std::time_t lifeTime;
 };
 
 class Ladder : public Sprite {
@@ -177,4 +184,5 @@ public:
 private:
     Color color;
     Kind kind;
+    int speedY;
 };

@@ -76,12 +76,14 @@ public:
   void StartGame(int newLevel = 1);
   void DrawLevelSelector();
 
-  Rectangle getPlayerPosition();
+  //Rectangle getPlayerPosition();
 
   void AddEnemy(float, float, Enemy::Kind, int);
   void AddWeapon(float, float, int);
   void AddScore(int);
+  void AddPickup(float, float);
   void PickAction(Pickup::Kind);
+  void CheckTime();
   int MainLoop();
   void LoadTextures();
 
@@ -103,8 +105,12 @@ public:
   int levelTime;
   int elapsedLevelTime;
 
-
   short int weaponType = 0;
-  int shootingLeft = 0;
+  int shootingLeft;
+
+  std::time_t timeLeft[4];
+  bool stopTime;
+  short int speedBoost;
+  short int multiWeapon = 0;
 };
 
