@@ -21,6 +21,12 @@ enum TextureTypes {
     BALL_2,
     BALL_3,
     BALL_4,
+    LINE_STRAIGHT,
+    LINE_WIGGLED,
+    WEAPON_ENDING,
+    WEAPON_SHOT,
+    WEAPON_MINE,
+    POWERUP_TIME,
 
     NUM_TEXTURES
 };
@@ -48,7 +54,14 @@ public:
                                             "res/Ball/Ball_1.png",
                                             "res/Ball/Ball_2.png",
                                             "res/Ball/Ball_3.png",
-                                            "res/Ball/Ball_4.png"};
+                                            "res/Ball/Ball_4.png",
+                                            "res/hook/line_straight.png",
+                                            "res/hook/line_wiggled.png",
+                                            "res/hook/ending2.png",
+                                            "res/hook/shot.png",
+                                            "res/hook/mine.png",
+                                            "res/powerups/clock.png"
+                                            };
   Texture2D textures[NUM_TEXTURES];
 
   const float screenWidth = 1280;
@@ -81,8 +94,8 @@ public:
   void AddEnemy(float, float, Enemy::Kind, int);
   void AddWeapon(float, float, int);
   void AddScore(int);
-  void AddPickup(float, float);
-  void PickAction(Pickup::Kind);
+  void AddPowerup(float, float);
+  void PickAction(Powerup::Kind);
   void CheckTime();
   int MainLoop();
   void LoadTextures();

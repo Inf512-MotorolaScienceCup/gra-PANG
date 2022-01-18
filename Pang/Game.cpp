@@ -49,12 +49,12 @@ void Game::CheckCollision() {
         }
     }
 
-    // Collision Player<->Pickup
-    for (auto& pickup : spriteMap[Sprite::Type::PICKUP]) {
-        if (IsCollision(player, pickup)) {
+    // Collision Player<->Powerup
+    for (auto& powerup : spriteMap[Sprite::Type::POWERUP]) {
+        if (IsCollision(player, powerup)) {
             // std::cout << "PLAYER collided with LADDER:" << std::endl;
-            player->Collision(pickup);
-            pickup->Collision(player);
+            player->Collision(powerup);
+            powerup->Collision(player);
         }
     }
 
@@ -96,11 +96,11 @@ void Game::CheckCollision() {
         }
     }
 
-    // Collision Pickup<->Block
-    for (auto& pickup : spriteMap[Sprite::Type::PICKUP]) {
+    // Collision Powerup<->Block
+    for (auto& powerup : spriteMap[Sprite::Type::POWERUP]) {
         for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
-            if (IsCollision(pickup, block)) {
-                pickup->Collision(block);
+            if (IsCollision(powerup, block)) {
+                powerup->Collision(block);
             }
         }
     }
@@ -128,73 +128,73 @@ void Game::AddWeapon(float x, float y, int type) {
     //if (w != spriteMap.end() && !w->second.empty()) return;
     switch (type) {
     case 1:
-        weapon = new Weapon(this, x, y, 20, 0, PURPLE, Weapon::Kind::WEAPON1);
+        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON1);
         spriteMap[Sprite::Type::WEAPON].push_back(weapon);
         sprites.push_back(weapon);
         break;
     case 2:
-        weapon = new Weapon(this, x, y, 15, 0, PURPLE, Weapon::Kind::WEAPON2);
+        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON2);
         spriteMap[Sprite::Type::WEAPON].push_back(weapon);
         sprites.push_back(weapon);
         break;
     case 3:
-        weapon = new Weapon(this, x, y, 20, 0, PURPLE, Weapon::Kind::WEAPON3);
+        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON3);
         spriteMap[Sprite::Type::WEAPON].push_back(weapon);
         sprites.push_back(weapon);
         break;
     case 4:
-        weapon = new Weapon(this, x, y, 40, 10, PURPLE, Weapon::Kind::WEAPON4);
+        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON4);
         spriteMap[Sprite::Type::WEAPON].push_back(weapon);
         sprites.push_back(weapon);
         break;
     }
 }
 
-void Game::AddPickup(float x, float y) {
+void Game::AddPowerup(float x, float y) {
     int chance = GetRandomValue(1, 3);
     if (chance == 1) {
         int kindNum = GetRandomValue(1, 4);
         Sprite* s;
         switch (kindNum) {
         case 1:
-            s = new Pickup(this, x, y, 20, 20, RED, Pickup::Kind::BOOST);
-            spriteMap[Sprite::Type::PICKUP].push_back(s);
+            s = new Powerup(this, x, y, Powerup::Kind::BOOST);
+            spriteMap[Sprite::Type::POWERUP].push_back(s);
             sprites.push_back(s);
             break;
         case 2:
-            s = new Pickup(this, x, y, 20, 20, RED, Pickup::Kind::DOUBLE);
-            spriteMap[Sprite::Type::PICKUP].push_back(s);
+            s = new Powerup(this, x, y, Powerup::Kind::DOUBLE);
+            spriteMap[Sprite::Type::POWERUP].push_back(s);
             sprites.push_back(s);
             break;
         case 3:
-            s = new Pickup(this, x, y, 20, 20, RED, Pickup::Kind::TIME);
-            spriteMap[Sprite::Type::PICKUP].push_back(s);
+            s = new Powerup(this, x, y, Powerup::Kind::TIME);
+            spriteMap[Sprite::Type::POWERUP].push_back(s);
             sprites.push_back(s);
             break;
         case 4:
-            s = new Pickup(this, x, y, 20, 20, RED, Pickup::Kind::WEAPON);
-            spriteMap[Sprite::Type::PICKUP].push_back(s);
+            s = new Powerup(this, x, y, Powerup::Kind::WEAPON);
+            spriteMap[Sprite::Type::POWERUP].push_back(s);
             sprites.push_back(s);
             break;
         }
     }
 }
 
-void Game::PickAction(Pickup::Kind kind) {
+void Game::PickAction(Powerup::Kind kind) {
     switch (kind) {
-    case Pickup::Kind::BOOST:
+    case Powerup::Kind::BOOST:
         speedBoost = 2;
         timeLeft[0] = std::time(nullptr);
         break;
-    case Pickup::Kind::DOUBLE:
+    case Powerup::Kind::DOUBLE:
         multiWeapon = 1;
         timeLeft[1] = std::time(nullptr);
         break;
-    case Pickup::Kind::TIME:
+    case Powerup::Kind::TIME:
         stopTime = true;
         timeLeft[2] = std::time(nullptr);
         break;
-    case Pickup::Kind::WEAPON:
+    case Powerup::Kind::WEAPON:
         weaponType = GetRandomValue(2, 4);
         switch (weaponType) {
         case 2:
@@ -268,7 +268,7 @@ void Game::SpawnLevel() {
             // distanceToGround must be properly calculated
             Spawn(new Ladder(this, 200, 395, 4, 25));
 
-            Spawn(new Pickup(this, 360, 600, 15, 15, RED, Pickup::Kind::DOUBLE));
+            Spawn(new Powerup(this, 360, 600, Powerup::Kind::TIME));
 
             //Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
             //Spawn(Enemy::create(this, 500, 400, Enemy::Kind::BALL1, 1));

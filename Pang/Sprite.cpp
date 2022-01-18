@@ -353,7 +353,7 @@ void Enemy::duality(Sprite* sprite) {
             }
             state = State::FINISHING;
             cooldown = 0;
-            game->AddPickup(position.center.x, position.center.y);
+            game->AddPowerup(position.center.x, position.center.y);
 }
 
 Sprite* Enemy::checkCollision() {
@@ -371,15 +371,55 @@ Sprite* Enemy::checkCollision() {
 }
 
 // Weapon
-Weapon::Weapon(Game *game, float x, float y, float width, float height, Color color, Kind kind)
-    : Sprite(game, Position(x, y, width, height), Type::WEAPON), color(color), kind(kind) {
-    if (kind == Kind::WEAPON4)
-        position.rectangle.y -= height;
+Weapon::Weapon(Game *game, float x, float y, Kind kind)
+    : Sprite(game, Position(x, y, 0, 0), Type::WEAPON), kind(kind) {
+        
+    switch (kind) {
+    case Kind::WEAPON2:
+        texture[0] = &game->textures[WEAPON_SHOT];
+        position.rectangle.width = texture[0]->width;
+        position.rectangle.height = texture[0]->height;
+        break;
+    case Kind::WEAPON4:
+        texture[0] = &game->textures[WEAPON_MINE];
+        position.rectangle.width = texture[0]->width;
+        position.rectangle.height = texture[0]->height;
+        position.rectangle.y -= position.rectangle.height;
+        break;
+    default:
+        texture[0] = &game->textures[WEAPON_ENDING];
+        texture[1] = &game->textures[LINE_WIGGLED];
+        position.rectangle.width = texture[1]->width;
+        moveLine = { 0.0f, 0.0f, position.rectangle.width, speedY };
+        break;
+    }
 }
 
 void Weapon::Draw() {
     if (state != State::FINISHED) {
-        DrawRectangleRec(position.rectangle, color);
+        //DrawRectangleRec(position.rectangle, color);
+        
+        DrawTexture(*texture[0], position.rectangle.x, position.rectangle.y, WHITE);
+        if (texture[1]) {
+            if (!stopMoving) {
+                int resetFrame = 1;
+                int offset = 0;
+                for (int i = 1; i < numElements; i++) {
+                    moveLine.height = speedY * resetFrame;
+                    DrawTextureRec(*texture[1], moveLine, { position.rectangle.x, position.rectangle.y + offset + texture[0]->height}, WHITE);
+
+                    if (resetFrame % 3 == 0) {
+                        resetFrame = 1;
+                        offset += texture[1]->height;
+                    } else
+                        resetFrame++;
+                }
+            } else {
+                texture[1] = &game->textures[LINE_STRAIGHT];
+                moveLine.height = position.rectangle.height - texture[0]->height;
+                DrawTextureRec(*texture[1], moveLine, { position.rectangle.x, position.rectangle.y + texture[0]->height }, WHITE);
+            }
+        }
     }
 }
 
@@ -391,6 +431,7 @@ void Weapon::Move() {
                 position.rectangle.height += speedY;
                 position.hbRectangle.height += speedY;
                 position.rectangle.y -= speedY;
+                numElements++;
                 break;
             case Kind::WEAPON2:
                 if (position.rectangle.height < 30) {
@@ -403,6 +444,7 @@ void Weapon::Move() {
                 position.rectangle.height += speedY;
                 position.hbRectangle.height += speedY;
                 position.rectangle.y -= speedY;
+                numElements++;
                 break;
             default:
                 break;
@@ -459,25 +501,42 @@ void Ladder::Draw() {
     }
 }
 
-//Pickup
-Pickup::Pickup(Game *game, float x, float y, float width, float height, Color color, Kind kind)
-    : Sprite(game, Position(x, y, width, height), Type::PICKUP), color(color), kind(kind) {
-}
+//Powerup
+Powerup::Powerup(Game *game, float x, float y, Kind kind)
+    : Sprite(game, Position(x, y, 0, 0), Type::POWERUP), kind(kind) {
 
-void Pickup::Draw() {
-    if (state == State::ACTIVE) {
-        DrawRectangle(position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height, color);
+    switch (kind) {
+    case Kind::BOOST:
+        break;
+    case Kind::DOUBLE:
+        break;
+    case Kind::TIME:
+        texture = &game->textures[POWERUP_TIME];
+        position.rectangle.width = texture->width;
+        position.rectangle.height = texture->height;
+        position.hbRectangle.width = texture->width;
+        position.hbRectangle.height = texture->height;
+        break;
+    case Kind::WEAPON:
+        break;
     }
 }
 
-void Pickup::Move() {
+void Powerup::Draw() {
+    DrawRectangle(position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height, RED);
+    if (state == State::ACTIVE) {
+        DrawTexture(*texture, position.rectangle.x, position.rectangle.y, WHITE);
+    }
+}
+
+void Powerup::Move() {
     if (state == State::ACTIVE) {
         speedY++;
         position.rectangle.y += speedY;
     }
 }
 
-void Pickup::Collision(Sprite *sprite) {
+void Powerup::Collision(Sprite *sprite) {
     if (sprite->type == Type::BLOCK) {
         position.rectangle.y = sprite->position.rectangle.y - position.rectangle.height;
         speedY = 0;

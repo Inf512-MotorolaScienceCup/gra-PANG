@@ -16,7 +16,7 @@ public:
         ENEMY,
         WEAPON,
         LADDER,
-        PICKUP
+        POWERUP
     } type;
 
     enum class Direction {
@@ -138,16 +138,18 @@ public:
         WEAPON4
     };
 
-    Weapon(Game* game, float x, float y, float width, float height, Color color, Kind kind);
+    Weapon(Game* game, float x, float y, Kind kind);
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
     void checkTime();
 
 private:
-    Color color;
     Kind kind;
-    const float speedY = 20;
+    Texture2D * texture[2] = { nullptr , nullptr };
+    Rectangle moveLine;
+    int numElements;
+    const float speedY = 21;
     int cooldown = 0;
     bool stopMoving;
     int overlap;
@@ -166,7 +168,7 @@ private:
     int numElements;
 };
 
-class Pickup : public Sprite {
+class Powerup : public Sprite {
 public:
     enum Kind {
         BOOST,
@@ -175,14 +177,14 @@ public:
         WEAPON
     };
 
-    Pickup(Game *game, float x, float y, float width, float height, Color color, Kind kind);
+    Powerup(Game *game, float x, float y, Kind kind);
 
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
 
 private:
-    Color color;
+    Texture2D* texture;
     Kind kind;
     int speedY;
 };
