@@ -10,7 +10,26 @@
 #include "Sprite.h"
 
 enum TextureTypes {
-    BACKGROUND,
+    BACKGROUND_ANI,
+    //BACKGROUND1,
+    //BACKGROUND2,
+    //BACKGROUND3,
+    //BACKGROUND4,
+    //BACKGROUND5,
+    //BACKGROUND6,
+    //BACKGROUND7,
+    //BACKGROUND8,
+    //BACKGROUND9,
+    //BACKGROUND10,
+    //BACKGROUND11,
+    //BACKGROUND12,
+    //BACKGROUND13,
+    //BACKGROUND14,
+    //BACKGROUND15,
+    //BACKGROUND16,
+    //BACKGROUND17,
+    //BACKGROUND18,
+    //BACKGROUND19,
     PLAYER,
     LADDER,
     WALL,
@@ -26,6 +45,7 @@ enum TextureTypes {
     WEAPON_ENDING,
     WEAPON_SHOT,
     WEAPON_MINE,
+    MINE_EXPLOSION,
     POWERUP_TIME,
     POWERUP_BOOST,
     POWERUP_WEAPON,
@@ -49,12 +69,31 @@ public:
     } state;
 
     const char *textureFiles[NUM_TEXTURES] = {"res/Background/forestHD.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
+                                              //"res/Background/.png",
                                               "res/spritesheet.png",
                                               "res/ladder.png",
                                               "res/wall.png",
                                               "res/platform1.png",
                                               "res/platform2.png",
-                                              "res/Ball/Explosion/firefly_explosion.png",
+                                              "res/Ball/Explosion/enemyexplosion1.png",
                                               "res/Ball/Ball_1.png",
                                               "res/Ball/Ball_2.png",
                                               "res/Ball/Ball_3.png",
@@ -64,6 +103,7 @@ public:
                                               "res/hook/ending2.png",
                                               "res/hook/shot.png",
                                               "res/hook/mine.png",
+                                              "res/hook/explosion.png",
                                               "res/powerups/clock.png",
                                               "res/powerups/boost.png",
                                               "res/powerups/anchor.png",
@@ -88,7 +128,7 @@ public:
     void Draw();
     void Update();
     void DrawSprites();
-    void DrawBackground(TextureTypes);
+    void DrawBackground();
     void DrawPanel();
     void MoveSprites();
     void CheckCollision();
@@ -112,6 +152,7 @@ public:
     Player *player;
     Weapon *weapon;
 
+    TextureTypes backTexture;
     Rectangle backRec = { 0, 0, 1280, 720 };
     short int backFrame = 0;
 

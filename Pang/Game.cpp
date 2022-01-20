@@ -269,9 +269,10 @@ void Game::SpawnLevel() {
             
             Spawn(new Ice(this, 700, 690, 150, 10));
 
-            //Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
+            Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
             //Spawn(Enemy::create(this, 500, 400, Enemy::Kind::BALL1, 1));
 
+            backTexture = BACKGROUND_ANI;
             levelTime = 60;
             break;
         case 2:
@@ -317,7 +318,7 @@ void Game::Draw() {
 
     ClearBackground(RAYWHITE);
 
-    DrawBackground(BACKGROUND);
+    DrawBackground();
 
     if (state == State::ACTIVE || state == State::PLAYER_DIED) {
         DrawPanel();
@@ -463,15 +464,15 @@ void Game::Unspawn() {
     spriteMap.clear();
 }
 
-void Game::DrawBackground(TextureTypes background) {
-    if (textures[background].width > 2560) {
-        DrawTextureRec(textures[background], backRec, { 0, 0 }, WHITE);
+void Game::DrawBackground() {
+    if (textures[backTexture].width > 2560) {
+        DrawTextureRec(textures[backTexture], backRec, { 0, 0 }, WHITE);
         if (backFrame++ % 8 == 0) {
             backRec.x += 1398;
             backFrame = 1;
         }
     } else {
-        DrawTexture(textures[background], 0, 0, WHITE);
+        DrawTexture(textures[backTexture], 0, 0, WHITE);
     }
 }
 

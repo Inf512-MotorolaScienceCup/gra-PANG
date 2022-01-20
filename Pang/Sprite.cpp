@@ -3,12 +3,12 @@
 #include "raylib.h"
 
 Texture2D Enemy::spriteSheet[NUM_KINDS];
-Texture2D Enemy::spriteExplode;
+Texture2D Enemy::spriteExplode[NUM_KINDS];
 
 bool IsCollision(const Sprite *s1, const Sprite *s2) {
     bool collision = false;
 
-    if (s1->state != Sprite::State::FINISHED && s2->state != Sprite::State::FINISHED) {
+    if (s1->state == Sprite::State::ACTIVE && s2->state == Sprite::State::ACTIVE) {
         if (s1->position.type == Position::Type::RECTANGLE) {
             if (s2->position.type == Position::Type::RECTANGLE) {
                 collision = CheckCollisionRecs(s1->position.hitBox(), s2->position.hitBox());
@@ -247,18 +247,23 @@ Enemy* Enemy::create(Game* game, float x, float y, Kind kind, int heading) {
         spriteSheet[BALL3] = game->textures[BALL_3];
         spriteSheet[BALL4] = game->textures[BALL_4];
     }
-    if (!spriteExplode.id)
-        spriteExplode = game->textures[EXPLOSION];
+    if (!spriteExplode[BALL1].id) {
+        spriteExplode[BALL1] = game->textures[EXPLOSION];
+        spriteExplode[BALL2] = game->textures[EXPLOSION];
+        spriteExplode[BALL3] = game->textures[EXPLOSION];
+        spriteExplode[BALL4] = game->textures[EXPLOSION];
+    }
+
 
     switch (kind) {
         case BALL1:
-            return new Enemy(game, x, y, /*radius*/ 30, BALL1, heading);
+            return new Enemy(game, x, y, spriteSheet[BALL1].height / 2, BALL1, heading);
         case BALL2:
-            return new Enemy(game, x, y, /*radius*/ 25, BALL2, heading);
+            return new Enemy(game, x, y, spriteSheet[BALL2].height / 2, BALL2, heading);
         case BALL3:
-            return new Enemy(game, x, y, /*radius*/ 15, BALL3, heading);
+            return new Enemy(game, x, y, spriteSheet[BALL3].height / 2, BALL3, heading);
         case BALL4:
-            return new Enemy(game, x, y, /*radius*/ 10, BALL4, heading);
+            return new Enemy(game, x, y, spriteSheet[BALL4].height / 2, BALL4, heading);
         default: return 0;
     }
 }
@@ -266,39 +271,40 @@ Enemy* Enemy::create(Game* game, float x, float y, Kind kind, int heading) {
 Enemy::Enemy(Game* game, float x, float y, float radius, Kind kind, int heading)
         : game(game), Sprite(game, Position(x, y, radius), Type::ENEMY), color(WHITE), sizeX(radius * 2), sizeY(radius * 2), kind(kind) {
     stand = { 0.0f, 0.0f, sizeX, sizeY };
-    standExplode = { 0.0f, 0.0f, sizeX + 20, sizeY };
+    standExplode = { 0.0f, 0.0f, spriteExplode[kind].width / 12.0f, sizeY };
     rad = radius;
     switch (kind) {
     case BALL1:
-        speed.x = 5;
-        maxSpeedY = 21;
+        speed.x = 2.5;
+        maxSpeedY = 35 * gravity;
         break;
     case BALL2:
-        speed.x = 4;
-        maxSpeedY = 19;
+        speed.x = 2;
+        maxSpeedY = 30 * gravity;
         break;
     case BALL3:
-        speed.x = 3;
-        maxSpeedY = 18;
+        speed.x = 2;
+        maxSpeedY = 27 * gravity;
         break;
     case BALL4:
         speed.x = 3;
-        maxSpeedY = 17;
+        maxSpeedY = 25 * gravity;
         break;
     }
     speed.x *= heading;
+    speed.y = -5;
 }
 
 void Enemy::Draw() {
     if (state == State::ACTIVE) {
         DrawTextureRec(spriteSheet[kind], stand, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
-        DrawCircleLines(position.center.x, position.center.y, position.radius, RED);
-        if (cooldown % 5 == 0) {
-            if (stand.x < sizeX * frameNumber) stand.x += sizeX;
-            else stand.x = 0.0;
-        }
-        cooldown++;
-        if (cooldown == 5) cooldown = 0;
+        //DrawCircleLines(position.center.x, position.center.y, position.radius, RED);
+        //if (cooldown % 5 == 0) {
+        //    if (stand.x < sizeX * frameNumber) stand.x += sizeX;
+        //    else stand.x = 0.0;
+        //}
+        //cooldown++;
+        //if (cooldown == 5) cooldown = 0;
     }
     else if (state == State::FINISHING) {
         DrawFinish();
@@ -311,7 +317,7 @@ void Enemy::Move() {
         return;
     }
 
-    speed.y++;
+    speed.y += gravity;
 
     position.center.x += speed.x;
     position.center.y += speed.y;
@@ -345,11 +351,11 @@ void Enemy::Collision(Sprite* sprite) {
 void Enemy::DrawFinish() {
     //std::cout << "Cooldown: " << cooldown << std::endl;
 
-    DrawTextureRec(spriteExplode, standExplode, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
+    DrawTextureRec(spriteExplode[kind], standExplode, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
     if (cooldown % 5 == 0)
-        standExplode.x += 100;
+        standExplode.x += standExplode.width;
 
-    if (cooldown == 45)
+    if (standExplode.x >= spriteExplode[kind].width)
         state = State::FINISHED;
 
     cooldown++;
@@ -411,22 +417,26 @@ Weapon::Weapon(Game *game, float x, float y, Kind kind)
         break;
     case Kind::WEAPON4:
         texture[0] = &game->textures[WEAPON_MINE];
+        texture[1] = &game->textures[MINE_EXPLOSION];
         position.rectangle.width = texture[0]->width;
         position.rectangle.height = texture[0]->height;
         position.rectangle.y -= position.rectangle.height;
+        moveTexture = { 0.0f, 0.0f, 40, 40 };
         break;
     default:
         texture[0] = &game->textures[WEAPON_ENDING];
         texture[1] = &game->textures[LINE_WIGGLED];
         position.rectangle.width = texture[1]->width;
-        moveLine = { 0.0f, 0.0f, position.rectangle.width, speedY };
+        moveTexture = { 0.0f, 0.0f, position.rectangle.width, speedY };
         break;
     }
+    position.hbRectangle.width = position.rectangle.width;
+    position.hbRectangle.height = position.rectangle.height;
 }
 
 void Weapon::Draw() {
-    if (state != State::FINISHED) {
-        //DrawRectangleRec(position.rectangle, color);
+    if (state == State::ACTIVE) {
+        //DrawRectangleRec(position.rectangle, RED);
         
         DrawTexture(*texture[0], position.rectangle.x, position.rectangle.y, WHITE);
         if (texture[1]) {
@@ -434,8 +444,8 @@ void Weapon::Draw() {
                 int resetFrame = 1;
                 int offset = 0;
                 for (int i = 1; i < numElements; i++) {
-                    moveLine.height = speedY * resetFrame;
-                    DrawTextureRec(*texture[1], moveLine, { position.rectangle.x, position.rectangle.y + offset + texture[0]->height}, WHITE);
+                    moveTexture.height = speedY * resetFrame;
+                    DrawTextureRec(*texture[1], moveTexture, { position.rectangle.x, position.rectangle.y + offset + texture[0]->height}, WHITE);
 
                     if (resetFrame % 3 == 0) {
                         resetFrame = 1;
@@ -445,15 +455,24 @@ void Weapon::Draw() {
                 }
             } else {
                 texture[1] = &game->textures[LINE_STRAIGHT];
-                moveLine.height = position.rectangle.height - texture[0]->height;
-                DrawTextureRec(*texture[1], moveLine, { position.rectangle.x, position.rectangle.y + texture[0]->height }, WHITE);
+                moveTexture.height = position.rectangle.height - texture[0]->height;
+                DrawTextureRec(*texture[1], moveTexture, { position.rectangle.x, position.rectangle.y + position.rectangle.height - texture[0]->height }, WHITE);
             }
+        }
+    } else if (state == State::FINISHING) {
+        if (kind == Kind::WEAPON4) {
+            DrawTextureRec(*texture[1], moveTexture, { position.rectangle.x, position.rectangle.y + position.rectangle.height - texture[1]->height }, WHITE);
+            if (cooldown++ % 5 == 0)
+                moveTexture.x += moveTexture.width;
+
+            if (moveTexture.x >= texture[1]->width)
+                state = State::FINISHED;
         }
     }
 }
 
 void Weapon::Move() {
-    if (state != State::FINISHED && cooldown++ % 5 == 0) {
+    if (state == State::ACTIVE && cooldown++ % 5 == 0) {
         if (!stopMoving) {
             switch (kind) {
             case Kind::WEAPON1:
@@ -499,7 +518,7 @@ void Weapon::Collision(Sprite *sprite) {
                 game->shootingLeft++;
         }
     } else if (sprite->type == Sprite::Type::ENEMY) {
-        state = State::FINISHED;
+        state = State::FINISHING;
         if (kind == Kind::WEAPON1 && game->shootingLeft < 0) {
             game->shootingLeft++;
         } else if (kind == Kind::WEAPON3 && game->shootingLeft < 0) {

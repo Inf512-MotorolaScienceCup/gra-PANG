@@ -116,7 +116,7 @@ public:
 private:
     Game * game;
     static Texture2D spriteSheet[NUM_KINDS];
-    static Texture2D spriteExplode;
+    static Texture2D spriteExplode[NUM_KINDS];
     Rectangle stand;
     Rectangle standExplode;
     Color color;
@@ -124,6 +124,7 @@ private:
     Vector2 speed;
     int cooldown = 0;
     float maxSpeedY;
+    float gravity = 0.5;
     float sizeX;
     float sizeY;
     Kind kind;
@@ -149,7 +150,7 @@ public:
 private:
     Kind kind;
     Texture2D * texture[2] = { nullptr , nullptr };
-    Rectangle moveLine;
+    Rectangle moveTexture;
     int numElements;
     const float speedY = 21;
     int cooldown = 0;
