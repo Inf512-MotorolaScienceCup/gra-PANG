@@ -16,7 +16,8 @@ public:
         ENEMY,
         WEAPON,
         LADDER,
-        POWERUP
+        POWERUP,
+        ICE
     } type;
 
     enum class Direction {
@@ -68,6 +69,7 @@ private:
     bool climbing = false;
     bool collision;
     int zone = 10;
+    bool onIce = false;
 };
 
 class Block : public Sprite {
@@ -172,8 +174,9 @@ class Powerup : public Sprite {
 public:
     enum Kind {
         BOOST,
-        TIME,
         DOUBLE,
+        HEAL,
+        TIME,
         WEAPON
     };
 
@@ -187,4 +190,10 @@ private:
     Texture2D* texture;
     Kind kind;
     int speedY;
+};
+
+class Ice : public Sprite {
+public:
+    Ice(Game *game, float x, float y, float width, float height);
+    virtual void Draw();
 };

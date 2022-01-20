@@ -47,8 +47,8 @@ Player::Player(Game *game, Position position, Color color)
 }
 
 void Player::Draw() {
-    DrawRectangleRec(position.rectangle, GREEN);
-    DrawRectangleRec(position.hitBox(), RED);
+    //DrawRectangleRec(position.rectangle, GREEN);
+    //DrawRectangleRec(position.hitBox(), RED);
 
     if (state == State::FINISHING) {
         if (hurtRec.x < 64.0 * 5)
@@ -88,33 +88,61 @@ void Player::Draw() {
 }
 
 void Player::Move() {
-    speed.x = 0;
+    if (state != State::ACTIVE) return;
 
     if (!climbing)
         speed.y++;
-    else
-        speed.y = 0;
-
-    if (state != State::ACTIVE) return;
-
-    if (IsKeyDown(KEY_LEFT) && !climbing) {
-        direction = Direction::LEFT;
-        speed.x = -7 * game->speedBoost;
-    }
-    else if (IsKeyDown(KEY_RIGHT) && !climbing) {
-        direction = Direction::RIGHT;
-        speed.x = 7 * game->speedBoost;
-    }
-    else if (IsKeyDown(KEY_UP) && climbing) {
-        direction = Direction::UP;
-        speed.y = -5;
-    }
-    else if (IsKeyDown(KEY_DOWN) && climbing) {
-        direction = Direction::DOWN;
-        speed.y = 5;
-    }
     else {
-        direction = Direction::NONE;
+        speed.y = 0;
+        speed.x = 0;
+    }
+
+    if (climbing) {
+        if (IsKeyDown(KEY_UP)) {
+            direction = Direction::UP;
+            speed.y = -5;
+        } else if (IsKeyDown(KEY_DOWN)) {
+            direction = Direction::DOWN;
+            speed.y = 5;
+        } else {
+            direction = Direction::NONE;
+        }
+    } else {
+        if (!onIce) {
+            if (IsKeyDown(KEY_LEFT)) {
+                direction = Direction::LEFT;
+                if (speed.x > -7 * game->speedBoost)
+                    speed.x -= 1;
+                else
+                    speed.x = -7 * game->speedBoost;
+            } else if (IsKeyDown(KEY_RIGHT)) {
+                direction = Direction::RIGHT;
+                if (speed.x < 7 * game->speedBoost)
+                    speed.x += 1;
+                else
+                    speed.x = 7 * game->speedBoost;
+            } else {
+                direction = Direction::NONE;
+                speed.x = 0;
+            }
+        } else {
+            if (IsKeyDown(KEY_LEFT)) {
+                direction = Direction::LEFT;
+                    speed.x -= 0.25 * game->speedBoost;
+            } else if (IsKeyDown(KEY_RIGHT)) {
+                direction = Direction::RIGHT;
+                speed.x += 0.25 * game->speedBoost;
+            } else {
+                direction = Direction::NONE;
+                if (speed.x > 0.2)
+                    speed.x -= 0.2;
+                else if (speed.x < -0.2)
+                    speed.x += 0.2;
+                else
+                    speed.x = 0;
+            }
+        }
+
     }
 
     if (!climbing && IsKeyPressed(KEY_SPACE)) {
@@ -123,24 +151,25 @@ void Player::Move() {
 
     position.rectangle.x += speed.x;
     position.rectangle.y += speed.y;
+    onIce = false;
 }
 
 void Player::Collision(Sprite *sprite) {
     if (sprite->type == Sprite::Type::BLOCK && !climbing) {
         collision = CheckCollisionRecs({ position.rectangle.x + position.hbRectangle.x, position.rectangle.y + position.hbRectangle.y - speed.y, position.hbRectangle.width, position.hbRectangle.height }, sprite->position.rectangle);
         if (collision) {
-            if (speed.x > 0) {
+            if (speed.x > 0) 
                 position.rectangle.x = sprite->position.rectangle.x - position.hbRectangle.width - position.hbRectangle.x;
-            } else if (speed.x < 0) {
+            else if (speed.x < 0) 
                 position.rectangle.x = sprite->position.rectangle.x + sprite->position.rectangle.width - position.hbRectangle.x;
-            }
+
             speed.x = 0;
         } else {
-            if (speed.y > 0) {
+            if (speed.y > 0)
                 position.rectangle.y = sprite->position.rectangle.y - position.rectangle.height;
-            } else if (speed.y < 0) {
+            else if (speed.y < 0)
                 position.rectangle.y = sprite->position.rectangle.y + sprite->position.rectangle.height;
-            }
+
             speed.y = 0;
         }
     } else if (sprite->type == Sprite::Type::ENEMY) {
@@ -152,14 +181,12 @@ void Player::Collision(Sprite *sprite) {
             bool canClimbUp = position.rectangle.y < sprite->position.rectangle.y + sprite->position.rectangle.height && position.rectangle.y + position.rectangle.height > sprite->position.rectangle.y + sprite->position.rectangle.height;
             bool canClimbDown = position.rectangle.y < sprite->position.rectangle.y && position.rectangle.y + position.rectangle.height > sprite->position.rectangle.y;
 
-            if (IsKeyDown(KEY_UP) && canClimbUp) {
+            if (IsKeyDown(KEY_UP) && canClimbUp)
                 climbing = true;
-            }
-            else if (IsKeyDown(KEY_DOWN) && canClimbDown) {
+            else if (IsKeyDown(KEY_DOWN) && canClimbDown)
                 climbing = true;
-            }
-        }
-        else {
+
+        } else {
             Ladder* ladder = static_cast<Ladder*>(sprite);
             position.rectangle.x = sprite->position.rectangle.x + (sprite->position.rectangle.width / 2) - (position.rectangle.width / 2);
             bool canStopClimbingUp = position.rectangle.y + position.rectangle.height < sprite->position.rectangle.y + 10;
@@ -167,6 +194,8 @@ void Player::Collision(Sprite *sprite) {
             if (canStopClimbingDown || canStopClimbingUp)
                 climbing = false;
         }
+    } else if (sprite->type == Sprite::Type::ICE) {
+        onIce = true;
     }
 }
 
@@ -507,23 +536,29 @@ Powerup::Powerup(Game *game, float x, float y, Kind kind)
 
     switch (kind) {
     case Kind::BOOST:
+        texture = &game->textures[POWERUP_BOOST];
         break;
     case Kind::DOUBLE:
+        texture = &game->textures[POWERUP_DOUBLE];
+        break;
+    case Kind::HEAL:
+        texture = &game->textures[POWERUP_HEAL];
         break;
     case Kind::TIME:
         texture = &game->textures[POWERUP_TIME];
-        position.rectangle.width = texture->width;
-        position.rectangle.height = texture->height;
-        position.hbRectangle.width = texture->width;
-        position.hbRectangle.height = texture->height;
         break;
     case Kind::WEAPON:
+        texture = &game->textures[POWERUP_WEAPON];
         break;
     }
+
+    position.rectangle.width = texture->width;
+    position.rectangle.height = texture->height;
+    position.hbRectangle.width = texture->width;
+    position.hbRectangle.height = texture->height;
 }
 
 void Powerup::Draw() {
-    DrawRectangle(position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height, RED);
     if (state == State::ACTIVE) {
         DrawTexture(*texture, position.rectangle.x, position.rectangle.y, WHITE);
     }
@@ -540,21 +575,18 @@ void Powerup::Collision(Sprite *sprite) {
     if (sprite->type == Type::BLOCK) {
         position.rectangle.y = sprite->position.rectangle.y - position.rectangle.height;
         speedY = 0;
-    } else if (sprite->type == Type::PLAYER) {
-        switch (kind) {
-        case BOOST:
-            game->PickAction(kind);
-            break;
-        case TIME:
-            game->PickAction(kind);
-            break;
-        case DOUBLE:
-            game->PickAction(kind);
-            break;
-        case WEAPON:
-            game->PickAction(kind);
-            break;
-        }
+    }
+    else if (sprite->type == Type::PLAYER) {
+        game->PickAction(kind);
         state = State::FINISHED;
     }
+}
+
+//Ice
+Ice::Ice(Game *game, float x, float y, float width, float height)
+    : Sprite(game, Position(x, y, width, height), Type::ICE) {
+}
+
+void Ice::Draw() {
+    DrawRectangle(position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height, RED);
 }

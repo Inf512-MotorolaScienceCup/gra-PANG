@@ -58,6 +58,14 @@ void Game::CheckCollision() {
         }
     }
 
+    // Collision Player<->Ice
+    for (auto& ice : spriteMap[Sprite::Type::ICE]) {
+        if (IsCollision(player, ice)) {
+            // std::cout << "PLAYER collided with LADDER:" << std::endl;
+            player->Collision(ice);
+        }
+    }
+
     // Collision Weapon<->Enemy
     for (auto& weapon : spriteMap[Sprite::Type::WEAPON]) {
         for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
@@ -106,17 +114,6 @@ void Game::CheckCollision() {
     }
 }
 
-/*
-Rectangle Game::getPlayerPosition() {
-    for (auto& sprite : sprites) {
-        if (sprite->type == Sprite::Type::PLAYER) {
-            return sprite->position.rectangle;
-        }
-    }
-    return { 0, 0, 0, 0 };
-}
-*/
-
 void Game::AddEnemy(float x, float y, Enemy::Kind kind, int heading) {
     Sprite* s = Enemy::create(this, x, y, kind, heading);
     spriteMap[Sprite::Type::ENEMY].push_back(s);
@@ -124,8 +121,6 @@ void Game::AddEnemy(float x, float y, Enemy::Kind kind, int heading) {
 }
 
 void Game::AddWeapon(float x, float y, int type) {
-    //auto w = spriteMap.find(Sprite::Type::WEAPON);
-    //if (w != spriteMap.end() && !w->second.empty()) return;
     switch (type) {
     case 1:
         weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON1);
@@ -189,6 +184,9 @@ void Game::PickAction(Powerup::Kind kind) {
     case Powerup::Kind::DOUBLE:
         multiWeapon = 1;
         timeLeft[1] = std::time(nullptr);
+        break;
+    case Powerup::Kind::HEAL:
+        lives++;
         break;
     case Powerup::Kind::TIME:
         stopTime = true;
@@ -267,13 +265,14 @@ void Game::SpawnLevel() {
             // y value must always be 5-10 points lower than block value
             // distanceToGround must be properly calculated
             Spawn(new Ladder(this, 200, 395, 4, 25));
-
-            Spawn(new Powerup(this, 360, 600, Powerup::Kind::TIME));
+            Spawn(new Powerup(this, 360, 600, Powerup::Kind::HEAL));
+            
+            Spawn(new Ice(this, 700, 690, 150, 10));
 
             //Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
             //Spawn(Enemy::create(this, 500, 400, Enemy::Kind::BALL1, 1));
 
-            levelTime = 30;
+            levelTime = 60;
             break;
         case 2:
             Spawn(new Block(this, 100, 500, 150, wallThickness, Block::Kind::PLATFORM_1));
@@ -286,7 +285,7 @@ void Game::SpawnLevel() {
             Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
             Spawn(Enemy::create(this, 500, 400, Enemy::Kind::BALL1, 1));
 
-            levelTime = 30;
+            levelTime = 60;
             break;
     }
 }
@@ -318,7 +317,7 @@ void Game::Draw() {
 
     ClearBackground(RAYWHITE);
 
-    DrawTexture(textures[BACKGROUND], 0, 0, WHITE);
+    DrawBackground(BACKGROUND);
 
     if (state == State::ACTIVE || state == State::PLAYER_DIED) {
         DrawPanel();
@@ -462,6 +461,18 @@ void Game::Unspawn() {
     });
     sprites.clear();
     spriteMap.clear();
+}
+
+void Game::DrawBackground(TextureTypes background) {
+    if (textures[background].width > 2560) {
+        DrawTextureRec(textures[background], backRec, { 0, 0 }, WHITE);
+        if (backFrame++ % 8 == 0) {
+            backRec.x += 1398;
+            backFrame = 1;
+        }
+    } else {
+        DrawTexture(textures[background], 0, 0, WHITE);
+    }
 }
 
 void Game::DrawPanel() {
