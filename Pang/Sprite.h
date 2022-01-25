@@ -50,15 +50,17 @@ bool IsCollision(const Sprite *s1, const Sprite *s2);
 
 class Player : public Sprite {
 public:
-    Player(Game* game, Position position, Color color);
+    Player(Game* game, Position position);
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
     void Shooting();
+    bool checkTime();
+    time_t hitBall;
 
 private:
     Vector2 speed;
-    Color color;
+    Color color = WHITE;
     Texture2D spriteSheet;
     Rectangle moveRightRec;
     Rectangle moveLeftRec;
@@ -70,6 +72,7 @@ private:
     bool collision;
     int zone = 10;
     bool onIce = false;
+    short int changeColor = 0;
 };
 
 class Block : public Sprite {
@@ -83,11 +86,11 @@ public:
     Block(Game *game, float x, float y, float width, float height, Kind type);
     virtual void Draw();
     virtual void Collision(Sprite*);
+    short int health = 2;
 
 private:
+    Texture2D* texture;
     Kind kind;
-    Color color;
-    short int health = 2;
 };
 
 class Enemy : public Sprite {
@@ -151,12 +154,14 @@ private:
     Kind kind;
     Texture2D * texture[2] = { nullptr , nullptr };
     Rectangle moveTexture;
+    Color color = WHITE;
     int numElements;
     const float speedY = 21;
     int cooldown = 0;
     bool stopMoving;
     int overlap;
     std::time_t lifeTime;
+    Sprite* block;
 };
 
 class Ladder : public Sprite {
@@ -197,4 +202,8 @@ class Ice : public Sprite {
 public:
     Ice(Game *game, float x, float y, float width, float height);
     virtual void Draw();
+
+private:
+    Texture2D* texture;
+    Rectangle textRec;
 };

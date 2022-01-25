@@ -35,9 +35,8 @@ Sprite::Sprite(Game *game, const Position &position, Type type)
 }
 
 // Player
-Player::Player(Game *game, Position position, Color color)
-    : Sprite(game, Position(position), Type::PLAYER),
-    color(color), speed({ 0, 0 }) {
+Player::Player(Game *game, Position position)
+    : Sprite(game, Position(position), Type::PLAYER), speed({ 0, 0 }) {
     spriteSheet = game->textures[PLAYER];
     moveRightRec = {0.0f, 11 * 64.0f, 64.0f, 64.0f};
     moveLeftRec = {0.0f, 9 * 64.0f, 64.0f, 64.0f};
@@ -50,45 +49,62 @@ void Player::Draw() {
     //DrawRectangleRec(position.rectangle, GREEN);
     //DrawRectangleRec(position.hitBox(), RED);
 
+    if (hitBall) {
+        if (checkTime()) {
+            color = WHITE;
+            hitBall = 0;
+            changeColor = 0;
+        } else {
+            if (changeColor <= 5)
+                color = DARKGRAY;
+            else
+                color = WHITE;
+            changeColor++;
+            if (changeColor >= 10)
+                changeColor = 0;
+        }
+    }
+
     if (state == State::FINISHING) {
         if (hurtRec.x < 64.0 * 5)
-            DrawTextureRec(spriteSheet, hurtRec, {position.rectangle.x, position.rectangle.y}, WHITE);
+            DrawTextureRec(spriteSheet, hurtRec, {position.rectangle.x, position.rectangle.y}, color);
         if (hurtRec.x == 64.0 * 5 && cooldown % 5 == 0)
-            DrawTextureRec(spriteSheet, hurtRec, {position.rectangle.x, position.rectangle.y}, WHITE);
+            DrawTextureRec(spriteSheet, hurtRec, {position.rectangle.x, position.rectangle.y}, color);
 
         if (cooldown % 5 == 0) {
             if (hurtRec.x < 64.0 * 5)
                 hurtRec.x += 64;
         }
         cooldown++;
-    } else if (direction == Direction::RIGHT) {
-        DrawTextureRec(spriteSheet, moveRightRec, { position.rectangle.x, position.rectangle.y }, WHITE);
+    }
+    if (direction == Direction::RIGHT) {
+        DrawTextureRec(spriteSheet, moveRightRec, { position.rectangle.x, position.rectangle.y }, color);
         if (cooldown % 5 == 0) {
             moveRightRec.x = (moveRightRec.x < 64.0 * 8) ? moveRightRec.x + 64 : 0;
         }
         cooldown++;
     } else if (direction == Direction::LEFT) {
-        DrawTextureRec(spriteSheet, moveLeftRec, { position.rectangle.x, position.rectangle.y }, WHITE);
+        DrawTextureRec(spriteSheet, moveLeftRec, { position.rectangle.x, position.rectangle.y }, color);
         if (cooldown % 5 == 0) {
             moveLeftRec.x = (moveLeftRec.x < 64.0 * 8) ? moveLeftRec.x + 64 : 0;
         }
         cooldown++;
     } else if (direction == Direction::UP || direction == Direction::DOWN) {
-        DrawTextureRec(spriteSheet, moveUpRec, {position.rectangle.x, position.rectangle.y}, WHITE);
+        DrawTextureRec(spriteSheet, moveUpRec, {position.rectangle.x, position.rectangle.y}, color);
         if (cooldown % 5 == 0) {
             moveUpRec.x = (moveUpRec.x < 64.0 * 8) ? moveUpRec.x + 64 : 0;
         }
         cooldown++;
     } else if (climbing) {
-        DrawTextureRec(spriteSheet, moveUpRec, { position.rectangle.x, position.rectangle.y }, WHITE);
+        DrawTextureRec(spriteSheet, moveUpRec, { position.rectangle.x, position.rectangle.y }, color);
     } else {
-        DrawTextureRec(spriteSheet, standRec, {position.rectangle.x, position.rectangle.y}, WHITE);
+        DrawTextureRec(spriteSheet, standRec, {position.rectangle.x, position.rectangle.y}, color);
         cooldown = 0;
     }
 }
 
 void Player::Move() {
-    if (state != State::ACTIVE) return;
+    if (state == State::FINISHED) return;
 
     if (!climbing)
         speed.y++;
@@ -111,16 +127,16 @@ void Player::Move() {
         if (!onIce) {
             if (IsKeyDown(KEY_LEFT)) {
                 direction = Direction::LEFT;
-                if (speed.x > -7 * game->speedBoost)
+                if (speed.x > -7.0f * game->speedBoost)
                     speed.x -= 1;
                 else
-                    speed.x = -7 * game->speedBoost;
+                    speed.x = -7.0f * game->speedBoost;
             } else if (IsKeyDown(KEY_RIGHT)) {
                 direction = Direction::RIGHT;
-                if (speed.x < 7 * game->speedBoost)
+                if (speed.x < 7.0f * game->speedBoost)
                     speed.x += 1;
                 else
-                    speed.x = 7 * game->speedBoost;
+                    speed.x = 7.0f * game->speedBoost;
             } else {
                 direction = Direction::NONE;
                 speed.x = 0;
@@ -128,16 +144,16 @@ void Player::Move() {
         } else {
             if (IsKeyDown(KEY_LEFT)) {
                 direction = Direction::LEFT;
-                    speed.x -= 0.25 * game->speedBoost;
+                    speed.x -= 0.25f * game->speedBoost;
             } else if (IsKeyDown(KEY_RIGHT)) {
                 direction = Direction::RIGHT;
-                speed.x += 0.25 * game->speedBoost;
+                speed.x += 0.25f * game->speedBoost;
             } else {
                 direction = Direction::NONE;
                 if (speed.x > 0.2)
-                    speed.x -= 0.2;
+                    speed.x -= 0.2f;
                 else if (speed.x < -0.2)
-                    speed.x += 0.2;
+                    speed.x += 0.2f;
                 else
                     speed.x = 0;
             }
@@ -173,9 +189,9 @@ void Player::Collision(Sprite *sprite) {
             speed.y = 0;
         }
     } else if (sprite->type == Sprite::Type::ENEMY) {
-        // FIXME: only sprite change, game state change on moving to FINISHED
-        state = State::FINISHING;
-        game->ChangeState(Game::State::PLAYER_DIED);
+        game->lives--;
+        hitBall = std::time(nullptr);
+        speed.y -= 10;
     } else if (sprite->type == Sprite::Type::LADDER) {
         if (!climbing) {
             bool canClimbUp = position.rectangle.y < sprite->position.rectangle.y + sprite->position.rectangle.height && position.rectangle.y + position.rectangle.height > sprite->position.rectangle.y + sprite->position.rectangle.height;
@@ -200,34 +216,50 @@ void Player::Collision(Sprite *sprite) {
 }
 
 void Player::Shooting() {
-    if (game->shootingLeft > 0) {
+    switch (game->weaponType) {
+    case 2:
+        game->AddWeapon(position.rectangle.x + position.rectangle.width / 2, position.rectangle.y, game->weaponType);
+        break;
+    case 4:
         game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height, game->weaponType);
         game->shootingLeft--;
+        if (game->shootingLeft <= 0)
+            game->weaponType = 1;
+        break;
+    default:
+        if (game->shootingLeft == 0 || game->shootingLeft == -game->multiWeapon) {
+            game->AddWeapon(position.rectangle.x + position.rectangle.width / 2, position.rectangle.y + position.rectangle.height, game->weaponType);
+            game->shootingLeft--;
+        }
+        break;
     }
-    else if (game->shootingLeft == 0 - game->multiWeapon) {
-        game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height, 1);
-        game->shootingLeft--;
+}
+
+bool Player::checkTime() {
+    std::time_t now = std::time(nullptr);
+    if (hitBall + 4 <= now) {
+        return true;
     }
+    return false;
 }
 
 //Block
 Block::Block(Game *game, float x, float y, float width, float height, Kind kind)
     : Sprite(game, Position(x, y, width, height), Sprite::Type::BLOCK), kind(kind) {
+    switch (kind) {
+    case Kind::PLATFORM_1:
+        texture = &game->textures[PLATFORM_1];
+        break;
+    case Kind::PLATFORM_2:
+        texture = &game->textures[PLATFORM_2];
+        break;
+    default:
+        texture = &game->textures[WALL];
+    }
 }
 
 void Block::Draw() {
-    // DrawRectangleRec(position.rectangle, color);
-    Texture2D* texture = nullptr;
-    switch (kind) {
-        case Kind::PLATFORM_1:
-            texture = &game->textures[PLATFORM_1];
-            break;
-        case Kind::PLATFORM_2:
-            texture = &game->textures[PLATFORM_2];
-            break;
-        default:
-            texture = &game->textures[WALL];
-    }
+    // DrawRectangleRec(position.rectangle, color);    
     DrawTextureTiled(*texture, {0, 0, 20, 20}, position.rectangle, {0, 0}, 0, 1, WHITE);
 }
 
@@ -257,13 +289,13 @@ Enemy* Enemy::create(Game* game, float x, float y, Kind kind, int heading) {
 
     switch (kind) {
         case BALL1:
-            return new Enemy(game, x, y, spriteSheet[BALL1].height / 2, BALL1, heading);
+            return new Enemy(game, x, y, spriteSheet[BALL1].height / 2.0f, BALL1, heading);
         case BALL2:
-            return new Enemy(game, x, y, spriteSheet[BALL2].height / 2, BALL2, heading);
+            return new Enemy(game, x, y, spriteSheet[BALL2].height / 2.0f, BALL2, heading);
         case BALL3:
-            return new Enemy(game, x, y, spriteSheet[BALL3].height / 2, BALL3, heading);
+            return new Enemy(game, x, y, spriteSheet[BALL3].height / 2.0f, BALL3, heading);
         case BALL4:
-            return new Enemy(game, x, y, spriteSheet[BALL4].height / 2, BALL4, heading);
+            return new Enemy(game, x, y, spriteSheet[BALL4].height / 2.0f, BALL4, heading);
         default: return 0;
     }
 }
@@ -271,7 +303,7 @@ Enemy* Enemy::create(Game* game, float x, float y, Kind kind, int heading) {
 Enemy::Enemy(Game* game, float x, float y, float radius, Kind kind, int heading)
         : game(game), Sprite(game, Position(x, y, radius), Type::ENEMY), color(WHITE), sizeX(radius * 2), sizeY(radius * 2), kind(kind) {
     stand = { 0.0f, 0.0f, sizeX, sizeY };
-    standExplode = { 0.0f, 0.0f, spriteExplode[kind].width / 12.0f, sizeY };
+    standExplode = { 0.0f, 0.0f, spriteExplode[kind].width / 12.0f, /*sizeY*/47 };
     rad = radius;
     switch (kind) {
     case BALL1:
@@ -345,6 +377,8 @@ void Enemy::Collision(Sprite* sprite) {
         }
     } else if (sprite->type == Sprite::Type::WEAPON) {
         duality(sprite);
+    } else if (sprite->type == Sprite::Type::PLAYER) {
+        DrawFinish();
     }
 }
 
@@ -352,6 +386,21 @@ void Enemy::DrawFinish() {
     //std::cout << "Cooldown: " << cooldown << std::endl;
 
     DrawTextureRec(spriteExplode[kind], standExplode, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
+    switch (kind) {
+    case Kind::BALL1:
+        DrawText("100", position.center.x, position.center.y, 20, WHITE);
+        break;
+    case Kind::BALL2:
+        DrawText("200", position.center.x, position.center.y, 20, WHITE);
+        break;
+    case Kind::BALL3:
+        DrawText("300", position.center.x, position.center.y, 20, WHITE);
+        break;
+    case Kind::BALL4:
+        DrawText("400", position.center.x, position.center.y, 20, WHITE);
+        break;
+    }
+
     if (cooldown % 5 == 0)
         standExplode.x += standExplode.width;
 
@@ -368,22 +417,22 @@ void Enemy::duality(Sprite* sprite) {
                 newKind = Kind::BALL2;
                 game->Spawn(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
                 game->Spawn(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
-                game->AddScore(1);
+                game->AddScore(100);
                 break;
             case Kind::BALL2:
                 newKind = Kind::BALL3;
                 game->Spawn(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
                 game->Spawn(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
-                game->AddScore(2);
+                game->AddScore(200);
                 break;
             case Kind::BALL3:
                 newKind = Kind::BALL4;
                 game->Spawn(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
                 game->Spawn(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
-                game->AddScore(3);
+                game->AddScore(300);
                 break;
             default:
-                game->AddScore(4);
+                game->AddScore(400);
                 break;
             }
             state = State::FINISHING;
@@ -455,8 +504,7 @@ void Weapon::Draw() {
                 }
             } else {
                 texture[1] = &game->textures[LINE_STRAIGHT];
-                moveTexture.height = position.rectangle.height - texture[0]->height;
-                DrawTextureRec(*texture[1], moveTexture, { position.rectangle.x, position.rectangle.y + position.rectangle.height - texture[0]->height }, WHITE);
+                DrawTextureTiled(*texture[1], { 0, 0, 20, 20 }, { position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height - texture[0]->height }, { 0, texture[0]->height * -1.0f }, 0, 1, color);
             }
         }
     } else if (state == State::FINISHING) {
@@ -497,9 +545,11 @@ void Weapon::Move() {
             default:
                 break;
             }
-        }
-        else
+        } else {
             checkTime();
+            if (block->state == Sprite::State::FINISHED)
+                state = State::FINISHED;
+        }
     }
 }
 
@@ -512,6 +562,7 @@ void Weapon::Collision(Sprite *sprite) {
             position.rectangle.y += overlap;
             position.rectangle.height -= overlap;
             position.hbRectangle.height -= overlap;
+            block = sprite;
         } else {
             state = State::FINISHED;
             if (kind == Kind::WEAPON1 && game->shootingLeft < 0)
@@ -532,6 +583,10 @@ void Weapon::checkTime() {
     if (lifeTime + 5 <= now) {
         state = State::FINISHED;
         game->shootingLeft++;
+    } else if (lifeTime + 4 <= now) {
+        color = RED;
+    } else if (lifeTime + 3 <= now) {
+        color = YELLOW;
     }
 }
 
@@ -549,7 +604,7 @@ void Ladder::Draw() {
     }
 }
 
-//Powerup
+// Powerup
 Powerup::Powerup(Game *game, float x, float y, Kind kind)
     : Sprite(game, Position(x, y, 0, 0), Type::POWERUP), kind(kind) {
 
@@ -604,8 +659,10 @@ void Powerup::Collision(Sprite *sprite) {
 //Ice
 Ice::Ice(Game *game, float x, float y, float width, float height)
     : Sprite(game, Position(x, y, width, height), Type::ICE) {
+    texture = &game->textures[ICE];
 }
 
 void Ice::Draw() {
-    DrawRectangle(position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height, RED);
+    //DrawRectangle(position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height, RED);
+    DrawTextureTiled(*texture, { 0, 0, 15, 30 }, position.rectangle, { 0, -7 }, 0, 1, WHITE);
 }

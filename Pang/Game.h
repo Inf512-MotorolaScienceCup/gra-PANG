@@ -11,17 +11,17 @@
 
 enum TextureTypes {
     BACKGROUND_ANI,
-    //BACKGROUND1,
-    //BACKGROUND2,
-    //BACKGROUND3,
-    //BACKGROUND4,
-    //BACKGROUND5,
-    //BACKGROUND6,
-    //BACKGROUND7,
-    //BACKGROUND8,
-    //BACKGROUND9,
-    //BACKGROUND10,
-    //BACKGROUND11,
+    BACKGROUND1,
+    BACKGROUND2,
+    BACKGROUND3,
+    BACKGROUND4,
+    BACKGROUND5,
+    BACKGROUND6,
+    BACKGROUND7,
+    BACKGROUND8,
+    BACKGROUND9,
+    BACKGROUND10,
+    BACKGROUND11,
     //BACKGROUND12,
     //BACKGROUND13,
     //BACKGROUND14,
@@ -51,6 +51,10 @@ enum TextureTypes {
     POWERUP_WEAPON,
     POWERUP_DOUBLE,
     POWERUP_HEAL,
+    HUD_WEAPONS,
+    HUD_BOOST,
+    HUD_DOUBLE,
+    ICE,
 
     NUM_TEXTURES
 };
@@ -60,7 +64,6 @@ public:
     enum class State {
         MAIN_MENU,
         LEVEL_SELECTOR,
-        PLAYER_DIED,
         ACTIVE,
         PAUSED,
         LEVEL_FINISHED,
@@ -69,25 +72,17 @@ public:
     } state;
 
     const char *textureFiles[NUM_TEXTURES] = {"res/Background/forestHD.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
-                                              //"res/Background/.png",
+                                              "res/Background/bagno1.png",
+                                              "res/Background/jungla1.png",
+                                              "res/Background/jungla2.png",
+                                              "res/Background/jungla3.png",
+                                              "res/Background/las1.png",
+                                              "res/Background/las2.png",
+                                              "res/Background/las3.png",
+                                              "res/Background/morze1.png",
+                                              "res/Background/pustynia1.png",
+                                              "res/Background/pustynia2.png",
+                                              "res/Background/pustynia3.png",
                                               "res/spritesheet.png",
                                               "res/ladder.png",
                                               "res/wall.png",
@@ -98,17 +93,21 @@ public:
                                               "res/Ball/Ball_2.png",
                                               "res/Ball/Ball_3.png",
                                               "res/Ball/Ball_4.png",
-                                              "res/hook/line_straight.png",
-                                              "res/hook/line_wiggled.png",
-                                              "res/hook/ending2.png",
-                                              "res/hook/shot.png",
-                                              "res/hook/mine.png",
-                                              "res/hook/explosion.png",
+                                              "res/weapons/line_straight.png",
+                                              "res/weapons/line_wiggled.png",
+                                              "res/weapons/ending.png",
+                                              "res/weapons/shot.png",
+                                              "res/weapons/mine.png",
+                                              "res/weapons/explosion.png",
                                               "res/powerups/clock.png",
                                               "res/powerups/boost.png",
                                               "res/powerups/anchor.png",
                                               "res/powerups/double.png",
-                                              "res/powerups/heart.png"
+                                              "res/powerups/heart.png",
+                                              "res/hud/weapons.png",
+                                              "res/hud/boost.png",
+                                              "res/hud/double.png",
+                                              "res/ice.png"
                                               };
     Texture2D textures[NUM_TEXTURES];
 
@@ -156,9 +155,11 @@ public:
     Rectangle backRec = { 0, 0, 1280, 720 };
     short int backFrame = 0;
 
+    Rectangle hudWeapons = { 0, 0, 32, 32 };
+
     int level = 1;
-    int lives = 3;
-    int score = 0;
+    int lives;
+    int score;
 
     int frameCounter = 0;
     int sequenceFrameCounter;

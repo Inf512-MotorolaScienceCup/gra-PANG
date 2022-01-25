@@ -25,19 +25,20 @@ void Game::MoveSprites() {
 }
 
 void Game::CheckCollision() {
+    // Collision Player<->Block
+    for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
+        if (IsCollision(player, block)) {
+            // std::cout << "PLAYER collided with BLOCK:" << std::endl;
+            player->Collision(block);
+        }
+    }
+
     // Collision Player<->Enemy
     for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
         if (IsCollision(player, enemy)) {
         // std::cout << "PLAYER collided with ENEMY:" << std::endl;
-            player->Collision(enemy);
-        }
-    }
-
-    // Collision Player<->Block
-    for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
-        if (IsCollision(player, block)) {
-        // std::cout << "PLAYER collided with BLOCK:" << std::endl;
-            player->Collision(block);
+            if (!player->hitBall)
+                player->Collision(enemy);
         }
     }
 
@@ -88,8 +89,8 @@ void Game::CheckCollision() {
     for (auto& weapon : spriteMap[Sprite::Type::WEAPON]) {
         for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
             if (IsCollision(weapon, block)) {
-                weapon->Collision(block);
                 block->Collision(weapon);
+                weapon->Collision(block);
                 break;
             }
         }
@@ -149,6 +150,11 @@ void Game::AddPowerup(float x, float y) {
     int chance = GetRandomValue(1, 3);
     if (chance == 1) {
         int kindNum = GetRandomValue(1, 4);
+        if (weaponType == 2) {
+            if (kindNum == 2)
+                kindNum = 4;
+        }
+            
         Sprite* s;
         switch (kindNum) {
         case 1:
@@ -182,8 +188,12 @@ void Game::PickAction(Powerup::Kind kind) {
         timeLeft[0] = std::time(nullptr);
         break;
     case Powerup::Kind::DOUBLE:
-        multiWeapon = 1;
-        timeLeft[1] = std::time(nullptr);
+        if (weaponType == 4)
+            shootingLeft *= 2;
+        else {
+            multiWeapon = 1;
+            timeLeft[1] = std::time(nullptr);
+        }
         break;
     case Powerup::Kind::HEAL:
         lives++;
@@ -193,15 +203,14 @@ void Game::PickAction(Powerup::Kind kind) {
         timeLeft[2] = std::time(nullptr);
         break;
     case Powerup::Kind::WEAPON:
-        weaponType = GetRandomValue(2, 4);
-        switch (weaponType) {
-        case 2:
-            shootingLeft = 15;
-            break;
-        default:
+        int change = GetRandomValue(2, 4);
+        if (change == weaponType)
+            weaponType = 1;
+        else
+            weaponType = change;
+
+        if (weaponType == 4)
             shootingLeft = 5;
-            break;
-        }
         break;
     }
 }
@@ -265,7 +274,7 @@ void Game::SpawnLevel() {
             // y value must always be 5-10 points lower than block value
             // distanceToGround must be properly calculated
             Spawn(new Ladder(this, 200, 395, 4, 25));
-            Spawn(new Powerup(this, 360, 600, Powerup::Kind::HEAL));
+            Spawn(new Powerup(this, 360, 600, Powerup::Kind::DOUBLE));
             
             Spawn(new Ice(this, 700, 690, 150, 10));
 
@@ -303,9 +312,10 @@ void Game::Spawn() {
     // weapon = new Weapon(this, 0, 0, 20, 0, PURPLE);
     // sprites.push_back(weapon);
 
-    player = new Player(this, {400, screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54}, BLACK);
+    player = new Player(this, {400, screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54});
     sprites.push_back(player);
 
+    weaponType = 3;
     shootingLeft = 0;
     speedBoost = 1;
 
@@ -320,7 +330,7 @@ void Game::Draw() {
 
     DrawBackground();
 
-    if (state == State::ACTIVE || state == State::PLAYER_DIED) {
+    if (state == State::ACTIVE) {
         DrawPanel();
         DrawSprites();
     }
@@ -333,9 +343,6 @@ void Game::Draw() {
             break;
         case State::PAUSED:
             ingameMenu.Draw();
-            break;
-        case State::PLAYER_DIED:
-            DrawSequence("You are Dead!");
             break;
         case State::LEVEL_FINISHED:
             DrawSequence("Great Job!");
@@ -356,13 +363,8 @@ void Game::Draw() {
 void Game::Update() {
     frameCounter++;
 
-    if (state == State::PLAYER_DIED) {
-        if (sequenceFrameCounter > frameCounter) return;
-
-        if (lives > 0)
-            RestartLevel();
-        else
-            ChangeState(State::GAME_OVER);
+    if (state == State::ACTIVE && lives <= 0) {
+        ChangeState(State::GAME_OVER);
     } else if (state == State::GAME_OVER) {
         if (sequenceFrameCounter > frameCounter) return;
 
@@ -424,7 +426,7 @@ void Game::Update() {
             if (elapsedLevelTime <= 0) {
                 elapsedLevelTime = 0;
                 endLevelTime = 0;
-                ChangeState(State::PLAYER_DIED);
+                ChangeState(State::GAME_OVER);
             }
         }
         MoveSprites();
@@ -480,11 +482,32 @@ void Game::DrawPanel() {
     float y = wallThickness + 10;
 
     DrawRectangleRec({wallThickness, wallThickness, screenWidth - 2 * wallThickness, panelHeight}, ColorAlpha(BLACK, 0.6));
-    DrawFPS(wallThickness + 10, y);
-    DrawText(TextFormat("Level: %i", level), 300, y, 20, GREEN);
-    DrawText(TextFormat("Score: %03i", score), 560, y, 20, GREEN);
+    //DrawFPS(wallThickness + 10, y);
+    DrawText(TextFormat("Level: %i", level), 40, y, 20, GREEN);
+    DrawText(TextFormat("Score: %03i", score), 245, y, 20, GREEN);
     DrawText(TextFormat("Lives: %i", lives), 900, y, 20, GREEN);
     DrawText(TextFormat("Time: %03i", elapsedLevelTime), 1150, y, 20, GREEN);
+    if (multiWeapon != 0)
+        DrawTexture(textures[HUD_DOUBLE], 450, y - 5, WHITE);
+    if (speedBoost != 1)
+        DrawTexture(textures[HUD_BOOST], 500, y - 5, WHITE);
+    switch (weaponType) {
+    case 2:
+        hudWeapons.x = 0;
+        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 600, y - 5 }, WHITE);
+        break;
+    case 3:
+        hudWeapons.x = hudWeapons.width;
+        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 600, y - 5}, WHITE);
+        break;
+    case 4:
+        hudWeapons.x = 2 * hudWeapons.width;
+        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 600, y - 5 }, WHITE);
+        DrawText(TextFormat("x%i", shootingLeft), 565, y, 20, GREEN);
+        break;
+    default:
+        break;
+    }
 }
 
 void Game::DrawSequence(const char* message) {
@@ -496,11 +519,6 @@ void Game::ChangeState(State newState) {
     if (state == newState) return;
 
     switch (newState) {
-        case State::PLAYER_DIED:
-            player->state = Sprite::State::FINISHING;
-            lives -= 1;
-            sequenceFrameCounter = frameCounter + 2 * 60;
-            break;
         case State::GAME_OVER:
             Unspawn();
             sequenceFrameCounter = frameCounter + 2 * 60;
@@ -526,7 +544,7 @@ void Game::RestartLevel() {
 void Game::StartGame(int newLevel) {
     level = newLevel;
     score = 0;
-    lives = 3;
+    lives = 5;
     RestartLevel();
 }
 
@@ -551,8 +569,3 @@ void Game::DrawLevelSelector() {
     DrawRectangleRounded({xOffset + (level - 1) * (width + space) - 10, y - 10, width + 20, height + 20}, 0.2, 8, ColorAlpha(ORANGE, 0.6));
 }
 
-// void Game::ChangeState() {
-//     std::time_t now = std::time(nullptr);
-//     if (endLevelTime - now <= 0)
-//         return;
-// }
