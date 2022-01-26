@@ -26,7 +26,7 @@ void Game::MoveSprites() {
 
 void Game::CheckCollision() {
     // Collision Player<->Block
-    for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
+    for (auto& block : GetSprites(Sprite::Type::BLOCK)) {
         if (IsCollision(player, block)) {
             // std::cout << "PLAYER collided with BLOCK:" << std::endl;
             player->Collision(block);
@@ -34,7 +34,7 @@ void Game::CheckCollision() {
     }
 
     // Collision Player<->Enemy
-    for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
+    for (auto& enemy : GetSprites(Sprite::Type::ENEMY)) {
         if (IsCollision(player, enemy)) {
         // std::cout << "PLAYER collided with ENEMY:" << std::endl;
             if (!player->hitBall)
@@ -43,7 +43,7 @@ void Game::CheckCollision() {
     }
 
     // Collision Player<->Ladder
-    for (auto& ladder : spriteMap[Sprite::Type::LADDER]) {
+    for (auto& ladder : GetSprites(Sprite::Type::LADDER)) {
         if (IsCollision(player, ladder)) {
             // std::cout << "PLAYER collided with LADDER:" << std::endl;
             player->Collision(ladder);
@@ -51,7 +51,7 @@ void Game::CheckCollision() {
     }
 
     // Collision Player<->Powerup
-    for (auto& powerup : spriteMap[Sprite::Type::POWERUP]) {
+    for (auto& powerup : GetSprites(Sprite::Type::POWERUP)) {
         if (IsCollision(player, powerup)) {
             // std::cout << "PLAYER collided with LADDER:" << std::endl;
             player->Collision(powerup);
@@ -60,7 +60,7 @@ void Game::CheckCollision() {
     }
 
     // Collision Player<->Ice
-    for (auto& ice : spriteMap[Sprite::Type::ICE]) {
+    for (auto& ice : GetSprites(Sprite::Type::ICE)) {
         if (IsCollision(player, ice)) {
             // std::cout << "PLAYER collided with LADDER:" << std::endl;
             player->Collision(ice);
@@ -86,8 +86,8 @@ void Game::CheckCollision() {
     }
 
     // Collision Weapon<->Block
-    for (auto& weapon : spriteMap[Sprite::Type::WEAPON]) {
-        for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
+    for (auto& weapon : GetSprites(Sprite::Type::WEAPON)) {
+        for (auto& block : GetSprites(Sprite::Type::BLOCK)) {
             if (IsCollision(weapon, block)) {
                 block->Collision(weapon);
                 weapon->Collision(block);
@@ -97,8 +97,8 @@ void Game::CheckCollision() {
     }
 
     // Collision Enemy<->Block
-    for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
-        for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
+    for (auto& enemy : GetSprites(Sprite::Type::ENEMY)) {
+        for (auto& block : GetSprites(Sprite::Type::BLOCK)) {
             if (IsCollision(enemy, block)) {
                 enemy->Collision(block);
             }
@@ -106,8 +106,8 @@ void Game::CheckCollision() {
     }
 
     // Collision Powerup<->Block
-    for (auto& powerup : spriteMap[Sprite::Type::POWERUP]) {
-        for (auto& block : spriteMap[Sprite::Type::BLOCK]) {
+    for (auto& powerup : GetSprites(Sprite::Type::POWERUP)) {
+        for (auto& block : GetSprites(Sprite::Type::BLOCK)) {
             if (IsCollision(powerup, block)) {
                 powerup->Collision(block);
             }
