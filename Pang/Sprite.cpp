@@ -197,9 +197,9 @@ void Player::Collision(Sprite *sprite) {
             bool canClimbUp = position.rectangle.y < sprite->position.rectangle.y + sprite->position.rectangle.height && position.rectangle.y + position.rectangle.height > sprite->position.rectangle.y + sprite->position.rectangle.height;
             bool canClimbDown = position.rectangle.y < sprite->position.rectangle.y && position.rectangle.y + position.rectangle.height > sprite->position.rectangle.y;
 
-            if (IsKeyDown(KEY_UP) && canClimbUp)
+            if (IsKeyDown(KEY_UP) && canClimbUp && !IsKeyDown(KEY_DOWN))
                 climbing = true;
-            else if (IsKeyDown(KEY_DOWN) && canClimbDown)
+            else if (IsKeyDown(KEY_DOWN) && canClimbDown && !IsKeyDown(KEY_UP))
                 climbing = true;
 
         } else {
@@ -307,20 +307,20 @@ Enemy::Enemy(Game* game, float x, float y, float radius, Kind kind, int heading)
     rad = radius;
     switch (kind) {
     case BALL1:
-        speed.x = 2.5;
-        maxSpeedY = 35 * gravity;
+        speed.x = 2.2f;
+        maxSpeedY = 43 * gravity;
         break;
     case BALL2:
-        speed.x = 2;
-        maxSpeedY = 30 * gravity;
+        speed.x = 1.8f;
+        maxSpeedY = 39 * gravity;
         break;
     case BALL3:
-        speed.x = 2;
-        maxSpeedY = 27 * gravity;
+        speed.x = 1.6f;
+        maxSpeedY = 35 * gravity;
         break;
     case BALL4:
-        speed.x = 3;
-        maxSpeedY = 25 * gravity;
+        speed.x = 1.4f;
+        maxSpeedY = 32 * gravity;
         break;
     }
     speed.x *= heading;
@@ -369,10 +369,10 @@ void Enemy::Collision(Sprite* sprite) {
         } else {
             if (speed.y > 0) {
                 speed.y = -maxSpeedY;
-                position.center.y = sprite->position.rectangle.y - position.radius;
+                position.center.y = sprite->position.rectangle.y - position.radius - 1;
             } else {
-                speed.y = maxSpeedY / 2;
-                position.center.y = sprite->position.rectangle.y + sprite->position.rectangle.height + position.radius;
+                speed.y = maxSpeedY / 3;
+                position.center.y = sprite->position.rectangle.y + sprite->position.rectangle.height + position.radius + 1;
             }
         }
     } else if (sprite->type == Sprite::Type::WEAPON) {

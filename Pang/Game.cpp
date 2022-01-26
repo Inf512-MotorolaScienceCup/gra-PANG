@@ -68,8 +68,8 @@ void Game::CheckCollision() {
     }
 
     // Collision Weapon<->Enemy
-    for (auto& weapon : spriteMap[Sprite::Type::WEAPON]) {
-        for (auto& enemy : spriteMap[Sprite::Type::ENEMY]) {
+    for (auto& weapon : GetSprites(Sprite::Type::WEAPON)) {
+        for (auto& enemy : GetSprites(Sprite::Type::ENEMY)) {
             if (IsCollision(weapon, enemy)) {
                 std::cout << "WEAPON collided with ENEMY:" << std::endl;
                 weapon->Collision(enemy);
@@ -149,21 +149,21 @@ void Game::AddWeapon(float x, float y, int type) {
 void Game::AddPowerup(float x, float y) {
     int chance = GetRandomValue(1, 3);
     if (chance == 1) {
-        int kindNum = GetRandomValue(1, 4);
-        if (weaponType == 2) {
-            if (kindNum == 2)
-                kindNum = 4;
-        }
+        int kindNum;
+        if (weaponType == 2)
+            kindNum = GetRandomValue(2, 4);
+        else
+            kindNum = GetRandomValue(1, 4);
             
         Sprite* s;
         switch (kindNum) {
         case 1:
-            s = new Powerup(this, x, y, Powerup::Kind::BOOST);
+            s = new Powerup(this, x, y, Powerup::Kind::DOUBLE);
             spriteMap[Sprite::Type::POWERUP].push_back(s);
             sprites.push_back(s);
             break;
         case 2:
-            s = new Powerup(this, x, y, Powerup::Kind::DOUBLE);
+            s = new Powerup(this, x, y, Powerup::Kind::BOOST);
             spriteMap[Sprite::Type::POWERUP].push_back(s);
             sprites.push_back(s);
             break;
@@ -248,7 +248,7 @@ void Game::AddScore(int score) {
 Game::Game()
     : state(State::MAIN_MENU),
       mainMenu(this, {"Start", "Load", "Level", "Quit"}),
-      ingameMenu(this, {"Continue", "Break", "Restart", "Quit"}) {
+      ingameMenu(this, {"Continue", "Restart", "Back to menu", "Quit"}) {
     InitWindow(screenWidth, screenHeight, "Pang");
     SetExitKey(KEY_F10);
     SetTargetFPS(60);
@@ -297,7 +297,173 @@ void Game::SpawnLevel() {
 
             levelTime = 60;
             break;
-    }
+        case 3:
+            for (int x = 32; x > 0; x--) {
+                Spawn(new Block(this, 20, 60 + x * 20, (32 - x) * 20, wallThickness, Block::Kind::PLATFORM_1));
+                Spawn(new Block(this, 20 + 620 + x * 20, 60 + x * 20, (32 - x) * 20, wallThickness, Block::Kind::PLATFORM_1));
+            }
+            //  Spawn(new Block(this, 23 * 20, 260, 380, wallThickness, Block::Kind::PLATFORM_2));
+            //  Spawn(new Block(this, 16 * 20, 400, 660, wallThickness, Block::Kind::PLATFORM_2));
+
+            for (int x = 0; x < 33; x++) {
+                if (x < 19) {
+                    Spawn(new Block(this, 460 + x * 20, 260, 20, wallThickness, Block::Kind::PLATFORM_2));
+                }
+                Spawn(new Block(this, 320 + x * 20, 400, 20, wallThickness, Block::Kind::PLATFORM_2));
+            }
+            Spawn(Enemy::create(this, 620, 300, Enemy::Kind::BALL3, 1));
+            Spawn(Enemy::create(this, 620, 160, Enemy::Kind::BALL3, -1));
+            backTexture = BACKGROUND1;
+            levelTime = 160;
+            break;
+        case 4:
+            Spawn(new Block(this, 20, 80, 500, 450, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 760, 80, 500, 450, Block::Kind::PLATFORM_1));
+
+            for (int y = 0; y < 3; y++) {
+                for (int x = 0; x < 4; x++) {
+                    Spawn(new Block(this, 520 + x * 60, 510 - y * 150, 60, wallThickness, Block::Kind::PLATFORM_2));
+                }
+                Spawn(Enemy::create(this, 520 + 120, 510 - y * 150 - 50, Enemy::Kind::BALL3, -1));
+            }
+            backTexture = BACKGROUND2;
+            levelTime = 160;
+            break;
+        case 5:
+            Spawn(new Block(this, 20, 550, 1050, wallThickness, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 135, 300, 1145, wallThickness, Block::Kind::PLATFORM_1));
+
+            for (int x = 0; x < 4; x++) {
+                Spawn(new Block(this, 200 + x * 270, 400, 270, wallThickness, Block::Kind::PLATFORM_2));
+                if (x % 2 == 0) {
+                    Spawn(Enemy::create(this, 250 + x * 275, 350, Enemy::Kind::BALL3, 1));
+                }
+                if (x % 2 == 1) {
+                    Spawn(Enemy::create(this, 250 + x * 275, 350, Enemy::Kind::BALL3, -1));
+                }
+            }
+
+            for (int x = 0; x < 4; x++) {
+                Spawn(new Block(this, 200 + x * (1080 / 4), 300, 20, 120, Block::Kind::PLATFORM_1));
+            }
+
+            Spawn(new Block(this, 740, 80, 20, 160, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 800, 240, 20, 80, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 760, 220, 60, 20, Block::Kind::PLATFORM_1));
+            Spawn(new Ladder(this, 1010, 545, 2, 55));
+            Spawn(new Ladder(this, 135, 290, 4, 65));
+
+            Spawn(Enemy::create(this, 900, 100, Enemy::Kind::BALL1, -1));
+
+            backTexture = BACKGROUND3;
+            levelTime = 160;
+            break;
+        case 6:
+            Spawn(new Block(this, 20, 550, 220, wallThickness, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 240, 550, 60, wallThickness, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 300, 550, 680, wallThickness, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 980, 550, 60, wallThickness, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 1040, 550, 220, wallThickness, Block::Kind::PLATFORM_1));
+            Spawn(Enemy::create(this, 900, 100, Enemy::Kind::BALL1, -1));
+
+            backTexture = BACKGROUND4;
+            levelTime = 160;
+            break;
+        case 7:
+            for (int x = 0; x < 15; x++) {
+                Spawn(new Block(this, 20 + x * 40, 140 + x * 20, 40, wallThickness, Block::Kind::PLATFORM_1));
+                Spawn(new Block(this, 1220 - x * 40, 140 + x * 20, 40, wallThickness, Block::Kind::PLATFORM_1));
+            }
+            Spawn(Enemy::create(this, 600, 150, Enemy::Kind::BALL1, 1));
+
+            backTexture = BACKGROUND5;
+            levelTime = 160;
+            break;
+        case 8:
+            for (int x = 1; x < 11; x++) {
+                Spawn(Enemy::create(this, x * 60 + 500, 80 + x * 60, Enemy::Kind::BALL4, 1));
+            }
+
+            backTexture = BACKGROUND6;
+            levelTime = 160;
+            break;
+        case 9:
+
+            Spawn(new Block(this, 20, 500, 1000, wallThickness, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 1020, 500, 240, wallThickness, Block::Kind::PLATFORM_2));
+
+            Spawn(new Block(this, 260, 300, 1000, wallThickness, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 20, 300, 240, wallThickness, Block::Kind::PLATFORM_2));
+
+            Spawn(new Ladder(this, 200, 295, 3, 55));
+            Spawn(new Ladder(this, 1020, 495, 3, 55));
+
+            Spawn(Enemy::create(this, 600, 150, Enemy::Kind::BALL2, 1));
+            Spawn(Enemy::create(this, 600, 350, Enemy::Kind::BALL2, -1));
+            Spawn(Enemy::create(this, 600, 550, Enemy::Kind::BALL2, 1));
+
+            backTexture = BACKGROUND7;
+            levelTime = 160;
+            break;
+        case 10:
+            for (int x = 0; x < 14; x++) {
+                Spawn(new Block(this, x * (1240 / 10), 80, 20, 540, Block::Kind::PLATFORM_1));
+                if (x % 2 == 0) {
+                    Spawn(Enemy::create(this, x * (1240 / 10) + 30, 120, Enemy::Kind::BALL4, 1));
+                }
+            }
+
+            backTexture = BACKGROUND8;
+            levelTime = 160;
+            break;
+        case 11:
+            Spawn(new Block(this, 20, 560, 1240, 20, Block::Kind::PLATFORM_1));
+
+            Spawn(new Ladder(this, 300, 555, 2, 55));
+            Spawn(new Ladder(this, 600, 555, 2, 55));
+            Spawn(new Ladder(this, 900, 555, 2, 55));
+            Spawn(Enemy::create(this, 50, 500, Enemy::Kind::BALL1, 1));
+            Spawn(Enemy::create(this, 500, 200, Enemy::Kind::BALL1, 1));
+            backTexture = BACKGROUND9;
+            levelTime = 160;
+            break;
+        case 12:
+            Spawn(new Block(this, 20, 500, 200, 20, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 220, 500, 80, 20, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 300, 500, 300, 20, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 600, 500, 80, 20, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 680, 500, 300, 20, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 980, 500, 80, 20, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 1060, 500, 200, 20, Block::Kind::PLATFORM_1));
+
+            Spawn(Enemy::create(this, 50, 500, Enemy::Kind::BALL1, 1));
+            Spawn(Enemy::create(this, 500, 200, Enemy::Kind::BALL1, 1));
+
+            backTexture = BACKGROUND10;
+            levelTime = 160;
+            break;
+        case 13:
+            Spawn(new Block(this, 500, 400, 720, 20, Block::Kind::PLATFORM_1));
+
+            Spawn(new Block(this, 540, 240, 140, 20, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 680, 240, 80, 20, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 760, 240, 260, 20, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 1020, 240, 80, 20, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 1100, 240, 140, 20, Block::Kind::PLATFORM_1));
+
+            Spawn(new Block(this, 540, 80, 20, 160, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 880, 80, 20, 160, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 1220, 80, 20, 160, Block::Kind::PLATFORM_1));
+
+            Spawn(new Ladder(this, 505, 395, 4, 20));
+
+            Spawn(Enemy::create(this, 590, 120, Enemy::Kind::BALL1, 1));
+            Spawn(Enemy::create(this, 1020, 120, Enemy::Kind::BALL1, 1));
+
+            backTexture = BACKGROUND11;
+            levelTime = 160;
+            break;
+    }//1240, 20
 }
 
 void Game::Spawn() {
@@ -315,7 +481,7 @@ void Game::Spawn() {
     player = new Player(this, {400, screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54});
     sprites.push_back(player);
 
-    weaponType = 3;
+    weaponType = 2;
     shootingLeft = 0;
     speedBoost = 1;
 
@@ -399,8 +565,11 @@ void Game::Update() {
     } else if (ingameMenu.selected == "Continue") {
         ChangeState(State::ACTIVE);
         ingameMenu.selected = "";
+    } else if (ingameMenu.selected == "Back to menu") {
+        ChangeState(State::GAME_OVER);
+        ingameMenu.selected = "";
     } else if (mainMenu.selected == "Start") {
-        StartGame();
+        StartGame(level);
         mainMenu.selected = "";
     } else if (mainMenu.selected == "Load") {
 
@@ -538,13 +707,13 @@ void Game::ChangeState(State newState) {
 void Game::RestartLevel() {
     Unspawn();
     Spawn();
+    lives = 5;
     ChangeState(State::ACTIVE);
 }
 
 void Game::StartGame(int newLevel) {
     level = newLevel;
     score = 0;
-    lives = 5;
     RestartLevel();
 }
 
@@ -569,3 +738,8 @@ void Game::DrawLevelSelector() {
     DrawRectangleRounded({xOffset + (level - 1) * (width + space) - 10, y - 10, width + 20, height + 20}, 0.2, 8, ColorAlpha(ORANGE, 0.6));
 }
 
+std::vector<Sprite*> Game::GetSprites(Sprite::Type type) {
+    if (spriteMap.find(type) == spriteMap.end())
+        return {};
+    return spriteMap[type];
+}

@@ -146,6 +146,8 @@ public:
     int MainLoop();
     void LoadTextures();
 
+    std::vector<Sprite*> GetSprites(Sprite::Type type);
+
     std::vector<Sprite *> sprites;
     std::map<Sprite::Type, std::vector<Sprite *>> spriteMap;
     Player *player;
@@ -170,7 +172,7 @@ public:
     int levelTime;
     int elapsedLevelTime;
 
-    short int weaponType = 0;
+    short int weaponType = 1;
     int shootingLeft;
 
     std::time_t timeLeft[4];

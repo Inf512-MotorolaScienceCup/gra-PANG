@@ -127,7 +127,7 @@ private:
     Vector2 speed;
     int cooldown = 0;
     float maxSpeedY;
-    float gravity = 0.5;
+    float gravity = 0.3;
     float sizeX;
     float sizeY;
     Kind kind;
