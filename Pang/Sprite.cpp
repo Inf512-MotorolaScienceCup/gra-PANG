@@ -548,8 +548,10 @@ void Weapon::Move() {
             }
         } else {
             checkTime();
-            if (block->state == Sprite::State::FINISHED)
+            if (block->state == Sprite::State::FINISHED) {
                 state = State::FINISHED;
+                game->shootingLeft++;
+            }
         }
     }
 }

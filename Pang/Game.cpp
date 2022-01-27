@@ -476,7 +476,7 @@ void Game::Spawn() {
     Spawn(new Block(this, 0, 0, wallThickness, screenHeight, Block::Kind::WALL));
     Spawn(new Block(this, screenWidth - wallThickness, 0, wallThickness, screenHeight, Block::Kind::WALL));
 
-    weaponType = 2;
+    weaponType = 3;
     shootingLeft = 0;
     speedBoost = 1;
 
@@ -684,16 +684,16 @@ void Game::DrawPanel() {
     switch (weaponType) {
     case 2:
         hudWeapons.x = 0;
-        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 600, y - 5 }, WHITE);
+        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y - 5 }, WHITE);
         break;
     case 3:
         hudWeapons.x = hudWeapons.width;
-        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 600, y - 5}, WHITE);
+        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y - 5}, WHITE);
         break;
     case 4:
         hudWeapons.x = 2 * hudWeapons.width;
-        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 600, y - 5 }, WHITE);
-        DrawText(TextFormat("x%i", shootingLeft), 565, y, 20, GREEN);
+        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y - 5 }, WHITE);
+        DrawText(TextFormat("x%i", shootingLeft), 590, y, 20, GREEN);
         break;
     default:
         break;
