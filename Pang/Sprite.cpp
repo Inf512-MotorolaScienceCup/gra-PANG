@@ -463,6 +463,7 @@ Weapon::Weapon(Game *game, float x, float y, Kind kind)
         texture[0] = &game->textures[WEAPON_SHOT];
         position.rectangle.width = texture[0]->width;
         position.rectangle.height = texture[0]->height;
+        position.rectangle.x -= position.rectangle.width / 2;
         break;
     case Kind::WEAPON4:
         texture[0] = &game->textures[WEAPON_MINE];
@@ -640,7 +641,7 @@ void Powerup::Draw() {
 
 void Powerup::Move() {
     if (state == State::ACTIVE) {
-        speedY++;
+        speedY += 0.5f;
         position.rectangle.y += speedY;
     }
 }

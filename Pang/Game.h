@@ -167,6 +167,7 @@ public:
     int sequenceFrameCounter;
     Menu mainMenu;
     Menu ingameMenu;
+    //Menu saveMenu;
 
     std::time_t endLevelTime;
     int levelTime;

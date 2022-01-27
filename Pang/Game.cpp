@@ -248,7 +248,8 @@ void Game::AddScore(int score) {
 Game::Game()
     : state(State::MAIN_MENU),
       mainMenu(this, {"Start", "Load", "Level", "Quit"}),
-      ingameMenu(this, {"Continue", "Restart", "Back to menu", "Quit"}) {
+      ingameMenu(this, {"Continue", "Restart", "Back to menu", "Quit"})
+      /*saveMenu(this, {"Save game", "Quit without saving"})*/ {
     InitWindow(screenWidth, screenHeight, "Pang");
     SetExitKey(KEY_F10);
     SetTargetFPS(60);
@@ -275,6 +276,8 @@ void Game::SpawnLevel() {
             // distanceToGround must be properly calculated
             Spawn(new Ladder(this, 200, 395, 4, 25));
             Spawn(new Powerup(this, 360, 600, Powerup::Kind::DOUBLE));
+            Spawn(new Powerup(this, 360, 600, Powerup::Kind::BOOST));
+            Spawn(new Powerup(this, 360, 600, Powerup::Kind::TIME));
             
             Spawn(new Ice(this, 700, 690, 150, 10));
 
@@ -463,7 +466,7 @@ void Game::SpawnLevel() {
             backTexture = BACKGROUND11;
             levelTime = 160;
             break;
-    }//1240, 20
+    }
 }
 
 void Game::Spawn() {
@@ -473,6 +476,10 @@ void Game::Spawn() {
     Spawn(new Block(this, 0, 0, wallThickness, screenHeight, Block::Kind::WALL));
     Spawn(new Block(this, screenWidth - wallThickness, 0, wallThickness, screenHeight, Block::Kind::WALL));
 
+    weaponType = 2;
+    shootingLeft = 0;
+    speedBoost = 1;
+
     SpawnLevel();
 
     // weapon = new Weapon(this, 0, 0, 20, 0, PURPLE);
@@ -480,10 +487,6 @@ void Game::Spawn() {
 
     player = new Player(this, {400, screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54});
     sprites.push_back(player);
-
-    weaponType = 2;
-    shootingLeft = 0;
-    speedBoost = 1;
 
     endLevelTime = std::time(nullptr) + levelTime;
 }
@@ -549,7 +552,7 @@ void Game::Update() {
         ChangeState(State::MAIN_MENU);
     } else if (state == State::LEVEL_SELECTOR) {
         if (IsKeyPressed(KEY_ENTER)) {
-            RestartLevel();
+            StartGame(level);
         } else if (IsKeyPressed(KEY_ESCAPE)) {
             ChangeState(State::MAIN_MENU);
         } else if (IsKeyPressed(KEY_RIGHT)) {
@@ -653,13 +656,31 @@ void Game::DrawPanel() {
     DrawRectangleRec({wallThickness, wallThickness, screenWidth - 2 * wallThickness, panelHeight}, ColorAlpha(BLACK, 0.6));
     //DrawFPS(wallThickness + 10, y);
     DrawText(TextFormat("Level: %i", level), 40, y, 20, GREEN);
-    DrawText(TextFormat("Score: %03i", score), 245, y, 20, GREEN);
+    DrawText(TextFormat("Score: %03i", score), 200, y, 20, GREEN);
     DrawText(TextFormat("Lives: %i", lives), 900, y, 20, GREEN);
     DrawText(TextFormat("Time: %03i", elapsedLevelTime), 1150, y, 20, GREEN);
-    if (multiWeapon != 0)
-        DrawTexture(textures[HUD_DOUBLE], 450, y - 5, WHITE);
-    if (speedBoost != 1)
-        DrawTexture(textures[HUD_BOOST], 500, y - 5, WHITE);
+    
+    if (speedBoost != 1) {
+        DrawTexture(textures[HUD_BOOST], 340, y - 5, WHITE);
+        if (timeLeft[0]) {
+            std::time_t now = std::time(nullptr);
+            DrawText(TextFormat(": %i s", 5 - (now - timeLeft[0])), 365, y, 20, GREEN);
+        }
+    }
+    if (multiWeapon != 0) {
+        DrawTexture(textures[HUD_DOUBLE], 420, y - 5, WHITE);
+        if (timeLeft[1]) {
+            std::time_t now = std::time(nullptr);
+            DrawText(TextFormat(": %i s", 5 - (now - timeLeft[1])), 445, y, 20, GREEN);
+        }
+    }
+    if (stopTime) {
+        DrawTexture(textures[POWERUP_TIME], 500, y - 5, WHITE);
+        if (timeLeft[2]) {
+            std::time_t now = std::time(nullptr);
+            DrawText(TextFormat(": %i s", 5 - (now - timeLeft[2])), 535, y, 20, GREEN);
+        }
+    }
     switch (weaponType) {
     case 2:
         hudWeapons.x = 0;
@@ -707,13 +728,13 @@ void Game::ChangeState(State newState) {
 void Game::RestartLevel() {
     Unspawn();
     Spawn();
-    lives = 5;
     ChangeState(State::ACTIVE);
 }
 
 void Game::StartGame(int newLevel) {
     level = newLevel;
     score = 0;
+    lives = 5;
     RestartLevel();
 }
 

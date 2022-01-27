@@ -195,7 +195,7 @@ public:
 private:
     Texture2D* texture;
     Kind kind;
-    int speedY;
+    float speedY;
 };
 
 class Ice : public Sprite {
