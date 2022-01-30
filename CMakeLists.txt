@@ -40,3 +40,4 @@ target_link_libraries(pang dl)
 target_link_libraries(pang pthread)
 
 file(COPY ${game_resources} DESTINATION "res/")
+make_directory("saves")

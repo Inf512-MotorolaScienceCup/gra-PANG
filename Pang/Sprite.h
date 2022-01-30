@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <ctime>
+#include <fstream>
 
 #include "Utils.h"
 #include "raylib.h"
@@ -42,8 +43,9 @@ public:
 
     virtual void Draw() = 0;
 
-    virtual void Move() {};
-    virtual void Collision(Sprite* sprite) {};
+    virtual void Move() {}
+    virtual void Collision(Sprite* sprite) {}
+    virtual void Save(std::ofstream&) {}
 };
 
 bool IsCollision(const Sprite *s1, const Sprite *s2);
@@ -51,9 +53,11 @@ bool IsCollision(const Sprite *s1, const Sprite *s2);
 class Player : public Sprite {
 public:
     Player(Game* game, Position position);
+    Player(Game* game, std::ifstream&);
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
+    virtual void Save(std::ofstream&);
     void Shooting();
     bool checkTime();
     time_t hitBall;
@@ -70,7 +74,7 @@ private:
     int cooldown = 0;
     bool climbing = false;
     bool collision;
-    int zone = 10;
+    //int zone = 10;
     bool onIce = false;
     short int changeColor = 0;
 };
@@ -84,8 +88,10 @@ public:
     };
 
     Block(Game *game, float x, float y, float width, float height, Kind type);
+    Block(Game* game, std::ifstream&);
     virtual void Draw();
     virtual void Collision(Sprite*);
+    virtual void Save(std::ofstream&);
     short int health = 2;
 
 private:
@@ -106,10 +112,12 @@ public:
     static Enemy* create(Game *game, float x, float y, Kind kind, int heading);
 
     Enemy(Game *game, float x, float y, float radius, Kind kind, int heading);
+    Enemy(Game* game, std::ifstream&);
 
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
+    virtual void Save(std::ofstream&);
 
     void DrawFinish();
     void duality(Sprite*);
@@ -123,7 +131,7 @@ private:
     Rectangle stand;
     Rectangle standExplode;
     Color color;
-    int rad;
+    //int rad;
     Vector2 speed;
     int cooldown = 0;
     float maxSpeedY;
@@ -145,9 +153,11 @@ public:
     };
 
     Weapon(Game* game, float x, float y, Kind kind);
+    Weapon(Game* game, std::ifstream&);
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
+    virtual void Save(std::ofstream&);
     void checkTime();
 
 private:
@@ -167,8 +177,9 @@ private:
 class Ladder : public Sprite {
 public:
     Ladder(Game *game, float x, float y, int numElements, float distanceToGround);
-
+    Ladder(Game* game, std::ifstream&);
     virtual void Draw();
+    virtual void Save(std::ofstream&);
     float distanceToGround;
 
 private:
@@ -187,10 +198,11 @@ public:
     };
 
     Powerup(Game *game, float x, float y, Kind kind);
-
+    Powerup(Game* game, std::ifstream&);
     virtual void Draw();
     virtual void Move();
     virtual void Collision(Sprite*);
+    virtual void Save(std::ofstream&);
 
 private:
     Texture2D* texture;
@@ -201,7 +213,9 @@ private:
 class Ice : public Sprite {
 public:
     Ice(Game *game, float x, float y, float width, float height);
+    Ice(Game* game, std::ifstream&);
     virtual void Draw();
+    virtual void Save(std::ofstream&);
 
 private:
     Texture2D* texture;

@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <ctime>
+#include <fstream>
 
 #include "raylib.h"
 
@@ -133,6 +134,10 @@ public:
     void CheckCollision();
     void DrawSequence(const char* message);
     void ChangeState(State newState);
+    void WriteGameData(std::ofstream&);
+    void ReadGameData(std::ifstream&);
+    void SaveGame();
+    void LoadGame();
     void RestartLevel();
     void StartGame(int newLevel = 1);
     void DrawLevelSelector();
@@ -159,15 +164,15 @@ public:
 
     Rectangle hudWeapons = { 0, 0, 32, 32 };
 
-    int level = 1;
-    int lives;
-    int score;
-
     int frameCounter = 0;
     int sequenceFrameCounter;
     Menu mainMenu;
     Menu ingameMenu;
     //Menu saveMenu;
+
+    int level = 1;
+    int lives;
+    int score;
 
     std::time_t endLevelTime;
     int levelTime;

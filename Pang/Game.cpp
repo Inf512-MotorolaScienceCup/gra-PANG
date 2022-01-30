@@ -248,8 +248,7 @@ void Game::AddScore(int score) {
 Game::Game()
     : state(State::MAIN_MENU),
       mainMenu(this, {"Start", "Load", "Level", "Quit"}),
-      ingameMenu(this, {"Continue", "Restart", "Back to menu", "Quit"})
-      /*saveMenu(this, {"Save game", "Quit without saving"})*/ {
+      ingameMenu(this, {"Continue", "Save Game", "Back to Menu", "Quit"}) {
     InitWindow(screenWidth, screenHeight, "Pang");
     SetExitKey(KEY_F10);
     SetTargetFPS(60);
@@ -466,6 +465,14 @@ void Game::SpawnLevel() {
             backTexture = BACKGROUND11;
             levelTime = 160;
             break;
+        case 14:
+            Spawn(new Block(this, 540, 240, 140, 20, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 680, 240, 80, 20, Block::Kind::PLATFORM_2));
+
+            Spawn(Enemy::create(this, 590, 120, Enemy::Kind::BALL1, 1));
+
+            levelTime = 160;
+            break;
     }
 }
 
@@ -562,8 +569,8 @@ void Game::Update() {
         }
     }
 
-    if (ingameMenu.selected == "Restart") {
-        RestartLevel();
+    if (ingameMenu.selected == "Save Game") {
+        SaveGame();
         ingameMenu.selected = "";
     } else if (ingameMenu.selected == "Continue") {
         ChangeState(State::ACTIVE);
@@ -575,7 +582,8 @@ void Game::Update() {
         StartGame(level);
         mainMenu.selected = "";
     } else if (mainMenu.selected == "Load") {
-
+        LoadGame();
+        ChangeState(State::ACTIVE);
         mainMenu.selected = "";
     } else if (mainMenu.selected == "Level") {
         ChangeState(State::LEVEL_SELECTOR);
@@ -723,6 +731,105 @@ void Game::ChangeState(State newState) {
             break;
     }
     state = newState;
+}
+
+void Game::WriteGameData(std::ofstream& s) {
+    Write(s, &level);
+    Write(s, &lives);
+    Write(s, &score);
+
+    //Write(s, &endLevelTime);
+    Write(s, &levelTime);
+    Write(s, &elapsedLevelTime);
+
+    size_t numSprites = sprites.size();
+    Write(s, &numSprites);
+
+    for (auto& sprite : sprites) {
+        sprite->Save(s);
+    }
+    //std::map<Sprite::Type, std::vector<Sprite *>> spriteMap;
+    //player->Save(s);
+    //weapon->Save(s);
+}
+
+void Game::ReadGameData(std::ifstream& s) {
+    Read(s, &level);
+    Read(s, &lives);
+    Read(s, &score);
+
+    //Read(s, &endLevelTime);
+    Read(s, &levelTime);
+    Read(s, &elapsedLevelTime);
+    std::time_t now = std::time(nullptr);
+    endLevelTime = now + elapsedLevelTime;
+
+    int numSprites = 0;
+    Read(s, &numSprites);
+
+    // sprite.erase()
+    for (int i = 0; i < numSprites; i++) {
+        int type;
+        Read(s, &type);
+        switch (static_cast<Sprite::Type>(type)) {
+        case Sprite::Type::PLAYER:
+            player = new Player(this, s);
+            sprites.push_back(player);
+            break;
+        case Sprite::Type::BLOCK:
+            Spawn(new Block(this, s));
+            break;
+        case Sprite::Type::ENEMY:
+            Spawn(new Enemy(this, s));
+            break;
+        case Sprite::Type::POWERUP:
+            Spawn(new Powerup(this, s));
+            break;
+        case Sprite::Type::ICE:
+            Spawn(new Ice(this, s));
+            break;
+        case Sprite::Type::LADDER:
+            Spawn(new Ladder(this, s));
+            break;
+        case Sprite::Type::WEAPON:
+            Spawn(new Weapon(this, s));
+            break;
+        }
+    }
+    //std::map<Sprite::Type, std::vector<Sprite *>> spriteMap;
+}
+
+void Game::SaveGame() {
+    if (!DirectoryExists("saves")) {
+        std::system("mkdir saves");
+    }
+    std::ofstream saveFile("saves/s1.psf", std::ios_base::binary);
+    if (saveFile.is_open()) {
+        WriteGameData(saveFile);
+
+        saveFile.close();
+
+        std::cout << "Save file created";
+    } else {
+        std::cout << "Unable to open file";
+    }
+}
+
+void Game::LoadGame() {
+    if (!DirectoryExists("saves")) {
+        std::cout << "No saves";
+    } else {
+        std::ifstream loadFile("saves/s1.psf", std::ios_base::binary);
+        if (loadFile.is_open()) {
+            ReadGameData(loadFile);
+
+            loadFile.close();
+            std::cout << "Load complete\n";
+        } else {
+            std::cout << "Unable to open file";
+        }
+
+    }
 }
 
 void Game::RestartLevel() {

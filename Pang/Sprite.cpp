@@ -38,11 +38,25 @@ Sprite::Sprite(Game *game, const Position &position, Type type)
 Player::Player(Game *game, Position position)
     : Sprite(game, Position(position), Type::PLAYER), speed({ 0, 0 }) {
     spriteSheet = game->textures[PLAYER];
-    moveRightRec = {0.0f, 11 * 64.0f, 64.0f, 64.0f};
-    moveLeftRec = {0.0f, 9 * 64.0f, 64.0f, 64.0f};
-    standRec = {0.0f, 2 * 64.0f, 64.0f, 64.0f};
-    moveUpRec = {0.0f, 8 * 64.0f, 64.0f, 64.0f};
-    hurtRec = {0.0f, 20 * 64.0f, 64.0f, 64.0f};
+    moveRightRec = { 0.0f, 11 * 64.0f, 64.0f, 64.0f };
+    moveLeftRec = { 0.0f, 9 * 64.0f, 64.0f, 64.0f };
+    standRec = { 0.0f, 2 * 64.0f, 64.0f, 64.0f };
+    moveUpRec = { 0.0f, 8 * 64.0f, 64.0f, 64.0f };
+    hurtRec = { 0.0f, 20 * 64.0f, 64.0f, 64.0f };
+}
+
+Player::Player(Game *game, std::ifstream& s)
+    : Sprite(game, Position(s), Type::PLAYER) {
+    Read(s, &speed.x);
+    Read(s, &speed.y);
+    Read(s, &climbing);
+    Read(s, &onIce);
+    spriteSheet = game->textures[PLAYER];
+    moveRightRec = { 0.0f, 11 * 64.0f, 64.0f, 64.0f };
+    moveLeftRec = { 0.0f, 9 * 64.0f, 64.0f, 64.0f };
+    standRec = { 0.0f, 2 * 64.0f, 64.0f, 64.0f };
+    moveUpRec = { 0.0f, 8 * 64.0f, 64.0f, 64.0f };
+    hurtRec = { 0.0f, 20 * 64.0f, 64.0f, 64.0f };
 }
 
 void Player::Draw() {
@@ -215,6 +229,16 @@ void Player::Collision(Sprite *sprite) {
     }
 }
 
+void Player::Save(std::ofstream& s) {
+    int t = static_cast<int>(type);
+    Write(s, &t);
+    position.Save(s);
+    Write(s, &speed.x);
+    Write(s, &speed.y);
+    Write(s, &climbing);
+    Write(s, &onIce);
+}
+
 void Player::Shooting() {
     switch (game->weaponType) {
     case 2:
@@ -258,6 +282,24 @@ Block::Block(Game *game, float x, float y, float width, float height, Kind kind)
     }
 }
 
+Block::Block(Game* game, std::ifstream& s)
+    : Sprite(game, Position(s), Sprite::Type::BLOCK) {
+    int k;
+    Read(s, &k);
+    kind = static_cast<Block::Kind>(k);
+
+    switch (kind) {
+    case Kind::PLATFORM_1:
+        texture = &game->textures[PLATFORM_1];
+        break;
+    case Kind::PLATFORM_2:
+        texture = &game->textures[PLATFORM_2];
+        break;
+    default:
+        texture = &game->textures[WALL];
+    }
+}
+
 void Block::Draw() {
     // DrawRectangleRec(position.rectangle, color);    
     DrawTextureTiled(*texture, {0, 0, 20, 20}, position.rectangle, {0, 0}, 0, 1, WHITE);
@@ -269,6 +311,14 @@ void Block::Collision(Sprite* sprite) {
         if (health == 0)
             state = State::FINISHED;
     }
+}
+
+void Block::Save(std::ofstream& s) {
+    int t = static_cast<int>(type);
+    Write(s, &t);
+    position.Save(s);
+    int k = static_cast<int>(kind);
+    Write(s, &k);
 }
 
 // Ball
@@ -304,7 +354,7 @@ Enemy::Enemy(Game* game, float x, float y, float radius, Kind kind, int heading)
         : game(game), Sprite(game, Position(x, y, radius), Type::ENEMY), color(WHITE), sizeX(radius * 2), sizeY(radius * 2), kind(kind) {
     stand = { 0.0f, 0.0f, sizeX, sizeY };
     standExplode = { 0.0f, 0.0f, spriteExplode[kind].width / 12.0f, /*sizeY*/47 };
-    rad = radius;
+    //rad = radius;
     switch (kind) {
     case BALL1:
         speed.x = 2.2f;
@@ -327,7 +377,34 @@ Enemy::Enemy(Game* game, float x, float y, float radius, Kind kind, int heading)
     speed.y = -5;
 }
 
+Enemy::Enemy(Game *game, std::ifstream& s) 
+    : game(game), Sprite(game, s, Type::ENEMY) {
+    Read(s, &speed);
+    Read(s, &kind);
+    Read(s, &maxSpeedY);
+    Read(s, &collision);
+    
+    switch (kind) {
+    case Enemy::BALL1:
+        spriteSheet[kind] = game->textures[BALL1];
+        break;
+    case Enemy::BALL2:
+        spriteSheet[kind] = game->textures[BALL2];
+        break;
+    case Enemy::BALL3:
+        spriteSheet[kind] = game->textures[BALL3];
+        break;
+    case Enemy::BALL4:
+        spriteSheet[kind] = game->textures[BALL4];
+        break;
+    default:
+        break;
+    }
+    spriteExplode[kind] = game->textures[EXPLOSION];
+}
+
 void Enemy::Draw() {
+    //DrawCircle(position.center.x, position.center.y, position.radius, RED);
     if (state == State::ACTIVE) {
         DrawTextureRec(spriteSheet[kind], stand, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
         //DrawCircleLines(position.center.x, position.center.y, position.radius, RED);
@@ -380,6 +457,15 @@ void Enemy::Collision(Sprite* sprite) {
     } else if (sprite->type == Sprite::Type::PLAYER) {
         DrawFinish();
     }
+}
+
+void Enemy::Save(std::ofstream& s) {
+    Write(s, &type);
+    position.Save(s);
+    Write(s, &speed);
+    Write(s, &kind);
+    Write(s, &maxSpeedY);
+    Write(s, &collision);
 }
 
 void Enemy::DrawFinish() {
@@ -458,6 +544,42 @@ Sprite* Enemy::checkCollision() {
 Weapon::Weapon(Game *game, float x, float y, Kind kind)
     : Sprite(game, Position(x, y, 0, 0), Type::WEAPON), kind(kind) {
         
+    switch (kind) {
+    case Kind::WEAPON2:
+        texture[0] = &game->textures[WEAPON_SHOT];
+        position.rectangle.width = texture[0]->width;
+        position.rectangle.height = texture[0]->height;
+        position.rectangle.x -= position.rectangle.width / 2;
+        break;
+    case Kind::WEAPON4:
+        texture[0] = &game->textures[WEAPON_MINE];
+        texture[1] = &game->textures[MINE_EXPLOSION];
+        position.rectangle.width = texture[0]->width;
+        position.rectangle.height = texture[0]->height;
+        position.rectangle.y -= position.rectangle.height;
+        moveTexture = { 0.0f, 0.0f, 40, 40 };
+        break;
+    default:
+        texture[0] = &game->textures[WEAPON_ENDING];
+        texture[1] = &game->textures[LINE_WIGGLED];
+        position.rectangle.width = texture[1]->width;
+        moveTexture = { 0.0f, 0.0f, position.rectangle.width, speedY };
+        break;
+    }
+    position.hbRectangle.width = position.rectangle.width;
+    position.hbRectangle.height = position.rectangle.height;
+}
+
+Weapon::Weapon(Game *game, std::ifstream& s)
+    : Sprite(game, s, Type::WEAPON) {
+    Read(s, &kind);
+    Read(s, &state);
+    Read(s, &numElements);
+    Read(s, &cooldown);
+    Read(s, &stopMoving);
+    Read(s, &lifeTime);
+    Read(s, &block);
+
     switch (kind) {
     case Kind::WEAPON2:
         texture[0] = &game->textures[WEAPON_SHOT];
@@ -581,6 +703,18 @@ void Weapon::Collision(Sprite *sprite) {
     }
 }
 
+void Weapon::Save(std::ofstream& s) {
+    Write(s, &type);
+    position.Save(s);
+    Write(s, &kind);
+    Write(s, &state);
+    Write(s, &numElements);
+    Write(s, &cooldown);
+    Write(s, &stopMoving);
+    Write(s, &lifeTime);
+    Write(s, &block);
+}
+
 void Weapon::checkTime() {
     std::time_t now = std::time(nullptr);
     if (lifeTime + 5 <= now) {
@@ -601,15 +735,57 @@ Ladder::Ladder(Game *game, float x, float y, int numElements, float distanceToGr
     //position.rectangle.height = numElements * texture->height;
 }
 
+Ladder::Ladder(Game *game, std::ifstream& s)
+    : Sprite(game, s, Type::LADDER), texture(&game->textures[LADDER]) {
+    Read(s, &numElements);
+    Read(s, &distanceToGround);
+}
+
 void Ladder::Draw() {
     for (int i = 0; i < numElements; i++) {
         DrawTexture(*texture, position.rectangle.x, position.rectangle.y + i * texture->height, WHITE);
     }
 }
 
+void Ladder::Save(std::ofstream& s) {
+    Write(s, &type);
+    position.Save(s);
+    Write(s, &numElements);
+    Write(s, &distanceToGround);
+}
+
 // Powerup
 Powerup::Powerup(Game *game, float x, float y, Kind kind)
     : Sprite(game, Position(x, y, 0, 0), Type::POWERUP), kind(kind) {
+
+    switch (kind) {
+    case Kind::BOOST:
+        texture = &game->textures[POWERUP_BOOST];
+        break;
+    case Kind::DOUBLE:
+        texture = &game->textures[POWERUP_DOUBLE];
+        break;
+    case Kind::HEAL:
+        texture = &game->textures[POWERUP_HEAL];
+        break;
+    case Kind::TIME:
+        texture = &game->textures[POWERUP_TIME];
+        break;
+    case Kind::WEAPON:
+        texture = &game->textures[POWERUP_WEAPON];
+        break;
+    }
+
+    position.rectangle.width = texture->width;
+    position.rectangle.height = texture->height;
+    position.hbRectangle.width = texture->width;
+    position.hbRectangle.height = texture->height;
+}
+
+Powerup::Powerup(Game *game, std::ifstream& s)
+    : Sprite(game, s, Type::POWERUP) {
+    Read(s, &speedY);
+    Read(s, &kind);
 
     switch (kind) {
     case Kind::BOOST:
@@ -659,13 +835,30 @@ void Powerup::Collision(Sprite *sprite) {
     }
 }
 
+void Powerup::Save(std::ofstream& s) {
+    Write(s, &type);
+    position.Save(s);
+    Write(s, &speedY);
+    Write(s, &kind);
+}
+
 //Ice
 Ice::Ice(Game *game, float x, float y, float width, float height)
     : Sprite(game, Position(x, y, width, height), Type::ICE) {
     texture = &game->textures[ICE];
 }
 
+Ice::Ice(Game *game, std::ifstream& s)
+    : Sprite(game, s, Type::ICE) {
+    texture = &game->textures[ICE];
+}
+
 void Ice::Draw() {
     //DrawRectangle(position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height, RED);
     DrawTextureTiled(*texture, { 0, 0, 15, 30 }, position.rectangle, { 0, -7 }, 0, 1, WHITE);
+}
+
+void Ice::Save(std::ofstream& s) {
+    Write(s, &type);
+    position.Save(s);
 }

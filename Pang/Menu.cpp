@@ -41,13 +41,13 @@ void Menu::Draw() {
     int i = 0;
     for (const auto& g : graphics) {
         DrawRectangleRounded(g.rec, 0.2, 8, menuBgColor);
-        DrawText(g.name.c_str(), g.rec.x + 100, g.rec.y + 5, 20, BLACK);
+        DrawText(g.name.c_str(), g.rec.x + 115 - 3 * g.name.size(), g.rec.y + 5, 20, BLACK);
     }
 
   // Draw selected item
     const MenuItem& item = graphics[position];
     DrawRectangleRounded(item.rec, 0.2, 8, BLACK);
-    DrawText(item.name.c_str(), item.rec.x + 100, item.rec.y + 5, 20, menuBgColor);
+    DrawText(item.name.c_str(), item.rec.x + 115 - 3 * item.name.size(), item.rec.y + 5, 20, menuBgColor);
 }
 
 void Menu::Update() {
