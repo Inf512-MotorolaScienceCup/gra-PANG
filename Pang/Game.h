@@ -157,9 +157,9 @@ public:
 
     std::vector<Sprite*> GetSprites(Sprite::Type type);
     
-    //void FindLoadFiles();
     std::vector<std::string> FindLoadFiles();
-    std::vector<std::string> fileNames = {};
+    std::vector<std::string> FindSaveFiles();
+    short int numFiles;
 
     std::vector<Sprite *> sprites;
     std::map<Sprite::Type, std::vector<Sprite *>> spriteMap;

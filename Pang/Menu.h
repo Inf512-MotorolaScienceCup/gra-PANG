@@ -15,7 +15,7 @@ class Menu {
 
 public:
     Menu(Game* game, std::vector<std::string> items);
-    void Reload(Game* game, std::vector<std::string> items);
+    void Reload(std::vector<std::string> items);
     void Draw();
     void Update();
 
