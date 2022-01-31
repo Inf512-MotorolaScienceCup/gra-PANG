@@ -65,11 +65,15 @@ public:
     enum class State {
         MAIN_MENU,
         LEVEL_SELECTOR,
+        SAVE_MENU,
+        LOAD_MENU,
         ACTIVE,
         PAUSED,
         LEVEL_FINISHED,
         GAME_OVER,
-        GAME_FINISHED
+        GAME_FINISHED,
+        GAME_SAVED,
+        ERROR
     } state;
 
     const char *textureFiles[NUM_TEXTURES] = {"res/Background/forestHD.png",
@@ -136,8 +140,8 @@ public:
     void ChangeState(State newState);
     void WriteGameData(std::ofstream&);
     void ReadGameData(std::ifstream&);
-    void SaveGame();
-    void LoadGame();
+    bool SaveGame(int);
+    void LoadGame(int);
     void RestartLevel();
     void StartGame(int newLevel = 1);
     void DrawLevelSelector();
@@ -152,6 +156,10 @@ public:
     void LoadTextures();
 
     std::vector<Sprite*> GetSprites(Sprite::Type type);
+    
+    //void FindLoadFiles();
+    std::vector<std::string> FindLoadFiles();
+    std::vector<std::string> fileNames = {};
 
     std::vector<Sprite *> sprites;
     std::map<Sprite::Type, std::vector<Sprite *>> spriteMap;
@@ -168,7 +176,8 @@ public:
     int sequenceFrameCounter;
     Menu mainMenu;
     Menu ingameMenu;
-    //Menu saveMenu;
+    Menu saveMenu;
+    Menu loadMenu;
 
     int level = 1;
     int lives;

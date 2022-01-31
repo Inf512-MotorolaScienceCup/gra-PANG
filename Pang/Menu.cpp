@@ -9,6 +9,13 @@ const float MENU_HEIGHT = 200;
 
 Menu::Menu(Game* game, std::vector<std::string> items)
     : game(game) {
+    Reload(game, items);
+}
+
+void Menu::Reload(Game* game, std::vector<std::string> items) {
+    if (graphics.size() > 0)
+        graphics.clear();
+
     bgRec.x = (game->screenWidth - MENU_WIDTH) / 2;
     bgRec.y = (game->screenHeight - MENU_HEIGHT) / 2;
     bgRec.width = MENU_WIDTH;
@@ -20,14 +27,14 @@ Menu::Menu(Game* game, std::vector<std::string> items)
 
     int i = 0;
     for (auto item : items) {
-    graphics.push_back({
-        item, {
-            bgRec.x + xMargin,
-            bgRec.y + yMargin + i++ * (itemHeight + 2),
-            MENU_WIDTH - 2 * xMargin,
-            itemHeight
-        }
-        });
+        graphics.push_back({
+            item,{
+                bgRec.x + xMargin,
+                bgRec.y + yMargin + i++ * (itemHeight + 2),
+                MENU_WIDTH - 2 * xMargin,
+                itemHeight
+            }
+            });
     }
 }
 
@@ -41,13 +48,13 @@ void Menu::Draw() {
     int i = 0;
     for (const auto& g : graphics) {
         DrawRectangleRounded(g.rec, 0.2, 8, menuBgColor);
-        DrawText(g.name.c_str(), g.rec.x + 115 - 3 * g.name.size(), g.rec.y + 5, 20, BLACK);
+        DrawText(g.name.c_str(), g.rec.x + 125 - 4 * g.name.size(), g.rec.y + 5, 20, BLACK);
     }
 
   // Draw selected item
     const MenuItem& item = graphics[position];
     DrawRectangleRounded(item.rec, 0.2, 8, BLACK);
-    DrawText(item.name.c_str(), item.rec.x + 115 - 3 * item.name.size(), item.rec.y + 5, 20, menuBgColor);
+    DrawText(item.name.c_str(), item.rec.x + 127 - 4 * item.name.size(), item.rec.y + 5, 20, menuBgColor);
 }
 
 void Menu::Update() {

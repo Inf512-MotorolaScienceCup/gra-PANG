@@ -248,7 +248,9 @@ void Game::AddScore(int score) {
 Game::Game()
     : state(State::MAIN_MENU),
       mainMenu(this, {"Start", "Load", "Level", "Quit"}),
-      ingameMenu(this, {"Continue", "Save Game", "Back to Menu", "Quit"}) {
+      ingameMenu(this, {"Continue", "Save Game", "Back to Menu", "Quit"}),
+      saveMenu(this, {"Save 1", "Save 2", "Save 3", "Save 4"}),
+      loadMenu(this, FindLoadFiles()) {
     InitWindow(screenWidth, screenHeight, "Pang");
     SetExitKey(KEY_F10);
     SetTargetFPS(60);
@@ -531,6 +533,19 @@ void Game::Draw() {
             break;
         case State::LEVEL_SELECTOR:
             DrawLevelSelector();
+            break;
+        case State::SAVE_MENU:
+            saveMenu.Draw();
+            break;
+        case State::GAME_SAVED:
+            DrawSequence("Game Saved");
+            break;
+        case State::LOAD_MENU:
+            loadMenu.Draw();
+            break;
+        case State::ERROR:
+            DrawSequence("Unable to save file");
+            break;
     }
 
     EndDrawing();
@@ -557,6 +572,11 @@ void Game::Update() {
         if (sequenceFrameCounter > frameCounter) return;
 
         ChangeState(State::MAIN_MENU);
+    }
+    else if (state == State::GAME_SAVED) {
+        if (sequenceFrameCounter > frameCounter) return;
+
+        ChangeState(State::SAVE_MENU);
     } else if (state == State::LEVEL_SELECTOR) {
         if (IsKeyPressed(KEY_ENTER)) {
             StartGame(level);
@@ -570,24 +590,69 @@ void Game::Update() {
     }
 
     if (ingameMenu.selected == "Save Game") {
-        SaveGame();
+        //SaveGame();
+        ChangeState(State::SAVE_MENU);
         ingameMenu.selected = "";
     } else if (ingameMenu.selected == "Continue") {
         ChangeState(State::ACTIVE);
         ingameMenu.selected = "";
-    } else if (ingameMenu.selected == "Back to menu") {
+    } else if (ingameMenu.selected == "Back to Menu") {
         ChangeState(State::GAME_OVER);
         ingameMenu.selected = "";
     } else if (mainMenu.selected == "Start") {
         StartGame(level);
         mainMenu.selected = "";
     } else if (mainMenu.selected == "Load") {
-        LoadGame();
-        ChangeState(State::ACTIVE);
+        ChangeState(State::LOAD_MENU);
+        loadMenu.Reload(this, FindLoadFiles());
         mainMenu.selected = "";
     } else if (mainMenu.selected == "Level") {
         ChangeState(State::LEVEL_SELECTOR);
         mainMenu.selected = "";
+    } else if (saveMenu.selected == "Save 1") {
+        if (SaveGame(1))
+            ChangeState(State::GAME_SAVED);
+        else
+            ChangeState(State::ERROR);
+
+        saveMenu.selected = "";
+    } else if (saveMenu.selected == "Save 2") {
+        if (SaveGame(2))
+            ChangeState(State::GAME_SAVED);
+        else
+            ChangeState(State::ERROR);
+
+        saveMenu.selected = "";
+    } else if (saveMenu.selected == "Save 3") {
+        if (SaveGame(3))
+        ChangeState(State::GAME_SAVED);
+        else
+            ChangeState(State::ERROR);
+
+        saveMenu.selected = "";
+    } else if (saveMenu.selected == "Save 4") {
+        if (SaveGame(4))
+            ChangeState(State::GAME_SAVED);
+        else
+            ChangeState(State::ERROR);
+
+        saveMenu.selected = "";
+    } else if (loadMenu.selected == "Save 1") {
+        LoadGame(1);
+        ChangeState(State::ACTIVE);
+        loadMenu.selected = "";
+    } else if (loadMenu.selected == "Save 2") {
+        LoadGame(2);
+        ChangeState(State::ACTIVE);
+        loadMenu.selected = "";
+    } else if (loadMenu.selected == "Save 3") {
+        LoadGame(3);
+        ChangeState(State::ACTIVE);
+        loadMenu.selected = "";
+    } else if (loadMenu.selected == "Save 4") {
+        LoadGame(4);
+        ChangeState(State::ACTIVE);
+        loadMenu.selected = "";
     }
 
     if (GetKeyPressed() == KEY_ESCAPE) {
@@ -595,6 +660,10 @@ void Game::Update() {
             ChangeState(State::ACTIVE);
         else if (state == State::ACTIVE)
             ChangeState(State::PAUSED);
+        else if (state == State::SAVE_MENU)
+            ChangeState(State::PAUSED);
+        else if (state == State::LOAD_MENU)
+            ChangeState(State::MAIN_MENU);
     }
 
     if (state == State::PAUSED) {
@@ -617,6 +686,10 @@ void Game::Update() {
         }
     } else if (state == State::MAIN_MENU) {
         mainMenu.Update();
+    } else if (state == State::SAVE_MENU) {
+        saveMenu.Update();
+    } else if (state == State::LOAD_MENU) {
+        loadMenu.Update();
     }
 }
 
@@ -710,7 +783,7 @@ void Game::DrawPanel() {
 
 void Game::DrawSequence(const char* message) {
     DrawRectangleRec({0, 0, screenWidth, screenHeight}, ColorAlpha(BLACK, 0.6));
-    DrawText(message, 400, 400, 40, GREEN);
+    DrawText(message, 520, 350, 40, GREEN);
 }
 
 void Game::ChangeState(State newState) {
@@ -729,6 +802,11 @@ void Game::ChangeState(State newState) {
             Unspawn();
             sequenceFrameCounter = frameCounter + 2 * 60;
             break;
+        case State::GAME_SAVED:
+            sequenceFrameCounter = frameCounter + 2 * 60;
+            break;
+        case State::ERROR:
+            sequenceFrameCounter = frameCounter + 2 * 60;
     }
     state = newState;
 }
@@ -799,27 +877,29 @@ void Game::ReadGameData(std::ifstream& s) {
     //std::map<Sprite::Type, std::vector<Sprite *>> spriteMap;
 }
 
-void Game::SaveGame() {
+bool Game::SaveGame(int fileNum) {
     if (!DirectoryExists("saves")) {
         std::system("mkdir saves");
     }
-    std::ofstream saveFile("saves/s1.psf", std::ios_base::binary);
+    std::ofstream saveFile(TextFormat("saves/s%d.psf", fileNum), std::ios_base::binary);
     if (saveFile.is_open()) {
         WriteGameData(saveFile);
 
         saveFile.close();
 
         std::cout << "Save file created";
+        return true;
     } else {
         std::cout << "Unable to open file";
+        return false;
     }
 }
 
-void Game::LoadGame() {
+void Game::LoadGame(int fileNum) {
     if (!DirectoryExists("saves")) {
         std::cout << "No saves";
     } else {
-        std::ifstream loadFile("saves/s1.psf", std::ios_base::binary);
+        std::ifstream loadFile(TextFormat("saves/s%d.psf", fileNum), std::ios_base::binary);
         if (loadFile.is_open()) {
             ReadGameData(loadFile);
 
@@ -828,8 +908,17 @@ void Game::LoadGame() {
         } else {
             std::cout << "Unable to open file";
         }
-
     }
+}
+
+std::vector<std::string> Game::FindLoadFiles() {
+    std::vector<std::string> fileNames;
+
+    for (int i = 1; i < 5; i++) {
+        if (FileExists(TextFormat("saves/s%d.psf", i)))
+            fileNames.push_back(TextFormat("Save %d", i));
+    }
+    return fileNames;
 }
 
 void Game::RestartLevel() {
