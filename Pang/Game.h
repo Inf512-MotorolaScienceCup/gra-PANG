@@ -137,11 +137,16 @@ public:
     void MoveSprites();
     void CheckCollision();
     void DrawSequence(const char* message);
+    void DrawEndLevel();
+    void DrawGameOver();
+    void DrawEndGame();
     void ChangeState(State newState);
     void WriteGameData(std::ofstream&);
     void ReadGameData(std::ifstream&);
     bool SaveGame(int);
     void LoadGame(int);
+    void SaveUsrData();
+    void LoadUsrData();
     void RestartLevel();
     void StartGame(int newLevel = 1);
     void DrawLevelSelector();
@@ -182,6 +187,7 @@ public:
     int level = 1;
     int lives;
     int score;
+    int highScore;
 
     std::time_t endLevelTime;
     int levelTime;

@@ -588,7 +588,7 @@ void Game::Spawn() {
     Spawn(new Block(this, 0, 0, wallThickness, screenHeight, Block::Kind::WALL));
     Spawn(new Block(this, screenWidth - wallThickness, 0, wallThickness, screenHeight, Block::Kind::WALL));
 
-    weaponType = 3;
+    weaponType = 2;
     shootingLeft = 0;
     speedBoost = 1;
 
@@ -626,10 +626,12 @@ void Game::Draw() {
             ingameMenu.Draw();
             break;
         case State::LEVEL_FINISHED:
-            DrawSequence("Great Job!");
+            //DrawSequence("Great Job!");
+            DrawEndLevel();
             break;
         case State::GAME_OVER:
-            DrawSequence("Game Over!");
+            //DrawSequence("Game Over!");
+            DrawGameOver();
             break;
         case State::GAME_FINISHED:
             DrawSequence("You Won!");
@@ -672,6 +674,9 @@ void Game::Update() {
         else
             RestartLevel();
     } else if (state == State::GAME_FINISHED) {
+        if (highScore < score)
+            highScore = score;
+
         if (sequenceFrameCounter > frameCounter) return;
 
         ChangeState(State::MAIN_MENU);
@@ -805,11 +810,14 @@ void Game::Update() {
 }
 
 int Game::MainLoop() {
+    LoadUsrData();
+
     while (!WindowShouldClose() && ingameMenu.selected != "Quit" && mainMenu.selected != "Quit") {
         Update();
         CheckCollision();
         Draw();
     }
+    SaveUsrData();
 
     return 0;
 }
@@ -897,21 +905,43 @@ void Game::DrawSequence(const char* message) {
     DrawText(message, 520, 350, 40, GREEN);
 }
 
+void Game::DrawEndLevel() {
+    DrawRectangleRec({ 0, 0, screenWidth, screenHeight }, ColorAlpha(BLACK, 0.6));
+    DrawText("Great job!", 520, 300, 40, GREEN);
+    DrawText(TextFormat("Time bonus: %d", elapsedLevelTime * 50), 500, 360, 30, GREEN);
+    DrawText(TextFormat("Your score: %d", score), 500, 410, 30, GREEN);
+}
+
+void Game::DrawGameOver() {
+    DrawRectangleRec({ 0, 0, screenWidth, screenHeight }, ColorAlpha(BLACK, 0.6));
+    DrawText("Game over", 520, 300, 40, GREEN);
+    DrawText(TextFormat("Your score: %d", score), 500, 360, 30, GREEN);
+}
+
+void Game::DrawEndGame() {
+    DrawRectangleRec({ 0, 0, screenWidth, screenHeight }, ColorAlpha(BLACK, 0.6));
+    DrawText("Game finished - Superb job!", 480, 300, 40, GREEN);
+    DrawText(TextFormat("Time bonus: %d", elapsedLevelTime * 50), 500, 360, 30, GREEN);
+    DrawText(TextFormat("Your score: %d", score), 500, 410, 30, GREEN);
+    DrawText(TextFormat("Highest score: %d", highScore), 500, 460, 30, GREEN);
+}
+
 void Game::ChangeState(State newState) {
     if (state == newState) return;
 
     switch (newState) {
         case State::GAME_OVER:
             Unspawn();
-            sequenceFrameCounter = frameCounter + 2 * 60;
+            sequenceFrameCounter = frameCounter + 3 * 60;
             break;
         case State::LEVEL_FINISHED:
             Unspawn();
-            sequenceFrameCounter = frameCounter + 2 * 60;
+            score += elapsedLevelTime * 100;
+            sequenceFrameCounter = frameCounter + 3 * 60;
             break;
         case State::GAME_FINISHED:
             Unspawn();
-            sequenceFrameCounter = frameCounter + 2 * 60;
+            sequenceFrameCounter = frameCounter + 3 * 60;
             break;
         case State::GAME_SAVED:
             sequenceFrameCounter = frameCounter + 2 * 60;
@@ -1013,6 +1043,27 @@ void Game::LoadGame(int fileNum) {
             std::cout << "Load complete\n";
         } else {
             std::cout << "Unable to open file";
+        }
+    }
+}
+
+void Game::SaveUsrData() {
+    if (!DirectoryExists("saves")) {
+        std::system("mkdir saves");
+    }
+    std::ofstream saveFile("saves/s0.psf", std::ios_base::binary);
+    if (saveFile.is_open()) {
+        Write(saveFile, &highScore);
+        saveFile.close();
+    }
+}
+
+void Game::LoadUsrData() {
+    if (DirectoryExists("saves")) {
+        std::ifstream loadFile("saves/s0.psf", std::ios_base::binary);
+        if (loadFile.is_open()) {
+            Read(loadFile, &highScore);
+            loadFile.close();
         }
     }
 }
