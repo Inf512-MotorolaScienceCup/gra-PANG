@@ -60,10 +60,25 @@ enum TextureTypes {
     NUM_TEXTURES
 };
 
+enum AudioTypes {
+    BALL_BOUNCE,
+    GAME_OVER,
+    HEALTH_LOSE,
+    LASER,
+    LEVEL_START,
+    LEVEL_COMPLETED,
+    POWERUP,
+    WALL_DESTRACTION,
+
+    NUM_AUDIO
+};
+
 class Game {
 public:
     enum class State {
         MAIN_MENU,
+        MOD_MENU,
+        DIFFLVL_MENU,
         LEVEL_SELECTOR,
         SAVE_MENU,
         LOAD_MENU,
@@ -116,6 +131,17 @@ public:
                                               };
     Texture2D textures[NUM_TEXTURES];
 
+    const char *audioFiles[NUM_AUDIO] = {"res/audio/bounce.wav",
+                                         "res/audio/game_over.wav",
+                                         "res/audio/health_lose.wav",
+                                         "res/audio/laser.wav",
+                                         "res/audio/level_start.wav",
+                                         "res/audio/level_completed.wav",
+                                         "res/audio/powerup.wav",
+                                         "res/audio/wall_destruction.mp3",
+    };
+    Sound audio[NUM_AUDIO];
+
     const float screenWidth = 1280;
     const float screenHeight = 720;
     const float wallThickness = 20;
@@ -125,31 +151,41 @@ public:
     Game();
     ~Game();
 
-    void Spawn(Sprite *sprite);
+    void LoadTextures();
+    void LoadAudio();
+    void Unload();
+
+    int MainLoop();
+    void Update();
+    void ChangeState(State newState);
+    void CheckCollision();
+    void MoveSprites();
+
     void Spawn();
+    void Spawn(Sprite *sprite);
     void SpawnLevel();
     void Unspawn();
+    void StartGame(int newLevel = 1);
+    void RestartLevel();
+
     void Draw();
-    void Update();
     void DrawSprites();
     void DrawBackground();
     void DrawPanel();
-    void MoveSprites();
-    void CheckCollision();
     void DrawSequence(const char* message);
     void DrawEndLevel();
     void DrawGameOver();
     void DrawEndGame();
-    void ChangeState(State newState);
+    void DrawLevelSelector();
+
     void WriteGameData(std::ofstream&);
     void ReadGameData(std::ifstream&);
     bool SaveGame(int);
     void LoadGame(int);
     void SaveUsrData();
     void LoadUsrData();
-    void RestartLevel();
-    void StartGame(int newLevel = 1);
-    void DrawLevelSelector();
+    std::vector<std::string> FindLoadFiles();
+    std::vector<std::string> FindSaveFiles();
 
     void AddEnemy(float, float, Enemy::Kind, int);
     void AddWeapon(float, float, int);
@@ -157,13 +193,9 @@ public:
     void AddPowerup(float, float);
     void PickAction(Powerup::Kind);
     void CheckTime();
-    int MainLoop();
-    void LoadTextures();
 
     std::vector<Sprite*> GetSprites(Sprite::Type type);
-    
-    std::vector<std::string> FindLoadFiles();
-    std::vector<std::string> FindSaveFiles();
+
     short int numFiles;
 
     std::vector<Sprite *> sprites;
@@ -183,6 +215,8 @@ public:
     Menu ingameMenu;
     Menu saveMenu;
     Menu loadMenu;
+    Menu modMenu;
+    Menu diffLvlMenu;
 
     int level = 1;
     int lives;

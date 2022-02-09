@@ -375,6 +375,7 @@ Enemy::Enemy(Game* game, float x, float y, float radius, Kind kind, int heading)
     }
     speed.x *= heading;
     speed.y = -5;
+    bounce = game->audio[BALL_BOUNCE];
 }
 
 Enemy::Enemy(Game *game, std::ifstream& s) 
@@ -452,6 +453,9 @@ void Enemy::Collision(Sprite* sprite) {
                 position.center.y = sprite->position.rectangle.y + sprite->position.rectangle.height + position.radius + 1;
             }
         }
+
+        PlaySound(bounce);
+
     } else if (sprite->type == Sprite::Type::WEAPON) {
         duality(sprite);
     } else if (sprite->type == Sprite::Type::PLAYER) {
@@ -654,8 +658,8 @@ void Weapon::Move() {
                 break;
             case Kind::WEAPON2:
                 if (position.rectangle.height < 30) {
-                    position.rectangle.height += speedY;
-                    position.hbRectangle.height += speedY;
+                    position.rectangle.height += speedY + 20;
+                    position.hbRectangle.height += speedY + 20;
                 }
                 position.rectangle.y -= speedY;
                 break;

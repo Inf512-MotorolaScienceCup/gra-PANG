@@ -128,10 +128,10 @@ private:
     Game * game;
     static Texture2D spriteSheet[NUM_KINDS];
     static Texture2D spriteExplode[NUM_KINDS];
+    Sound bounce;
     Rectangle stand;
     Rectangle standExplode;
     Color color;
-    //int rad;
     Vector2 speed;
     int cooldown = 0;
     float maxSpeedY;

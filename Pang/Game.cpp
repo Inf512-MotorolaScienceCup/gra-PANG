@@ -9,19 +9,299 @@
 #include "Sprite.h"
 #include "Menu.h"
 
-void Game::DrawSprites() {
-    for (size_t i = 0; i < sprites.size(); i++) {
-        sprites[i]->Draw();
+Game::Game()
+    : state(State::MOD_MENU),
+    mainMenu(this, { "Start", "Load", "Level", "Quit" }),
+    ingameMenu(this, { "Continue", "Save Game", "Back to Menu", "Quit" }),
+    saveMenu(this, FindSaveFiles()),
+    loadMenu(this, FindLoadFiles()),
+    modMenu(this, { "Mod 1", "Mod 2", "Mod 3" }),
+    diffLvlMenu(this, { "Easy", "Normal", "Hard", "Quit" }) {
+    InitWindow(screenWidth, screenHeight, "Pang");
+    InitAudioDevice();
+    SetExitKey(KEY_F10);
+    SetTargetFPS(60);
+    LoadTextures();
+    LoadAudio();
+}
+
+Game::~Game() {
+    Unspawn();
+    Unload();
+    CloseWindow();
+    CloseAudioDevice();
+}
+
+void Game::LoadTextures() {
+    for (int i = 0; i < NUM_TEXTURES; i++) {
+        Image image = LoadImage(textureFiles[i]);
+        textures[i] = LoadTextureFromImage(image);
+        UnloadImage(image);
     }
 }
 
-void Game::MoveSprites() {
-    for (size_t i = 0; i < sprites.size(); i++) {
-        sprites[i]->Move();
+void Game::LoadAudio() {
+    for (int i = 0; i < NUM_AUDIO; i++) {
+        audio[i] = LoadSound(audioFiles[i]);
     }
-    auto removed = remove_if(sprites.begin(), sprites.end(), [](Sprite* sprite) { return sprite->state == Sprite::State::FINISHED; });
-    std::for_each(removed, sprites.end(), [](Sprite* sprite) { std::cout << "REMOVE:" << (int)sprite->type << " ptr:"<< sprite << std::endl; });
-    sprites.erase(removed, sprites.end());
+}
+
+void Game::Unload() {
+    for (int i = 0; i < NUM_TEXTURES; i++) {
+        UnloadTexture(textures[i]);
+    }
+    for (int i = 0; i < NUM_AUDIO; i++) {
+        UnloadSound(audio[i]);
+    }
+}
+
+int Game::MainLoop() {
+    LoadUsrData();
+
+    while (!WindowShouldClose() && ingameMenu.selected != "Quit" && mainMenu.selected != "Quit" && diffLvlMenu.selected != "Quit") {
+        Update();
+        CheckCollision();
+        Draw();
+    }
+    SaveUsrData();
+
+    return 0;
+}
+
+void Game::Update() {
+    frameCounter++;
+
+    if (state == State::ACTIVE && lives <= 0) {
+        ChangeState(State::GAME_OVER);
+    }
+    else if (state == State::GAME_OVER) {
+        if (sequenceFrameCounter > frameCounter) return;
+
+        ChangeState(State::MAIN_MENU);
+    }
+    else if (state == State::LEVEL_FINISHED) {
+        if (sequenceFrameCounter > frameCounter) return;
+
+        level += 1;
+        if (level > NUM_LEVELS)
+            ChangeState(State::GAME_FINISHED);
+        else
+            RestartLevel();
+    }
+    else if (state == State::GAME_FINISHED) {
+        if (highScore < score)
+            highScore = score;
+
+        if (sequenceFrameCounter > frameCounter) return;
+
+        ChangeState(State::MAIN_MENU);
+    }
+    else if (state == State::GAME_SAVED) {
+        if (sequenceFrameCounter > frameCounter) return;
+
+        saveMenu.Reload(FindSaveFiles());
+        ChangeState(State::SAVE_MENU);
+    }
+    else if (state == State::LEVEL_SELECTOR) {
+        if (IsKeyPressed(KEY_ENTER)) {
+            StartGame(level);
+        }
+        else if (IsKeyPressed(KEY_ESCAPE)) {
+            ChangeState(State::MAIN_MENU);
+        }
+        else if (IsKeyPressed(KEY_RIGHT)) {
+            if (level < NUM_LEVELS) level += 1;
+        }
+        else if (IsKeyPressed(KEY_LEFT)) {
+            if (level > 1) level -= 1;
+        }
+    }
+
+    if (ingameMenu.selected == "Save Game") {
+        ChangeState(State::SAVE_MENU);
+        saveMenu.Reload(FindSaveFiles());
+        ingameMenu.selected = "";
+    }
+    else if (ingameMenu.selected == "Continue") {
+        ChangeState(State::ACTIVE);
+        ingameMenu.selected = "";
+    }
+    else if (ingameMenu.selected == "Back to Menu") {
+        ChangeState(State::GAME_OVER);
+        ingameMenu.selected = "";
+    }
+    else if (mainMenu.selected == "Start") {
+        StartGame(level);
+        mainMenu.selected = "";
+    }
+    else if (mainMenu.selected == "Load") {
+        ChangeState(State::LOAD_MENU);
+        loadMenu.Reload(FindLoadFiles());
+        mainMenu.selected = "";
+    }
+    else if (mainMenu.selected == "Level") {
+        ChangeState(State::LEVEL_SELECTOR);
+        mainMenu.selected = "";
+    }
+    else if (saveMenu.selected == "Save 1") {
+        if (SaveGame(1))
+            ChangeState(State::GAME_SAVED);
+        else
+            ChangeState(State::ERROR);
+
+        saveMenu.selected = "";
+    }
+    else if (saveMenu.selected == "Save 2") {
+        if (SaveGame(2))
+            ChangeState(State::GAME_SAVED);
+        else
+            ChangeState(State::ERROR);
+
+        saveMenu.selected = "";
+    }
+    else if (saveMenu.selected == "Save 3") {
+        if (SaveGame(3))
+            ChangeState(State::GAME_SAVED);
+        else
+            ChangeState(State::ERROR);
+
+        saveMenu.selected = "";
+    }
+    else if (saveMenu.selected == "Save 4") {
+        if (SaveGame(4))
+            ChangeState(State::GAME_SAVED);
+        else
+            ChangeState(State::ERROR);
+
+        saveMenu.selected = "";
+    }
+    else if (saveMenu.selected == "Empty slot") {
+        if (SaveGame(numFiles + 1))
+            ChangeState(State::GAME_SAVED);
+        else
+            ChangeState(State::ERROR);
+
+        saveMenu.selected = "";
+    }
+    else if (loadMenu.selected == "Save 1") {
+        LoadGame(1);
+        ChangeState(State::ACTIVE);
+        loadMenu.selected = "";
+    }
+    else if (loadMenu.selected == "Save 2") {
+        LoadGame(2);
+        ChangeState(State::ACTIVE);
+        loadMenu.selected = "";
+    }
+    else if (loadMenu.selected == "Save 3") {
+        LoadGame(3);
+        ChangeState(State::ACTIVE);
+        loadMenu.selected = "";
+    }
+    else if (loadMenu.selected == "Save 4") {
+        LoadGame(4);
+        ChangeState(State::ACTIVE);
+        loadMenu.selected = "";
+    } if (modMenu.selected == "Mod 1") {
+        ChangeState(State::DIFFLVL_MENU);
+        modMenu.selected = "";
+    }
+    else if (modMenu.selected == "Mod 2") {
+        ChangeState(State::MAIN_MENU);
+        modMenu.selected = "";
+    }
+    else if (modMenu.selected == "Mod 3") {
+        ChangeState(State::MAIN_MENU);
+        modMenu.selected = "";
+    }
+    else if (diffLvlMenu.selected == "Easy") {
+        int randLvl = GetRandomValue(1, 5);
+        StartGame(randLvl);
+        diffLvlMenu.selected = "";
+    }
+    else if (diffLvlMenu.selected == "Normal") {
+        int randLvl = GetRandomValue(6, 10);
+        StartGame(randLvl);
+        diffLvlMenu.selected = "";
+    }
+    else if (diffLvlMenu.selected == "Hard") {
+        int randLvl = GetRandomValue(11, 15);
+        StartGame(randLvl);
+        diffLvlMenu.selected = "";
+    }
+
+    if (GetKeyPressed() == KEY_ESCAPE) {
+        if (state == State::PAUSED)
+            ChangeState(State::ACTIVE);
+        else if (state == State::ACTIVE)
+            ChangeState(State::PAUSED);
+        else if (state == State::SAVE_MENU)
+            ChangeState(State::PAUSED);
+        else if (state == State::LOAD_MENU)
+            ChangeState(State::MAIN_MENU);
+    }
+
+    if (state == State::PAUSED) {
+        ingameMenu.Update();
+    }
+    else if (state == State::ACTIVE) {
+        if (endLevelTime > 0) {
+            std::time_t now = std::time(nullptr);
+            elapsedLevelTime = endLevelTime - now;
+            if (elapsedLevelTime <= 0) {
+                elapsedLevelTime = 0;
+                endLevelTime = 0;
+                ChangeState(State::GAME_OVER);
+            }
+        }
+        MoveSprites();
+        for (int i = 0; i < 4; i++) {
+            if (timeLeft != 0) {
+                CheckTime();
+            }
+        }
+    }
+    else if (state == State::MAIN_MENU) {
+        mainMenu.Update();
+    }
+    else if (state == State::SAVE_MENU) {
+        saveMenu.Update();
+    }
+    else if (state == State::LOAD_MENU) {
+        loadMenu.Update();
+    }
+    else if (state == State::MOD_MENU) {
+        modMenu.Update();
+    }
+    else if (state == State::DIFFLVL_MENU) {
+        diffLvlMenu.Update();
+    }
+}
+
+void Game::ChangeState(State newState) {
+    if (state == newState) return;
+
+    switch (newState) {
+    case State::GAME_OVER:
+        Unspawn();
+        sequenceFrameCounter = frameCounter + 3 * 60;
+        break;
+    case State::LEVEL_FINISHED:
+        Unspawn();
+        score += elapsedLevelTime * 100;
+        sequenceFrameCounter = frameCounter + 3 * 60;
+        break;
+    case State::GAME_FINISHED:
+        Unspawn();
+        sequenceFrameCounter = frameCounter + 3 * 60;
+        break;
+    case State::GAME_SAVED:
+        sequenceFrameCounter = frameCounter + 2 * 60;
+        break;
+    case State::ERROR:
+        sequenceFrameCounter = frameCounter + 2 * 60;
+    }
+    state = newState;
 }
 
 void Game::CheckCollision() {
@@ -115,151 +395,35 @@ void Game::CheckCollision() {
     }
 }
 
-void Game::AddEnemy(float x, float y, Enemy::Kind kind, int heading) {
-    Sprite* s = Enemy::create(this, x, y, kind, heading);
-    spriteMap[Sprite::Type::ENEMY].push_back(s);
-    sprites.push_back(s);
-}
-
-void Game::AddWeapon(float x, float y, int type) {
-    switch (type) {
-    case 1:
-        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON1);
-        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
-        sprites.push_back(weapon);
-        break;
-    case 2:
-        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON2);
-        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
-        sprites.push_back(weapon);
-        break;
-    case 3:
-        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON3);
-        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
-        sprites.push_back(weapon);
-        break;
-    case 4:
-        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON4);
-        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
-        sprites.push_back(weapon);
-        break;
+void Game::MoveSprites() {
+    for (size_t i = 0; i < sprites.size(); i++) {
+        sprites[i]->Move();
     }
+    auto removed = remove_if(sprites.begin(), sprites.end(), [](Sprite* sprite) { return sprite->state == Sprite::State::FINISHED; });
+    std::for_each(removed, sprites.end(), [](Sprite* sprite) { std::cout << "REMOVE:" << (int)sprite->type << " ptr:" << sprite << std::endl; });
+    sprites.erase(removed, sprites.end());
 }
 
-void Game::AddPowerup(float x, float y) {
-    int chance = GetRandomValue(1, 3);
-    if (chance == 1) {
-        int kindNum;
-        if (weaponType == 2)
-            kindNum = GetRandomValue(2, 4);
-        else
-            kindNum = GetRandomValue(1, 4);
-            
-        Sprite* s;
-        switch (kindNum) {
-        case 1:
-            s = new Powerup(this, x, y, Powerup::Kind::DOUBLE);
-            spriteMap[Sprite::Type::POWERUP].push_back(s);
-            sprites.push_back(s);
-            break;
-        case 2:
-            s = new Powerup(this, x, y, Powerup::Kind::BOOST);
-            spriteMap[Sprite::Type::POWERUP].push_back(s);
-            sprites.push_back(s);
-            break;
-        case 3:
-            s = new Powerup(this, x, y, Powerup::Kind::TIME);
-            spriteMap[Sprite::Type::POWERUP].push_back(s);
-            sprites.push_back(s);
-            break;
-        case 4:
-            s = new Powerup(this, x, y, Powerup::Kind::WEAPON);
-            spriteMap[Sprite::Type::POWERUP].push_back(s);
-            sprites.push_back(s);
-            break;
-        }
-    }
-}
+void Game::Spawn() {
+    Spawn(new Block(this, 0, 0, screenWidth, wallThickness, Block::Kind::WALL));
+    Spawn(new Block(this, 0, panelHeight + wallThickness, screenWidth, wallThickness, Block::Kind::WALL));
+    Spawn(new Block(this, 0, screenHeight - wallThickness, screenWidth, wallThickness, Block::Kind::WALL));
+    Spawn(new Block(this, 0, 0, wallThickness, screenHeight, Block::Kind::WALL));
+    Spawn(new Block(this, screenWidth - wallThickness, 0, wallThickness, screenHeight, Block::Kind::WALL));
 
-void Game::PickAction(Powerup::Kind kind) {
-    switch (kind) {
-    case Powerup::Kind::BOOST:
-        speedBoost = 2;
-        timeLeft[0] = std::time(nullptr);
-        break;
-    case Powerup::Kind::DOUBLE:
-        if (weaponType == 4)
-            shootingLeft *= 2;
-        else {
-            multiWeapon = 1;
-            timeLeft[1] = std::time(nullptr);
-        }
-        break;
-    case Powerup::Kind::HEAL:
-        lives++;
-        break;
-    case Powerup::Kind::TIME:
-        stopTime = true;
-        timeLeft[2] = std::time(nullptr);
-        break;
-    case Powerup::Kind::WEAPON:
-        int change = GetRandomValue(2, 4);
-        if (change == weaponType)
-            weaponType = 1;
-        else
-            weaponType = change;
+    weaponType = 2;
+    shootingLeft = 0;
+    speedBoost = 1;
 
-        if (weaponType == 4)
-            shootingLeft = 5;
-        break;
-    }
-}
+    SpawnLevel();
 
-void Game::CheckTime() {
-    std::time_t now = std::time(nullptr);
-    for (int i = 0; i < 4; i++) {
-        if (timeLeft[i] + 5 <= now) {
-            switch (i) {
-            case 0:
-                speedBoost = 1;
-                timeLeft[i] = 0;
-                break;
-            case 1:
-                multiWeapon = 0;
-                timeLeft[i] = 0;
-                break;
-            case 2:
-                stopTime = false;
-                timeLeft[i] = 0;
-                break;
-            case 3:
-                break;
-            default:
-                break;
-            }
-        }
-    }
-}
+    // weapon = new Weapon(this, 0, 0, 20, 0, PURPLE);
+    // sprites.push_back(weapon);
 
-void Game::AddScore(int score) {
-    this->score += score;
-}
+    //player = new Player(this, {400, screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54});
+    //sprites.push_back(player);
 
-Game::Game()
-    : state(State::MAIN_MENU),
-      mainMenu(this, {"Start", "Load", "Level", "Quit"}),
-      ingameMenu(this, {"Continue", "Save Game", "Back to Menu", "Quit"}),
-      saveMenu(this, FindSaveFiles()),
-      loadMenu(this, FindLoadFiles()) {
-    InitWindow(screenWidth, screenHeight, "Pang");
-    SetExitKey(KEY_F10);
-    SetTargetFPS(60);
-    LoadTextures();
-}
-
-Game::~Game() {
-    Unspawn();
-    CloseWindow(); // Close window and OpenGL context
+    endLevelTime = std::time(nullptr) + levelTime;
 }
 
 void Game::Spawn(Sprite* sprite) {
@@ -581,26 +745,25 @@ void Game::SpawnLevel() {
     }
 }
 
-void Game::Spawn() {
-    Spawn(new Block(this, 0, 0, screenWidth, wallThickness, Block::Kind::WALL));
-    Spawn(new Block(this, 0, panelHeight + wallThickness, screenWidth, wallThickness, Block::Kind::WALL));
-    Spawn(new Block(this, 0, screenHeight - wallThickness, screenWidth, wallThickness, Block::Kind::WALL));
-    Spawn(new Block(this, 0, 0, wallThickness, screenHeight, Block::Kind::WALL));
-    Spawn(new Block(this, screenWidth - wallThickness, 0, wallThickness, screenHeight, Block::Kind::WALL));
+void Game::Unspawn() {
+    std::for_each(begin(sprites), end(sprites), [](Sprite *s) {
+        delete s;
+    });
+    sprites.clear();
+    spriteMap.clear();
+}
 
-    weaponType = 2;
-    shootingLeft = 0;
-    speedBoost = 1;
+void Game::StartGame(int newLevel) {
+    level = newLevel;
+    score = 0;
+    lives = 5;
+    RestartLevel();
+}
 
-    SpawnLevel();
-
-    // weapon = new Weapon(this, 0, 0, 20, 0, PURPLE);
-    // sprites.push_back(weapon);
-
-    //player = new Player(this, {400, screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54});
-    //sprites.push_back(player);
-
-    endLevelTime = std::time(nullptr) + levelTime;
+void Game::RestartLevel() {
+    Unspawn();
+    Spawn();
+    ChangeState(State::ACTIVE);
 }
 
 void Game::Draw() {
@@ -621,6 +784,12 @@ void Game::Draw() {
             break;
         case State::MAIN_MENU:
             mainMenu.Draw();
+            break;
+        case State::MOD_MENU:
+            modMenu.Draw();
+            break;
+        case State::DIFFLVL_MENU:
+            diffLvlMenu.Draw();
             break;
         case State::PAUSED:
             ingameMenu.Draw();
@@ -656,186 +825,10 @@ void Game::Draw() {
     EndDrawing();
 }
 
-void Game::Update() {
-    frameCounter++;
-
-    if (state == State::ACTIVE && lives <= 0) {
-        ChangeState(State::GAME_OVER);
-    } else if (state == State::GAME_OVER) {
-        if (sequenceFrameCounter > frameCounter) return;
-
-        ChangeState(State::MAIN_MENU);
-    } else if (state == State::LEVEL_FINISHED) {
-        if (sequenceFrameCounter > frameCounter) return;
-
-        level += 1;
-        if (level > NUM_LEVELS)
-            ChangeState(State::GAME_FINISHED);
-        else
-            RestartLevel();
-    } else if (state == State::GAME_FINISHED) {
-        if (highScore < score)
-            highScore = score;
-
-        if (sequenceFrameCounter > frameCounter) return;
-
-        ChangeState(State::MAIN_MENU);
+void Game::DrawSprites() {
+    for (size_t i = 0; i < sprites.size(); i++) {
+        sprites[i]->Draw();
     }
-    else if (state == State::GAME_SAVED) {
-        if (sequenceFrameCounter > frameCounter) return;
-
-        saveMenu.Reload(FindSaveFiles());
-        ChangeState(State::SAVE_MENU);
-    } else if (state == State::LEVEL_SELECTOR) {
-        if (IsKeyPressed(KEY_ENTER)) {
-            StartGame(level);
-        } else if (IsKeyPressed(KEY_ESCAPE)) {
-            ChangeState(State::MAIN_MENU);
-        } else if (IsKeyPressed(KEY_RIGHT)) {
-            if (level < NUM_LEVELS) level += 1;
-        } else if (IsKeyPressed(KEY_LEFT)) {
-            if (level > 1) level -= 1;
-        }
-    }
-
-    if (ingameMenu.selected == "Save Game") {
-        ChangeState(State::SAVE_MENU);
-        saveMenu.Reload(FindSaveFiles());
-        ingameMenu.selected = "";
-    } else if (ingameMenu.selected == "Continue") {
-        ChangeState(State::ACTIVE);
-        ingameMenu.selected = "";
-    } else if (ingameMenu.selected == "Back to Menu") {
-        ChangeState(State::GAME_OVER);
-        ingameMenu.selected = "";
-    } else if (mainMenu.selected == "Start") {
-        StartGame(level);
-        mainMenu.selected = "";
-    } else if (mainMenu.selected == "Load") {
-        ChangeState(State::LOAD_MENU);
-        loadMenu.Reload(FindLoadFiles());
-        mainMenu.selected = "";
-    } else if (mainMenu.selected == "Level") {
-        ChangeState(State::LEVEL_SELECTOR);
-        mainMenu.selected = "";
-    } else if (saveMenu.selected == "Save 1") {
-        if (SaveGame(1))
-            ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (saveMenu.selected == "Save 2") {
-        if (SaveGame(2))
-            ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (saveMenu.selected == "Save 3") {
-        if (SaveGame(3))
-        ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (saveMenu.selected == "Save 4") {
-        if (SaveGame(4))
-            ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (saveMenu.selected == "Empty slot") {
-        if (SaveGame(numFiles + 1))
-            ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (loadMenu.selected == "Save 1") {
-        LoadGame(1);
-        ChangeState(State::ACTIVE);
-        loadMenu.selected = "";
-    } else if (loadMenu.selected == "Save 2") {
-        LoadGame(2);
-        ChangeState(State::ACTIVE);
-        loadMenu.selected = "";
-    } else if (loadMenu.selected == "Save 3") {
-        LoadGame(3);
-        ChangeState(State::ACTIVE);
-        loadMenu.selected = "";
-    } else if (loadMenu.selected == "Save 4") {
-        LoadGame(4);
-        ChangeState(State::ACTIVE);
-        loadMenu.selected = "";
-    }
-
-    if (GetKeyPressed() == KEY_ESCAPE) {
-        if (state == State::PAUSED)
-            ChangeState(State::ACTIVE);
-        else if (state == State::ACTIVE)
-            ChangeState(State::PAUSED);
-        else if (state == State::SAVE_MENU)
-            ChangeState(State::PAUSED);
-        else if (state == State::LOAD_MENU)
-            ChangeState(State::MAIN_MENU);
-    }
-
-    if (state == State::PAUSED) {
-        ingameMenu.Update();
-    } else if (state == State::ACTIVE) {
-        if (endLevelTime > 0) {
-            std::time_t now = std::time(nullptr);
-            elapsedLevelTime = endLevelTime - now;
-            if (elapsedLevelTime <= 0) {
-                elapsedLevelTime = 0;
-                endLevelTime = 0;
-                ChangeState(State::GAME_OVER);
-            }
-        }
-        MoveSprites();
-        for (int i = 0; i < 4; i++) {
-            if (timeLeft != 0) {
-                CheckTime();
-            }
-        }
-    } else if (state == State::MAIN_MENU) {
-        mainMenu.Update();
-    } else if (state == State::SAVE_MENU) {
-        saveMenu.Update();
-    } else if (state == State::LOAD_MENU) {
-        loadMenu.Update();
-    }
-}
-
-int Game::MainLoop() {
-    LoadUsrData();
-
-    while (!WindowShouldClose() && ingameMenu.selected != "Quit" && mainMenu.selected != "Quit") {
-        Update();
-        CheckCollision();
-        Draw();
-    }
-    SaveUsrData();
-
-    return 0;
-}
-
-void Game::LoadTextures() {
-  for (int i = 0; i < NUM_TEXTURES; i++) {
-      Image image = LoadImage(textureFiles[i]);
-      textures[i] = LoadTextureFromImage(image);
-      UnloadImage(image);
-  }
-}
-
-void Game::Unspawn() {
-    std::for_each(begin(sprites), end(sprites), [](Sprite *s) {
-        delete s;
-    });
-    sprites.clear();
-    spriteMap.clear();
 }
 
 void Game::DrawBackground() {
@@ -926,30 +919,25 @@ void Game::DrawEndGame() {
     DrawText(TextFormat("Highest score: %d", highScore), 500, 460, 30, GREEN);
 }
 
-void Game::ChangeState(State newState) {
-    if (state == newState) return;
-
-    switch (newState) {
-        case State::GAME_OVER:
-            Unspawn();
-            sequenceFrameCounter = frameCounter + 3 * 60;
-            break;
-        case State::LEVEL_FINISHED:
-            Unspawn();
-            score += elapsedLevelTime * 100;
-            sequenceFrameCounter = frameCounter + 3 * 60;
-            break;
-        case State::GAME_FINISHED:
-            Unspawn();
-            sequenceFrameCounter = frameCounter + 3 * 60;
-            break;
-        case State::GAME_SAVED:
-            sequenceFrameCounter = frameCounter + 2 * 60;
-            break;
-        case State::ERROR:
-            sequenceFrameCounter = frameCounter + 2 * 60;
+void Game::DrawLevelSelector() {
+    float xOffset = 150;
+    float y = 200;
+    float width = 40;
+    float height = 40;
+    float space = 10;
+    for (int i = 0; i < NUM_LEVELS; i++) {
+        float x = xOffset + i * (width + space);
+        Color color = GREEN;
+        if (i > 4) {
+            if (i < 10)
+                color = YELLOW;
+            else
+                color = RED;
+        }
+        DrawRectangleRec({ x, y, width, height }, color);
+        DrawText(TextFormat("%02i", i + 1), x, y, 30, BLACK);
     }
-    state = newState;
+    DrawRectangleRounded({ xOffset + (level - 1) * (width + space) - 10, y - 10, width + 20, height + 20 }, 0.2, 8, ColorAlpha(ORANGE, 0.6));
 }
 
 void Game::WriteGameData(std::ofstream& s) {
@@ -1095,38 +1083,135 @@ std::vector<std::string> Game::FindSaveFiles() {
     return fileNames;
 }
 
-void Game::RestartLevel() {
-    Unspawn();
-    Spawn();
-    ChangeState(State::ACTIVE);
+
+void Game::AddEnemy(float x, float y, Enemy::Kind kind, int heading) {
+    Sprite* s = Enemy::create(this, x, y, kind, heading);
+    spriteMap[Sprite::Type::ENEMY].push_back(s);
+    sprites.push_back(s);
 }
 
-void Game::StartGame(int newLevel) {
-    level = newLevel;
-    score = 0;
-    lives = 5;
-    RestartLevel();
-}
-
-void Game::DrawLevelSelector() {
-    float xOffset = 150;
-    float y = 200;
-    float width = 40;
-    float height = 40;
-    float space = 10;
-    for (int i = 0; i < NUM_LEVELS; i++) {
-        float x = xOffset + i * (width + space);
-        Color color = GREEN;
-        if (i > 4) {
-            if (i < 10)
-                color = YELLOW;
-            else
-                color = RED;
-        }
-        DrawRectangleRec({x, y, width, height}, color);
-        DrawText(TextFormat("%02i", i + 1), x, y, 30, BLACK);
+void Game::AddWeapon(float x, float y, int type) {
+    switch (type) {
+    case 1:
+        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON1);
+        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
+        sprites.push_back(weapon);
+        break;
+    case 2:
+        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON2);
+        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
+        sprites.push_back(weapon);
+        break;
+    case 3:
+        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON3);
+        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
+        sprites.push_back(weapon);
+        break;
+    case 4:
+        weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON4);
+        spriteMap[Sprite::Type::WEAPON].push_back(weapon);
+        sprites.push_back(weapon);
+        break;
     }
-    DrawRectangleRounded({xOffset + (level - 1) * (width + space) - 10, y - 10, width + 20, height + 20}, 0.2, 8, ColorAlpha(ORANGE, 0.6));
+}
+
+void Game::AddScore(int score) {
+    this->score += score;
+}
+
+void Game::AddPowerup(float x, float y) {
+    int chance = GetRandomValue(1, 3);
+    if (chance == 1) {
+        int kindNum;
+        if (weaponType == 2)
+            kindNum = GetRandomValue(2, 4);
+        else
+            kindNum = GetRandomValue(1, 4);
+
+        Sprite* s;
+        switch (kindNum) {
+        case 1:
+            s = new Powerup(this, x, y, Powerup::Kind::DOUBLE);
+            spriteMap[Sprite::Type::POWERUP].push_back(s);
+            sprites.push_back(s);
+            break;
+        case 2:
+            s = new Powerup(this, x, y, Powerup::Kind::BOOST);
+            spriteMap[Sprite::Type::POWERUP].push_back(s);
+            sprites.push_back(s);
+            break;
+        case 3:
+            s = new Powerup(this, x, y, Powerup::Kind::TIME);
+            spriteMap[Sprite::Type::POWERUP].push_back(s);
+            sprites.push_back(s);
+            break;
+        case 4:
+            s = new Powerup(this, x, y, Powerup::Kind::WEAPON);
+            spriteMap[Sprite::Type::POWERUP].push_back(s);
+            sprites.push_back(s);
+            break;
+        }
+    }
+}
+
+void Game::PickAction(Powerup::Kind kind) {
+    switch (kind) {
+    case Powerup::Kind::BOOST:
+        speedBoost = 2;
+        timeLeft[0] = std::time(nullptr);
+        break;
+    case Powerup::Kind::DOUBLE:
+        if (weaponType == 4)
+            shootingLeft *= 2;
+        else {
+            multiWeapon = 1;
+            timeLeft[1] = std::time(nullptr);
+        }
+        break;
+    case Powerup::Kind::HEAL:
+        lives++;
+        break;
+    case Powerup::Kind::TIME:
+        stopTime = true;
+        timeLeft[2] = std::time(nullptr);
+        break;
+    case Powerup::Kind::WEAPON:
+        int change = GetRandomValue(2, 4);
+        if (change == weaponType)
+            weaponType = 1;
+        else
+            weaponType = change;
+
+        if (weaponType == 4)
+            shootingLeft = 5;
+        break;
+    }
+}
+
+void Game::CheckTime() {
+    std::time_t now = std::time(nullptr);
+    for (int i = 0; i < 4; i++) {
+        if (timeLeft[i] + 5 <= now) {
+            switch (i) {
+            case 0:
+                speedBoost = 1;
+                timeLeft[i] = 0;
+                break;
+            case 1:
+                multiWeapon = 0;
+                timeLeft[i] = 0;
+                break;
+            case 2:
+                stopTime = false;
+                timeLeft[i] = 0;
+                break;
+            case 3:
+                break;
+            default:
+                break;
+            }
+        }
+    }
 }
 
 std::vector<Sprite*> Game::GetSprites(Sprite::Type type) {
