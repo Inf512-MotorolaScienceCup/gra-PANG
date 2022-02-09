@@ -85,6 +85,7 @@ public:
     virtual void Collision(Sprite*);
 
 private:
+    Sound breaking;
     Kind kind;
     Color color;
     short int health = 2;
