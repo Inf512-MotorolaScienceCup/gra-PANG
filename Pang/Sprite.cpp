@@ -206,6 +206,7 @@ void Player::Collision(Sprite *sprite) {
         game->lives--;
         hitBall = std::time(nullptr);
         speed.y -= 10;
+        PlaySound(game->audio[HEALTH_LOSE]);
     } else if (sprite->type == Sprite::Type::LADDER) {
         if (!climbing) {
             bool canClimbUp = position.rectangle.y < sprite->position.rectangle.y + sprite->position.rectangle.height && position.rectangle.y + position.rectangle.height > sprite->position.rectangle.y + sprite->position.rectangle.height;
@@ -308,8 +309,10 @@ void Block::Draw() {
 void Block::Collision(Sprite* sprite) {
     if (kind == Kind::PLATFORM_2) {
         health--;
-        if (health == 0)
+        if (health == 0) {
             state = State::FINISHED;
+            PlaySound(game->audio[WALL_DESTRACTION]);
+        }
     }
 }
 
@@ -375,7 +378,6 @@ Enemy::Enemy(Game* game, float x, float y, float radius, Kind kind, int heading)
     }
     speed.x *= heading;
     speed.y = -5;
-    bounce = game->audio[BALL_BOUNCE];
 }
 
 Enemy::Enemy(Game *game, std::ifstream& s) 
@@ -385,23 +387,24 @@ Enemy::Enemy(Game *game, std::ifstream& s)
     Read(s, &maxSpeedY);
     Read(s, &collision);
     
-    switch (kind) {
-    case Enemy::BALL1:
-        spriteSheet[kind] = game->textures[BALL1];
-        break;
-    case Enemy::BALL2:
-        spriteSheet[kind] = game->textures[BALL2];
-        break;
-    case Enemy::BALL3:
-        spriteSheet[kind] = game->textures[BALL3];
-        break;
-    case Enemy::BALL4:
-        spriteSheet[kind] = game->textures[BALL4];
-        break;
-    default:
-        break;
+    if (!spriteSheet[BALL1].id) {
+        spriteSheet[BALL1] = game->textures[BALL_1];
+        spriteSheet[BALL2] = game->textures[BALL_2];
+        spriteSheet[BALL3] = game->textures[BALL_3];
+        spriteSheet[BALL4] = game->textures[BALL_4];
     }
-    spriteExplode[kind] = game->textures[EXPLOSION];
+    if (!spriteExplode[BALL1].id) {
+        spriteExplode[BALL1] = game->textures[EXPLOSION];
+        spriteExplode[BALL2] = game->textures[EXPLOSION];
+        spriteExplode[BALL3] = game->textures[EXPLOSION];
+        spriteExplode[BALL4] = game->textures[EXPLOSION];
+    }
+
+    sizeX = spriteSheet[kind].height;
+    sizeY = spriteSheet[kind].height;
+
+    stand = { 0.0f, 0.0f, sizeX, sizeY };
+    standExplode = { 0.0f, 0.0f, spriteExplode[kind].width / 12.0f, /*sizeY*/47 };
 }
 
 void Enemy::Draw() {
@@ -453,9 +456,8 @@ void Enemy::Collision(Sprite* sprite) {
                 position.center.y = sprite->position.rectangle.y + sprite->position.rectangle.height + position.radius + 1;
             }
         }
-
-        PlaySound(bounce);
-
+        if (!game->stopTime)
+            PlaySound(game->audio[BALL_BOUNCE]);
     } else if (sprite->type == Sprite::Type::WEAPON) {
         duality(sprite);
     } else if (sprite->type == Sprite::Type::PLAYER) {
@@ -674,7 +676,7 @@ void Weapon::Move() {
             }
         } else {
             checkTime();
-            if (block->state == Sprite::State::FINISHED) {
+            if (!block || block->state == Sprite::State::FINISHED) {
                 state = State::FINISHED;
                 game->shootingLeft++;
             }

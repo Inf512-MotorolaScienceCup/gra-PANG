@@ -87,7 +87,7 @@ public:
         PLATFORM_2
     };
 
-    Block(Game *game, float x, float y, float width, float height, Kind type);
+    Block(Game* game, float x, float y, float width, float height, Kind type);
     Block(Game* game, std::ifstream&);
     virtual void Draw();
     virtual void Collision(Sprite*);
@@ -128,14 +128,13 @@ private:
     Game * game;
     static Texture2D spriteSheet[NUM_KINDS];
     static Texture2D spriteExplode[NUM_KINDS];
-    Sound bounce;
     Rectangle stand;
     Rectangle standExplode;
     Color color;
     Vector2 speed;
     int cooldown = 0;
     float maxSpeedY;
-    float gravity = 0.3;
+    float gravity = 0.3f;
     float sizeX;
     float sizeY;
     Kind kind;
@@ -162,7 +161,7 @@ public:
 
 private:
     Kind kind;
-    Texture2D * texture[2] = { nullptr , nullptr };
+    Texture2D* texture[2] = { nullptr , nullptr };
     Rectangle moveTexture;
     Color color = WHITE;
     int numElements;
