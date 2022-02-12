@@ -23,14 +23,14 @@ enum TextureTypes {
     BACKGROUND9,
     BACKGROUND10,
     BACKGROUND11,
-    //BACKGROUND12,
-    //BACKGROUND13,
-    //BACKGROUND14,
-    //BACKGROUND15,
-    //BACKGROUND16,
-    //BACKGROUND17,
-    //BACKGROUND18,
-    //BACKGROUND19,
+    BACKGROUND12,
+    BACKGROUND13,
+    BACKGROUND14,
+    BACKGROUND15,
+    BACKGROUND16,
+    BACKGROUND17,
+    BACKGROUND18,
+    BACKGROUND19,
     PLAYER,
     LADDER,
     WALL,
@@ -69,8 +69,23 @@ enum AudioTypes {
     LEVEL_COMPLETED,
     POWERUP,
     WALL_DESTRACTION,
+    BALL_BREAKING,
+    MENU_SELECT,
+    MENU_ENTER,
+    WALK,
+    HARPUN,
 
     NUM_AUDIO
+};
+
+enum MusicTypes {
+    BACKGROUND_A,
+    BACKGROUND_B,
+    BACKGROUND_C,
+    BACKGROUND_D,
+    BACKGROUND_E,
+
+    NUM_MUSIC
 };
 
 class Game {
@@ -103,6 +118,14 @@ public:
                                               "res/Background/pustynia1.png",
                                               "res/Background/pustynia2.png",
                                               "res/Background/pustynia3.png",
+                                              "res/Background/pustynia4.png",
+                                              "res/Background/gory.png",
+                                              "res/Background/miasto1.png",
+                                              "res/Background/zima1.png",
+                                              "res/Background/zima2.png",
+                                              "res/Background/zima3.png",
+                                              "res/Background/zima4.png",
+                                              "res/Background/zima5.png",
                                               "res/spritesheet.png",
                                               "res/ladder.png",
                                               "res/wall.png",
@@ -131,22 +154,36 @@ public:
                                               };
     Texture2D textures[NUM_TEXTURES];
 
-    const char *audioFiles[NUM_AUDIO] = {"res/audio/bounce.wav",
-                                         "res/audio/game_over.wav",
-                                         "res/audio/health_lose.wav",
-                                         "res/audio/laser.wav",
-                                         "res/audio/level_start.wav",
-                                         "res/audio/level_completed.wav",
-                                         "res/audio/powerup.wav",
-                                         "res/audio/wall_destruction.mp3",
+    const char *audioFiles[NUM_AUDIO] = { "res/audio/bounce.mp3",
+                                          "res/audio/game_over.mp3",
+                                          "res/audio/health_lose.mp3",
+                                          "res/audio/laser.mp3",
+                                          "res/audio/level_start.mp3",
+                                          "res/audio/level_completed.mp3",
+                                          "res/audio/powerup.mp3",
+                                          "res/audio/wall_destruction.mp3",
+                                          "res/audio/ball-breaking.mp3",
+                                          "res/audio/menu_select.mp3",
+                                          "res/audio/menu_enter.mp3",
+                                          "res/audio/walk.mp3",
+                                          "res/audio/harpun.mp3"
     };
     Sound audio[NUM_AUDIO];
+
+    const char *musicFiles[NUM_MUSIC] = {
+        "res/audio/background1.mp3",
+        "res/audio/background2.mp3",
+        "res/audio/background3.mp3",
+        "res/audio/background4.mp3",
+        "res/audio/background5.mp3"
+    };
+    Music music[NUM_MUSIC];
 
     const float screenWidth = 1280;
     const float screenHeight = 720;
     const float wallThickness = 20;
     const float panelHeight = 40;
-    const int NUM_LEVELS = 20;
+    const int NUM_LEVELS = 21;
 
     Game();
     ~Game();
@@ -207,6 +244,8 @@ public:
     Rectangle backRec = { 0, 0, 1280, 720 };
     short int backFrame = 0;
 
+    MusicTypes backMusic = NUM_MUSIC;
+
     Rectangle hudWeapons = { 0, 0, 32, 32 };
 
     int frameCounter = 0;
@@ -217,6 +256,7 @@ public:
     Menu loadMenu;
     Menu modMenu;
     Menu diffLvlMenu;
+    short int modNum;
 
     int level = 1;
     int lives;

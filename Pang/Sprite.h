@@ -196,7 +196,7 @@ public:
         WEAPON
     };
 
-    Powerup(Game *game, float x, float y, Kind kind);
+    Powerup(Game* game, float x, float y, Kind kind);
     Powerup(Game* game, std::ifstream&);
     virtual void Draw();
     virtual void Move();

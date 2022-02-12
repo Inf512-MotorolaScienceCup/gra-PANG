@@ -60,9 +60,12 @@ void Menu::Draw() {
 void Menu::Update() {
     if (IsKeyPressed(KEY_UP)) {
         position = (position <= 0) ? position = 0 : position - 1;
+        PlaySound(game->audio[MENU_SELECT]);
     } else if (IsKeyPressed(KEY_DOWN)) {
         position = (position >= graphics.size() - 1) ? position = graphics.size() - 1 : position + 1;
+        PlaySound(game->audio[MENU_SELECT]);
     } else if (IsKeyPressed(KEY_ENTER)) {
         selected = graphics[position].name;
+        PlaySound(game->audio[MENU_ENTER]);
     }
 }

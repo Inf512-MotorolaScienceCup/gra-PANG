@@ -44,14 +44,26 @@ void Game::LoadAudio() {
     for (int i = 0; i < NUM_AUDIO; i++) {
         audio[i] = LoadSound(audioFiles[i]);
     }
+    SetSoundVolume(audio[BALL_BOUNCE], 0.2f);
+    SetSoundVolume(audio[WALK], 0.5f);
+
+    for (int i = 0; i < NUM_MUSIC; i++) {
+        music[i] = LoadMusicStream(musicFiles[i]);
+        music[i].looping = true;
+    }
+    SetMusicVolume(music[BACKGROUND_A], 0.7f);
 }
 
 void Game::Unload() {
     for (int i = 0; i < NUM_TEXTURES; i++) {
         UnloadTexture(textures[i]);
     }
+    StopSoundMulti();
     for (int i = 0; i < NUM_AUDIO; i++) {
         UnloadSound(audio[i]);
+    }
+    for (int i = 0; i < NUM_MUSIC; i++) {
+        UnloadMusicStream(music[i]);
     }
 }
 
@@ -73,11 +85,17 @@ void Game::Update() {
 
     if (state == State::ACTIVE && lives <= 0) {
         ChangeState(State::GAME_OVER);
-        
     } else if (state == State::GAME_OVER) {
         if (sequenceFrameCounter > frameCounter) return;
 
-        ChangeState(State::MAIN_MENU);
+        if (backMusic != NUM_MUSIC && IsMusicStreamPlaying(music[backMusic])) {
+            StopMusicStream(music[backMusic]);
+            backMusic = NUM_MUSIC;
+        }
+        if (modNum == 1)
+            ChangeState(State::DIFFLVL_MENU);
+        else
+            ChangeState(State::MAIN_MENU);
     } else if (state == State::LEVEL_FINISHED) {
         if (sequenceFrameCounter > frameCounter) return;
 
@@ -100,6 +118,7 @@ void Game::Update() {
         ChangeState(State::SAVE_MENU);
     } else if (state == State::LEVEL_SELECTOR) {
         if (IsKeyPressed(KEY_ENTER)) {
+            PlaySound(audio[MENU_ENTER]);
             StartGame(level);
         }
         else if (IsKeyPressed(KEY_ESCAPE)) {
@@ -107,9 +126,11 @@ void Game::Update() {
         }
         else if (IsKeyPressed(KEY_RIGHT)) {
             if (level < NUM_LEVELS) level += 1;
+            PlaySound(audio[MENU_SELECT]);
         }
         else if (IsKeyPressed(KEY_LEFT)) {
             if (level > 1) level -= 1;
+            PlaySound(audio[MENU_SELECT]);
         }
     }
 
@@ -117,110 +138,94 @@ void Game::Update() {
         ChangeState(State::SAVE_MENU);
         saveMenu.Reload(FindSaveFiles());
         ingameMenu.selected = "";
-    }
-    else if (ingameMenu.selected == "Continue") {
+    } else if (ingameMenu.selected == "Continue") {
         ChangeState(State::ACTIVE);
         ingameMenu.selected = "";
-    }
-    else if (ingameMenu.selected == "Back to Menu") {
+    } else if (ingameMenu.selected == "Back to Menu") {
         ChangeState(State::GAME_OVER);
         ingameMenu.selected = "";
-    }
-    else if (mainMenu.selected == "Start") {
+    } else if (mainMenu.selected == "Start") {
         StartGame(level);
         mainMenu.selected = "";
-    }
-    else if (mainMenu.selected == "Load") {
+    } else if (mainMenu.selected == "Load") {
         ChangeState(State::LOAD_MENU);
         loadMenu.Reload(FindLoadFiles());
         mainMenu.selected = "";
-    }
-    else if (mainMenu.selected == "Level") {
+    } else if (mainMenu.selected == "Level") {
         ChangeState(State::LEVEL_SELECTOR);
         mainMenu.selected = "";
-    }
-    else if (saveMenu.selected == "Save 1") {
+    } else if (saveMenu.selected == "Save 1") {
         if (SaveGame(1))
             ChangeState(State::GAME_SAVED);
         else
             ChangeState(State::ERROR);
 
         saveMenu.selected = "";
-    }
-    else if (saveMenu.selected == "Save 2") {
+    } else if (saveMenu.selected == "Save 2") {
         if (SaveGame(2))
             ChangeState(State::GAME_SAVED);
         else
             ChangeState(State::ERROR);
 
         saveMenu.selected = "";
-    }
-    else if (saveMenu.selected == "Save 3") {
+    } else if (saveMenu.selected == "Save 3") {
         if (SaveGame(3))
             ChangeState(State::GAME_SAVED);
         else
             ChangeState(State::ERROR);
 
         saveMenu.selected = "";
-    }
-    else if (saveMenu.selected == "Save 4") {
+    } else if (saveMenu.selected == "Save 4") {
         if (SaveGame(4))
             ChangeState(State::GAME_SAVED);
         else
             ChangeState(State::ERROR);
 
         saveMenu.selected = "";
-    }
-    else if (saveMenu.selected == "Empty slot") {
+    } else if (saveMenu.selected == "Empty slot") {
         if (SaveGame(numFiles + 1))
             ChangeState(State::GAME_SAVED);
         else
             ChangeState(State::ERROR);
 
         saveMenu.selected = "";
-    }
-    else if (loadMenu.selected == "Save 1") {
+    } else if (loadMenu.selected == "Save 1") {
         LoadGame(1);
         ChangeState(State::ACTIVE);
         loadMenu.selected = "";
-    }
-    else if (loadMenu.selected == "Save 2") {
+    } else if (loadMenu.selected == "Save 2") {
         LoadGame(2);
         ChangeState(State::ACTIVE);
         loadMenu.selected = "";
-    }
-    else if (loadMenu.selected == "Save 3") {
+    } else if (loadMenu.selected == "Save 3") {
         LoadGame(3);
         ChangeState(State::ACTIVE);
         loadMenu.selected = "";
-    }
-    else if (loadMenu.selected == "Save 4") {
+    } else if (loadMenu.selected == "Save 4") {
         LoadGame(4);
         ChangeState(State::ACTIVE);
         loadMenu.selected = "";
-    } if (modMenu.selected == "Mod 1") {
+    } else if (modMenu.selected == "Mod 1") {
         ChangeState(State::DIFFLVL_MENU);
+        modNum = 1;
         modMenu.selected = "";
-    }
-    else if (modMenu.selected == "Mod 2") {
+    } else if (modMenu.selected == "Mod 2") {
         ChangeState(State::MAIN_MENU);
+        modNum = 2;
         modMenu.selected = "";
-    }
-    else if (modMenu.selected == "Mod 3") {
+    } else if (modMenu.selected == "Mod 3") {
         ChangeState(State::MAIN_MENU);
+        modNum = 3;
         modMenu.selected = "";
-    }
-    else if (diffLvlMenu.selected == "Easy") {
+    } else if (diffLvlMenu.selected == "Easy") {
         int randLvl = GetRandomValue(1, 5);
         StartGame(randLvl);
         diffLvlMenu.selected = "";
-    }
-    else if (diffLvlMenu.selected == "Normal") {
+    } else if (diffLvlMenu.selected == "Normal") {
         int randLvl = GetRandomValue(6, 10);
         StartGame(randLvl);
         diffLvlMenu.selected = "";
-    }
-    else if (diffLvlMenu.selected == "Hard") {
+    } else if (diffLvlMenu.selected == "Hard") {
         int randLvl = GetRandomValue(11, 15);
         StartGame(randLvl);
         diffLvlMenu.selected = "";
@@ -251,27 +256,23 @@ void Game::Update() {
             }
         }
         MoveSprites();
+        if (backMusic != NUM_MUSIC)
+            UpdateMusicStream(music[backMusic]);
         for (int i = 0; i < 4; i++) {
             if (timeLeft != 0) {
                 CheckTime();
             }
         }
-    }
-    else if (state == State::MAIN_MENU) {
+    } else if (state == State::MAIN_MENU)
         mainMenu.Update();
-    }
-    else if (state == State::SAVE_MENU) {
+    else if (state == State::SAVE_MENU)
         saveMenu.Update();
-    }
-    else if (state == State::LOAD_MENU) {
+    else if (state == State::LOAD_MENU)
         loadMenu.Update();
-    }
-    else if (state == State::MOD_MENU) {
+    else if (state == State::MOD_MENU)
         modMenu.Update();
-    }
-    else if (state == State::DIFFLVL_MENU) {
+    else if (state == State::DIFFLVL_MENU)
         diffLvlMenu.Update();
-    }
 }
 
 void Game::ChangeState(State newState) {
@@ -417,6 +418,8 @@ void Game::Spawn() {
 
     SpawnLevel();
 
+    if (backMusic != NUM_MUSIC)
+        PlayMusicStream(music[backMusic]);
     // weapon = new Weapon(this, 0, 0, 20, 0, PURPLE);
     // sprites.push_back(weapon);
 
@@ -450,6 +453,7 @@ void Game::SpawnLevel() {
         sprites.push_back(player);
 
         backTexture = BACKGROUND_ANI;
+        backMusic = BACKGROUND_A;
         levelTime = 60;
         break;
     case 2:
@@ -588,6 +592,7 @@ void Game::SpawnLevel() {
         sprites.push_back(player);
 
         backTexture = BACKGROUND6;
+        backMusic = BACKGROUND_D;
         levelTime = 160;
         break;
     case 9:
@@ -711,7 +716,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backTexture = BACKGROUND10;
+        backTexture = BACKGROUND12;
         levelTime = 160;
         break;
     case 15:
@@ -738,7 +743,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backTexture = BACKGROUND10;
+        backTexture = BACKGROUND13;
         levelTime = 160;
         break;
     case 16:
@@ -774,7 +779,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backTexture = BACKGROUND10;
+        backTexture = BACKGROUND14;
         levelTime = 160;
         break;
     case 18:
@@ -814,7 +819,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backTexture = BACKGROUND10;
+        backTexture = BACKGROUND15;
         levelTime = 160;
         break;
     case 19:
@@ -863,7 +868,7 @@ void Game::SpawnLevel() {
 
         Spawn(new Powerup(this, 620, 280 - 64, Powerup::Kind::HEAL));
 
-        backTexture = BACKGROUND10;
+        backTexture = BACKGROUND16;
         levelTime = 160;
         break;
     case 20:
@@ -881,7 +886,7 @@ void Game::SpawnLevel() {
 
         Spawn(new Powerup(this, 620, 280 - 64, Powerup::Kind::HEAL));
 
-        backTexture = BACKGROUND10;
+        backTexture = BACKGROUND17;
         levelTime = 160;
         break;
     case 21:
@@ -898,13 +903,12 @@ void Game::SpawnLevel() {
 
         Spawn(new Powerup(this, 620, 700 - 64, Powerup::Kind::HEAL));
 
-        backTexture = BACKGROUND10;
+        backTexture = BACKGROUND18;
         levelTime = 160;
         break;
 
     }
 }
-
 
 void Game::Unspawn() {
     std::for_each(begin(sprites), end(sprites), [](Sprite *s) {
@@ -1107,6 +1111,7 @@ void Game::WriteGameData(std::ofstream& s) {
     Write(s, &lives);
     Write(s, &score);
     Write(s, &backTexture);
+    Write(s, &backMusic);
 
     Write(s, &levelTime);
     Write(s, &elapsedLevelTime);
@@ -1124,6 +1129,7 @@ void Game::ReadGameData(std::ifstream& s) {
     Read(s, &lives);
     Read(s, &score);
     Read(s, &backTexture);
+    Read(s, &backMusic);
 
     Read(s, &levelTime);
     Read(s, &elapsedLevelTime);
@@ -1194,6 +1200,8 @@ void Game::LoadGame(int fileNum) {
         } else {
             std::cout << "Unable to open file";
         }
+        if (backMusic != NUM_MUSIC)
+            PlayMusicStream(music[backMusic]);
     }
 }
 
@@ -1258,6 +1266,7 @@ void Game::AddWeapon(float x, float y, int type) {
         weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON1);
         spriteMap[Sprite::Type::WEAPON].push_back(weapon);
         sprites.push_back(weapon);
+        PlaySound(audio[HARPUN]);
         break;
     case 2:
         weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON2);
@@ -1269,6 +1278,7 @@ void Game::AddWeapon(float x, float y, int type) {
         weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON3);
         spriteMap[Sprite::Type::WEAPON].push_back(weapon);
         sprites.push_back(weapon);
+        PlaySound(audio[HARPUN]);
         break;
     case 4:
         weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON4);
@@ -1346,6 +1356,7 @@ void Game::PickAction(Powerup::Kind kind) {
         else
             weaponType = change;
 
+        shootingLeft = 0;
         if (weaponType == 4)
             shootingLeft = 5;
         break;

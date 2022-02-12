@@ -141,29 +141,43 @@ void Player::Move() {
         if (!onIce) {
             if (IsKeyDown(KEY_LEFT)) {
                 direction = Direction::LEFT;
-                if (speed.x > -7.0f * game->speedBoost)
+                if (speed.x > -6.0f * game->speedBoost)
                     speed.x -= 1;
                 else
-                    speed.x = -7.0f * game->speedBoost;
+                    speed.x = -6.0f * game->speedBoost;
+
+                if (!IsSoundPlaying(game->audio[WALK]))
+                    PlaySound(game->audio[WALK]);
             } else if (IsKeyDown(KEY_RIGHT)) {
                 direction = Direction::RIGHT;
-                if (speed.x < 7.0f * game->speedBoost)
+                if (speed.x < 6.0f * game->speedBoost)
                     speed.x += 1;
                 else
-                    speed.x = 7.0f * game->speedBoost;
+                    speed.x = 6.0f * game->speedBoost;
+
+                if (!IsSoundPlaying(game->audio[WALK]))
+                    PlaySound(game->audio[WALK]);
             } else {
                 direction = Direction::NONE;
                 speed.x = 0;
+                if (IsSoundPlaying(game->audio[WALK]))
+                    StopSound(game->audio[WALK]);
             }
         } else {
             if (IsKeyDown(KEY_LEFT)) {
                 direction = Direction::LEFT;
-                    speed.x -= 0.25f * game->speedBoost;
+                speed.x -= 0.25f * game->speedBoost;
+                if (!IsSoundPlaying(game->audio[WALK]))
+                    PlaySound(game->audio[WALK]);
             } else if (IsKeyDown(KEY_RIGHT)) {
                 direction = Direction::RIGHT;
                 speed.x += 0.25f * game->speedBoost;
+                if (!IsSoundPlaying(game->audio[WALK]))
+                    PlaySound(game->audio[WALK]);
             } else {
                 direction = Direction::NONE;
+                if (IsSoundPlaying(game->audio[WALK]))
+                    PlaySound(game->audio[WALK]);
                 if (speed.x > 0.2)
                     speed.x -= 0.2f;
                 else if (speed.x < -0.2)
@@ -457,7 +471,7 @@ void Enemy::Collision(Sprite* sprite) {
             }
         }
         if (!game->stopTime)
-            PlaySound(game->audio[BALL_BOUNCE]);
+            PlaySoundMulti(game->audio[BALL_BOUNCE]);
     } else if (sprite->type == Sprite::Type::WEAPON) {
         duality(sprite);
     } else if (sprite->type == Sprite::Type::PLAYER) {
@@ -504,32 +518,33 @@ void Enemy::DrawFinish() {
 
 void Enemy::duality(Sprite* sprite) {
     Kind newKind;
-            switch (kind) {
-            case Kind::BALL1:
-                newKind = Kind::BALL2;
-                game->Spawn(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
-                game->Spawn(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
-                game->AddScore(100);
-                break;
-            case Kind::BALL2:
-                newKind = Kind::BALL3;
-                game->Spawn(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
-                game->Spawn(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
-                game->AddScore(200);
-                break;
-            case Kind::BALL3:
-                newKind = Kind::BALL4;
-                game->Spawn(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
-                game->Spawn(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
-                game->AddScore(300);
-                break;
-            default:
-                game->AddScore(400);
-                break;
-            }
-            state = State::FINISHING;
-            cooldown = 0;
-            game->AddPowerup(position.center.x, position.center.y);
+    switch (kind) {
+        case Kind::BALL1:
+            newKind = Kind::BALL2;
+            game->Spawn(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
+            game->Spawn(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
+            game->AddScore(100);
+            break;
+        case Kind::BALL2:
+            newKind = Kind::BALL3;
+            game->Spawn(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
+            game->Spawn(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
+            game->AddScore(200);
+            break;
+        case Kind::BALL3:
+            newKind = Kind::BALL4;
+            game->Spawn(Enemy::create(game, sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1, position.center.y, newKind, 1));
+            game->Spawn(Enemy::create(game, sprite->position.rectangle.x - position.radius - 1, position.center.y, newKind, -1));
+            game->AddScore(300);
+            break;
+        default:
+            game->AddScore(400);
+            break;
+        }
+    state = State::FINISHING;
+    cooldown = 0;
+    PlaySound(game->audio[BALL_BREAKING]);
+    game->AddPowerup(position.center.x, position.center.y);
 }
 
 Sprite* Enemy::checkCollision() {
