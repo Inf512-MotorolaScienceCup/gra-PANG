@@ -14,6 +14,7 @@ Game::Game()
     mainMenu(this, { "Start", "Load", "Level", "Quit" }),
     ingameMenu(this, { "Continue", "Save Game", "Back to Menu", "Quit" }),
     saveMenu(this, FindSaveFiles()),
+    overwriteMenu(this, { "Overwrite?", "Cancel" }),
     loadMenu(this, FindLoadFiles()),
     modMenu(this, { "Mod 1", "Mod 2", "Mod 3" }),
     diffLvlMenu(this, { "Easy", "Normal", "Hard", "Quit" }) {
@@ -83,154 +84,6 @@ int Game::MainLoop() {
 void Game::Update() {
     frameCounter++;
 
-    if (state == State::ACTIVE && lives <= 0) {
-        ChangeState(State::GAME_OVER);
-    } else if (state == State::GAME_OVER) {
-        if (sequenceFrameCounter > frameCounter) return;
-
-        if (backMusic != NUM_MUSIC && IsMusicStreamPlaying(music[backMusic])) {
-            StopMusicStream(music[backMusic]);
-            backMusic = NUM_MUSIC;
-        }
-        if (modNum == 1)
-            ChangeState(State::DIFFLVL_MENU);
-        else
-            ChangeState(State::MAIN_MENU);
-    } else if (state == State::LEVEL_FINISHED) {
-        if (sequenceFrameCounter > frameCounter) return;
-
-        level += 1;
-        if (level > NUM_LEVELS)
-            ChangeState(State::GAME_FINISHED);
-        else
-            RestartLevel();
-    } else if (state == State::GAME_FINISHED) {
-        if (highScore < score)
-            highScore = score;
-
-        if (sequenceFrameCounter > frameCounter) return;
-
-        ChangeState(State::MAIN_MENU);
-    } else if (state == State::GAME_SAVED) {
-        if (sequenceFrameCounter > frameCounter) return;
-
-        saveMenu.Reload(FindSaveFiles());
-        ChangeState(State::SAVE_MENU);
-    } else if (state == State::LEVEL_SELECTOR) {
-        if (IsKeyPressed(KEY_ENTER)) {
-            PlaySound(audio[MENU_ENTER]);
-            StartGame(level);
-        }
-        else if (IsKeyPressed(KEY_ESCAPE)) {
-            ChangeState(State::MAIN_MENU);
-        }
-        else if (IsKeyPressed(KEY_RIGHT)) {
-            if (level < NUM_LEVELS) level += 1;
-            PlaySound(audio[MENU_SELECT]);
-        }
-        else if (IsKeyPressed(KEY_LEFT)) {
-            if (level > 1) level -= 1;
-            PlaySound(audio[MENU_SELECT]);
-        }
-    }
-
-    if (ingameMenu.selected == "Save Game") {
-        ChangeState(State::SAVE_MENU);
-        saveMenu.Reload(FindSaveFiles());
-        ingameMenu.selected = "";
-    } else if (ingameMenu.selected == "Continue") {
-        ChangeState(State::ACTIVE);
-        ingameMenu.selected = "";
-    } else if (ingameMenu.selected == "Back to Menu") {
-        ChangeState(State::GAME_OVER);
-        ingameMenu.selected = "";
-    } else if (mainMenu.selected == "Start") {
-        StartGame(level);
-        mainMenu.selected = "";
-    } else if (mainMenu.selected == "Load") {
-        ChangeState(State::LOAD_MENU);
-        loadMenu.Reload(FindLoadFiles());
-        mainMenu.selected = "";
-    } else if (mainMenu.selected == "Level") {
-        ChangeState(State::LEVEL_SELECTOR);
-        mainMenu.selected = "";
-    } else if (saveMenu.selected == "Save 1") {
-        if (SaveGame(1))
-            ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (saveMenu.selected == "Save 2") {
-        if (SaveGame(2))
-            ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (saveMenu.selected == "Save 3") {
-        if (SaveGame(3))
-            ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (saveMenu.selected == "Save 4") {
-        if (SaveGame(4))
-            ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (saveMenu.selected == "Empty slot") {
-        if (SaveGame(numFiles + 1))
-            ChangeState(State::GAME_SAVED);
-        else
-            ChangeState(State::ERROR);
-
-        saveMenu.selected = "";
-    } else if (loadMenu.selected == "Save 1") {
-        LoadGame(1);
-        ChangeState(State::ACTIVE);
-        loadMenu.selected = "";
-    } else if (loadMenu.selected == "Save 2") {
-        LoadGame(2);
-        ChangeState(State::ACTIVE);
-        loadMenu.selected = "";
-    } else if (loadMenu.selected == "Save 3") {
-        LoadGame(3);
-        ChangeState(State::ACTIVE);
-        loadMenu.selected = "";
-    } else if (loadMenu.selected == "Save 4") {
-        LoadGame(4);
-        ChangeState(State::ACTIVE);
-        loadMenu.selected = "";
-    } else if (modMenu.selected == "Mod 1") {
-        ChangeState(State::DIFFLVL_MENU);
-        modNum = 1;
-        modMenu.selected = "";
-    } else if (modMenu.selected == "Mod 2") {
-        ChangeState(State::MAIN_MENU);
-        modNum = 2;
-        modMenu.selected = "";
-    } else if (modMenu.selected == "Mod 3") {
-        ChangeState(State::MAIN_MENU);
-        modNum = 3;
-        modMenu.selected = "";
-    } else if (diffLvlMenu.selected == "Easy") {
-        int randLvl = GetRandomValue(1, 5);
-        StartGame(randLvl);
-        diffLvlMenu.selected = "";
-    } else if (diffLvlMenu.selected == "Normal") {
-        int randLvl = GetRandomValue(6, 10);
-        StartGame(randLvl);
-        diffLvlMenu.selected = "";
-    } else if (diffLvlMenu.selected == "Hard") {
-        int randLvl = GetRandomValue(11, 15);
-        StartGame(randLvl);
-        diffLvlMenu.selected = "";
-    }
-
     if (GetKeyPressed() == KEY_ESCAPE) {
         if (state == State::PAUSED)
             ChangeState(State::ACTIVE);
@@ -240,12 +93,134 @@ void Game::Update() {
             ChangeState(State::PAUSED);
         else if (state == State::LOAD_MENU)
             ChangeState(State::MAIN_MENU);
-    }
+    }  
 
-    if (state == State::PAUSED) {
-        ingameMenu.Update();
-    }
-    else if (state == State::ACTIVE) {
+    switch (state) {
+    case Game::State::MAIN_MENU:
+        if (mainMenu.selected == "Start") {
+            StartGame(level);
+            mainMenu.selected = "";
+        } else if (mainMenu.selected == "Load") {
+            ChangeState(State::LOAD_MENU);
+            loadMenu.Reload(FindLoadFiles());
+            mainMenu.selected = "";
+        } else if (mainMenu.selected == "Level") {
+            ChangeState(State::LEVEL_SELECTOR);
+            mainMenu.selected = "";
+        }
+        mainMenu.Update();
+        break;
+    case Game::State::MOD_MENU:
+        if (modMenu.selected == "Mod 1") {
+            ChangeState(State::DIFFLVL_MENU);
+            modNum = 1;
+            modMenu.selected = "";
+        } else if (modMenu.selected == "Mod 2") {
+            ChangeState(State::MAIN_MENU);
+            modNum = 2;
+            modMenu.selected = "";
+        } else if (modMenu.selected == "Mod 3") {
+            ChangeState(State::MAIN_MENU);
+            modNum = 3;
+            modMenu.selected = "";
+        }
+        modMenu.Update();
+        break;
+    case Game::State::DIFFLVL_MENU:
+        if (diffLvlMenu.selected == "Easy") {
+            int randLvl = GetRandomValue(1, 5);
+            StartGame(randLvl);
+            diffLvlMenu.selected = "";
+        } else if (diffLvlMenu.selected == "Normal") {
+            int randLvl = GetRandomValue(6, 10);
+            StartGame(randLvl);
+            diffLvlMenu.selected = "";
+        } else if (diffLvlMenu.selected == "Hard") {
+            int randLvl = GetRandomValue(11, 15);
+            StartGame(randLvl);
+            diffLvlMenu.selected = "";
+        }
+        diffLvlMenu.Update();
+        break;
+    case Game::State::LEVEL_SELECTOR:
+        if (IsKeyPressed(KEY_ENTER)) {
+            PlaySound(audio[MENU_ENTER]);
+            StartGame(level);
+        } else if (IsKeyPressed(KEY_ESCAPE)) {
+            ChangeState(State::MAIN_MENU);
+        } else if (IsKeyPressed(KEY_RIGHT)) {
+            if (level < NUM_LEVELS) {
+                level += 1;
+                PlaySoundMulti(audio[MENU_SELECT]);
+            }
+        } else if (IsKeyPressed(KEY_LEFT)) {
+            if (level > 1) {
+                level -= 1;
+                PlaySoundMulti(audio[MENU_SELECT]);
+            }
+        }
+        break;
+    case Game::State::SAVE_MENU:
+        if (saveMenu.selected == "Save 1") {
+            saveNum = 1;
+            ChangeState(State::OVERWRITE_MENU);
+            saveMenu.selected = "";
+        } else if (saveMenu.selected == "Save 2") {
+            saveNum = 2;
+            ChangeState(State::OVERWRITE_MENU);
+            saveMenu.selected = "";
+        } else if (saveMenu.selected == "Save 3") {
+            saveNum = 3;
+            ChangeState(State::OVERWRITE_MENU);
+            saveMenu.selected = "";
+        } else if (saveMenu.selected == "Save 4") {
+            saveNum = 4;
+            ChangeState(State::OVERWRITE_MENU);
+            saveMenu.selected = "";
+        } else if (saveMenu.selected == "Empty slot") {
+            if (SaveGame(numFiles + 1))
+                ChangeState(State::GAME_SAVED);
+            else
+                ChangeState(State::ERROR);
+
+            saveMenu.selected = "";
+        }
+        saveMenu.Update();
+        break;
+    case Game::State::OVERWRITE_MENU:
+        if (overwriteMenu.selected == "Overwrite?") {
+            if (SaveGame(saveNum))
+                ChangeState(State::GAME_SAVED);
+            else
+                ChangeState(State::ERROR);
+        }
+        overwriteMenu.Update();
+        break;
+    case Game::State::LOAD_MENU:
+        if (loadMenu.selected == "Save 1") {
+            LoadGame(1);
+            ChangeState(State::ACTIVE);
+            loadMenu.selected = "";
+        } else if (loadMenu.selected == "Save 2") {
+            LoadGame(2);
+            ChangeState(State::ACTIVE);
+            loadMenu.selected = "";
+        } else if (loadMenu.selected == "Save 3") {
+            LoadGame(3);
+            ChangeState(State::ACTIVE);
+            loadMenu.selected = "";
+        } else if (loadMenu.selected == "Save 4") {
+            LoadGame(4);
+            ChangeState(State::ACTIVE);
+            loadMenu.selected = "";
+        }
+        loadMenu.Update();
+        break;
+    case Game::State::ACTIVE:
+        if (lives <= 0) {
+            ChangeState(State::GAME_OVER);
+            break;
+        }
         if (endLevelTime > 0) {
             std::time_t now = std::time(nullptr);
             elapsedLevelTime = endLevelTime - now;
@@ -256,23 +231,67 @@ void Game::Update() {
             }
         }
         MoveSprites();
+
         if (backMusic != NUM_MUSIC)
             UpdateMusicStream(music[backMusic]);
+
         for (int i = 0; i < 4; i++) {
-            if (timeLeft != 0) {
+            if (timeLeft != 0)
                 CheckTime();
-            }
         }
-    } else if (state == State::MAIN_MENU)
-        mainMenu.Update();
-    else if (state == State::SAVE_MENU)
-        saveMenu.Update();
-    else if (state == State::LOAD_MENU)
-        loadMenu.Update();
-    else if (state == State::MOD_MENU)
-        modMenu.Update();
-    else if (state == State::DIFFLVL_MENU)
-        diffLvlMenu.Update();
+        break;
+    case Game::State::PAUSED:
+        if (ingameMenu.selected == "Save Game") {
+            ChangeState(State::SAVE_MENU);
+            saveMenu.Reload(FindSaveFiles());
+            ingameMenu.selected = "";
+        } else if (ingameMenu.selected == "Continue") {
+            ChangeState(State::ACTIVE);
+            ingameMenu.selected = "";
+        } else if (ingameMenu.selected == "Back to Menu") {
+            ChangeState(State::GAME_OVER);
+            ingameMenu.selected = "";
+        }
+        ingameMenu.Update();
+        break;
+    case Game::State::LEVEL_FINISHED:
+        if (sequenceFrameCounter > frameCounter) return;
+
+        level += 1;
+        if (level > NUM_LEVELS)
+            ChangeState(State::GAME_FINISHED);
+        else
+            RestartLevel();
+        break;
+    case Game::State::GAME_OVER:
+        if (sequenceFrameCounter > frameCounter) return;
+
+        if (backMusic != NUM_MUSIC && IsMusicStreamPlaying(music[backMusic])) {
+            StopMusicStream(music[backMusic]);
+            backMusic = NUM_MUSIC;
+        }
+        if (modNum == 1)
+            ChangeState(State::DIFFLVL_MENU);
+        else
+            ChangeState(State::MAIN_MENU);
+        break;
+    case Game::State::GAME_FINISHED:
+        if (highScore < score)
+            highScore = score;
+
+        if (sequenceFrameCounter > frameCounter) return;
+
+        ChangeState(State::MAIN_MENU);
+        break;
+    case Game::State::GAME_SAVED:
+        if (sequenceFrameCounter > frameCounter) return;
+
+        saveMenu.Reload(FindSaveFiles());
+        ChangeState(State::SAVE_MENU);
+        break;
+    default:
+        break;
+    }
 }
 
 void Game::ChangeState(State newState) {
@@ -976,6 +995,9 @@ void Game::Draw() {
             break;
         case State::SAVE_MENU:
             saveMenu.Draw();
+            break;
+        case State::OVERWRITE_MENU:
+            overwriteMenu.Draw();
             break;
         case State::GAME_SAVED:
             DrawSequence("Game Saved");

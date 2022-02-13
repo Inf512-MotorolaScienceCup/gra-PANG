@@ -96,6 +96,7 @@ public:
         DIFFLVL_MENU,
         LEVEL_SELECTOR,
         SAVE_MENU,
+        OVERWRITE_MENU,
         LOAD_MENU,
         ACTIVE,
         PAUSED,
@@ -253,10 +254,13 @@ public:
     Menu mainMenu;
     Menu ingameMenu;
     Menu saveMenu;
+    Menu overwriteMenu;
     Menu loadMenu;
     Menu modMenu;
     Menu diffLvlMenu;
+
     short int modNum;
+    short int saveNum;
 
     int level = 1;
     int lives;

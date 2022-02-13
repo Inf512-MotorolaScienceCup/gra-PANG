@@ -456,10 +456,10 @@ void Enemy::Collision(Sprite* sprite) {
         if (collision) {
             if (speed.x > 0) {
                 speed.x *= -1;
-                position.center.x = sprite->position.rectangle.x - position.radius;
+                position.center.x = sprite->position.rectangle.x - position.radius - 1;
             } else {
                 speed.x *= -1;
-                position.center.x = sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius;
+                position.center.x = sprite->position.rectangle.x + sprite->position.rectangle.width + position.radius + 1;
             }
         } else {
             if (speed.y > 0) {
@@ -546,7 +546,7 @@ void Enemy::duality(Sprite* sprite) {
     PlaySound(game->audio[BALL_BREAKING]);
     game->AddPowerup(position.center.x, position.center.y);
 }
-
+/*
 Sprite* Enemy::checkCollision() {
     for (auto sprite : game->sprites) {
         if (sprite->type == Sprite::Type::BLOCK && IsCollision(this, sprite)) {
@@ -560,7 +560,7 @@ Sprite* Enemy::checkCollision() {
     }
     return 0;
 }
-
+*/
 // Weapon
 Weapon::Weapon(Game *game, float x, float y, Kind kind)
     : Sprite(game, Position(x, y, 0, 0), Type::WEAPON), kind(kind) {

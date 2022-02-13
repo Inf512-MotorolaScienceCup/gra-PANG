@@ -122,7 +122,7 @@ public:
     void DrawFinish();
     void duality(Sprite*);
 
-    Sprite* checkCollision();
+    //Sprite* checkCollision();
 
 private:
     Game * game;
