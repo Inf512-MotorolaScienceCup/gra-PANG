@@ -253,6 +253,8 @@ void Game::Update() {
             ingameMenu.selected = "";
         }
         ingameMenu.Update();
+
+        endLevelTime = std::time(nullptr) + elapsedLevelTime;
         break;
     case Game::State::LEVEL_FINISHED:
         if (sequenceFrameCounter > frameCounter) return;
@@ -319,6 +321,7 @@ void Game::ChangeState(State newState) {
         break;
     case State::ERROR:
         sequenceFrameCounter = frameCounter + 2 * 60;
+        PlaySound(audio[ERROR]);
         break;
     }
     state = newState;
@@ -491,6 +494,7 @@ void Game::SpawnLevel() {
         sprites.push_back(player);
 
         Spawn(new Powerup(this, 1050, 720 - 20 - 64, Powerup::Kind::HEAL));
+        backMusic = BACKGROUND_B;
         backTexture = BACKGROUND_ANI;
         levelTime = 60;
         break;
@@ -516,6 +520,7 @@ void Game::SpawnLevel() {
 
         Spawn(Enemy::create(this, 620, 300, Enemy::Kind::BALL3, 1));
         Spawn(Enemy::create(this, 620, 160, Enemy::Kind::BALL3, -1));
+        backMusic = BACKGROUND_C;
         backTexture = BACKGROUND1;
         levelTime = 160;
         break;
@@ -535,6 +540,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
+        backMusic = BACKGROUND_D;
         backTexture = BACKGROUND2;
         levelTime = 160;
         break;
@@ -562,13 +568,14 @@ void Game::SpawnLevel() {
         Spawn(new Ladder(this, 1010, 545, 2, 55));
         Spawn(new Ladder(this, 135, 290, 4, 65));
 
-        Spawn(Enemy::create(this, 900, 100, Enemy::Kind::BALL1, -1));
+        Spawn(Enemy::create(this, 900, 130, Enemy::Kind::BALL1, -1));
 
         Spawn(new Powerup(this, 290, 340, Powerup::Kind::HEAL));
 
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
+        backMusic = BACKGROUND_E;
         backTexture = BACKGROUND3;
         levelTime = 160;
         break;
@@ -578,7 +585,7 @@ void Game::SpawnLevel() {
         Spawn(new Block(this, 300, 550, 680, wallThickness, Block::Kind::PLATFORM_1));
         Spawn(new Block(this, 980, 550, 60, wallThickness, Block::Kind::PLATFORM_2));
         Spawn(new Block(this, 1040, 550, 220, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(Enemy::create(this, 900, 100, Enemy::Kind::BALL1, -1));
+        Spawn(Enemy::create(this, 900, 200, Enemy::Kind::BALL1, -1));
 
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
@@ -639,10 +646,10 @@ void Game::SpawnLevel() {
         levelTime = 160;
         break;
     case 10:
-        for (int x = 0; x < 14; x++) {
-            Spawn(new Block(this, x * (1240 / 10), 80, 20, 540, Block::Kind::PLATFORM_1));
+        for (int x = 1; x < 10; x++) {
+            Spawn(new Block(this, x * (1260 / 10), 80, 20, 540, Block::Kind::PLATFORM_1));
             if (x % 2 == 0) {
-                Spawn(Enemy::create(this, x * (1240 / 10) + 30, 120, Enemy::Kind::BALL4, 1));
+                Spawn(Enemy::create(this, x * (1260 / 10) + 50, 120, Enemy::Kind::BALL4, 1));
             }
         }    //                       x     y                          wymiary 64-64                
         player = new Player(this, { 420,screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54 });
@@ -657,8 +664,8 @@ void Game::SpawnLevel() {
         Spawn(new Ladder(this, 300, 555, 2, 55));
         Spawn(new Ladder(this, 600, 555, 2, 55));
         Spawn(new Ladder(this, 900, 555, 2, 55));
-        Spawn(Enemy::create(this, 50, 500, Enemy::Kind::BALL1, 1));
-        Spawn(Enemy::create(this, 500, 200, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 80, 500, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 500, 200, Enemy::Kind::BALL1, -1));
         Spawn(new Powerup(this, 760, 300 - 64, Powerup::Kind::HEAL));
 
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
@@ -676,7 +683,7 @@ void Game::SpawnLevel() {
         Spawn(new Block(this, 980, 500, 80, 20, Block::Kind::PLATFORM_2));
         Spawn(new Block(this, 1060, 500, 200, 20, Block::Kind::PLATFORM_1));
 
-        Spawn(Enemy::create(this, 50, 500, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 90, 500, Enemy::Kind::BALL1, 1));
         Spawn(Enemy::create(this, 500, 200, Enemy::Kind::BALL1, 1));
 
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
@@ -747,12 +754,12 @@ void Game::SpawnLevel() {
         Spawn(new Block(this, 630, 80, 20, 120, Block::Kind::PLATFORM_1));
         Spawn(new Block(this, 940, 80, 20, 120, Block::Kind::PLATFORM_1));
 
-        for (int x = 1; x < 5; x++) {
-            for (int i = 1; i < 5; i++) {
-                Spawn(Enemy::create(this, 40 + 30 * i, 80 + x * 25, Enemy::Kind::BALL4, 1));
-                Spawn(Enemy::create(this, 360 + 30 * i, 80 + x * 25, Enemy::Kind::BALL4, 1));
-                Spawn(Enemy::create(this, 670 + 30 * i, 80 + x * 25, Enemy::Kind::BALL4, 1));
-                Spawn(Enemy::create(this, 980 + 30 * i, 80 + x * 25, Enemy::Kind::BALL4, 1));
+        for (int x = 1; x < 3; x++) {
+            for (int i = 1; i < 3; i++) {
+                Spawn(Enemy::create(this, 40 + 40 * i, 80 + x * 35, Enemy::Kind::BALL3, 1));
+                Spawn(Enemy::create(this, 360 + 40 * i, 80 + x * 35, Enemy::Kind::BALL3, 1));
+                Spawn(Enemy::create(this, 670 + 40 * i, 80 + x * 35, Enemy::Kind::BALL3, 1));
+                Spawn(Enemy::create(this, 980 + 40 * i, 80 + x * 35, Enemy::Kind::BALL3, 1));
             }
         }
         for (int i = 1; i <= 4; i++) {
@@ -910,8 +917,8 @@ void Game::SpawnLevel() {
         break;
     case 21:
 
-        for (int x = 1; x < 18; x++) {
-            Spawn(Enemy::create(this, x * 60 + 200, 80 + x * 60, Enemy::Kind::BALL3, 1));
+        for (int x = 1; x < 8; x++) {
+            Spawn(Enemy::create(this, x * 60 + 200, 100 + x * 50, Enemy::Kind::BALL3, 1));
         }
 
 
@@ -1306,6 +1313,7 @@ void Game::AddWeapon(float x, float y, int type) {
         weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON4);
         spriteMap[Sprite::Type::WEAPON].push_back(weapon);
         sprites.push_back(weapon);
+        PlaySound(audio[MINE]);
         break;
     }
 }
@@ -1315,7 +1323,7 @@ void Game::AddScore(int score) {
 }
 
 void Game::AddPowerup(float x, float y) {
-    int chance = GetRandomValue(1, 3);
+    int chance = GetRandomValue(1, 4);
     if (chance == 1) {
         int kindNum;
         if (weaponType == 2)
@@ -1375,12 +1383,15 @@ void Game::PickAction(Powerup::Kind kind) {
         int change = GetRandomValue(2, 4);
         if (change == weaponType)
             weaponType = 1;
-        else
+        else if (change == 4) {
+            previesWeapon = weaponType;
+            weaponType = change;
+            shootingLeft = 5;
+            break;
+        } else
             weaponType = change;
 
         shootingLeft = 0;
-        if (weaponType == 4)
-            shootingLeft = 5;
         break;
     }
 }

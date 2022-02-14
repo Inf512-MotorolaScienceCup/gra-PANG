@@ -74,6 +74,9 @@ enum AudioTypes {
     MENU_ENTER,
     WALK,
     HARPUN,
+    MINE,
+    MINE_EXP_SOUND,
+    ERROR,
 
     NUM_AUDIO
 };
@@ -155,28 +158,30 @@ public:
                                               };
     Texture2D textures[NUM_TEXTURES];
 
-    const char *audioFiles[NUM_AUDIO] = { "res/audio/bounce.mp3",
-                                          "res/audio/game_over.mp3",
-                                          "res/audio/health_lose.mp3",
-                                          "res/audio/laser.mp3",
-                                          "res/audio/level_start.mp3",
-                                          "res/audio/level_completed.mp3",
-                                          "res/audio/powerup.mp3",
-                                          "res/audio/wall_destruction.mp3",
-                                          "res/audio/ball-breaking.mp3",
-                                          "res/audio/menu_select.mp3",
-                                          "res/audio/menu_enter.mp3",
-                                          "res/audio/walk.mp3",
-                                          "res/audio/harpun.mp3"
+    const char *audioFiles[NUM_AUDIO] = {"res/audio/bounce.mp3",
+                                         "res/audio/game_over.mp3",
+                                         "res/audio/health_lose.mp3",
+                                         "res/audio/laser.mp3",
+                                         "res/audio/level_start.mp3",
+                                         "res/audio/level_completed.mp3",
+                                         "res/audio/powerup.mp3",
+                                         "res/audio/wall_destruction.mp3",
+                                         "res/audio/ball-breaking.mp3",
+                                         "res/audio/menu_select.mp3",
+                                         "res/audio/menu_enter.mp3",
+                                         "res/audio/walk.mp3",
+                                         "res/audio/harpun.mp3",
+                                         "res/audio/mine.mp3",
+                                         "res/audio/mine_explosion.mp3",
+                                         "res/audio/error.mp3"
     };
     Sound audio[NUM_AUDIO];
 
-    const char *musicFiles[NUM_MUSIC] = {
-        "res/audio/background1.mp3",
-        "res/audio/background2.mp3",
-        "res/audio/background3.mp3",
-        "res/audio/background4.mp3",
-        "res/audio/background5.mp3"
+    const char *musicFiles[NUM_MUSIC] = {"res/audio/background1.mp3",
+                                         "res/audio/background2.mp3",
+                                         "res/audio/background3.mp3",
+                                         "res/audio/background4.mp3",
+                                         "res/audio/background5.mp3"
     };
     Music music[NUM_MUSIC];
 
@@ -272,8 +277,8 @@ public:
     int elapsedLevelTime;
 
     short int weaponType = 1;
+    short int previesWeapon;
     int shootingLeft;
-
     std::time_t timeLeft[4];
     bool stopTime;
     short int speedBoost;

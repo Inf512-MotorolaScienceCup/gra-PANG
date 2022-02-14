@@ -716,7 +716,9 @@ void Weapon::Collision(Sprite *sprite) {
         }
     } else if (sprite->type == Sprite::Type::ENEMY) {
         state = State::FINISHING;
-        if (kind == Kind::WEAPON1 && game->shootingLeft < 0) {
+        if (kind == Kind::WEAPON4) {
+            PlaySound(game->audio[MINE_EXP_SOUND]);
+        } else if (kind == Kind::WEAPON1 && game->shootingLeft < 0) {
             game->shootingLeft++;
         } else if (kind == Kind::WEAPON3 && game->shootingLeft < 0) {
             game->shootingLeft++;
