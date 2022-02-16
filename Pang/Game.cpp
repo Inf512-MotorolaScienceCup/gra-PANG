@@ -85,14 +85,22 @@ void Game::Update() {
     frameCounter++;
 
     if (GetKeyPressed() == KEY_ESCAPE) {
-        if (state == State::PAUSED)
+        if (state == State::PAUSED) {
             ChangeState(State::ACTIVE);
-        else if (state == State::ACTIVE)
+            PlaySound(audio[MENU_ENTER]);
+        } else if (state == State::ACTIVE) {
             ChangeState(State::PAUSED);
-        else if (state == State::SAVE_MENU)
+            PlaySound(audio[MENU_ENTER]);
+        } else if (state == State::SAVE_MENU) {
             ChangeState(State::PAUSED);
-        else if (state == State::LOAD_MENU)
+            PlaySound(audio[MENU_ENTER]);
+        } else if (state == State::LOAD_MENU) {
             ChangeState(State::MAIN_MENU);
+            PlaySound(audio[MENU_ENTER]);
+        } else if (state == State::MAIN_MENU) {
+            ChangeState(State::MOD_MENU);
+            PlaySound(audio[MENU_ENTER]);
+        }
     }  
 
     switch (state) {
@@ -193,7 +201,10 @@ void Game::Update() {
                 ChangeState(State::GAME_SAVED);
             else
                 ChangeState(State::ERROR);
-        }
+        } else if (overwriteMenu.selected == "Cancel")
+            ChangeState(State::SAVE_MENU);
+
+        overwriteMenu.selected = "";
         overwriteMenu.Update();
         break;
     case Game::State::LOAD_MENU:
