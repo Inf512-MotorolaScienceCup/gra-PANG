@@ -14,7 +14,12 @@ class Menu {
     };
 
 public:
-    Menu(Game* game, std::vector<std::string> items);
+    enum class Type{
+        MAIN_MENU,
+        PAUSE_MENU
+    } type;
+
+    Menu(Game* game, std::vector<std::string> items, Type type);
     void Reload(std::vector<std::string> items);
     void Draw();
     void Update();
@@ -25,5 +30,6 @@ public:
     std::vector<MenuItem> graphics;
     Game* game;
     int position = 0;
-    Rectangle bgRec;
+    const float MENU_WIDTH = 300;
+    float MENU_HEIGHT;
 };

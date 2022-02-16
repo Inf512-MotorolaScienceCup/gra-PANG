@@ -4,11 +4,8 @@
 #include "Menu.h"
 #include "Game.h"
 
-const float MENU_WIDTH = 300;
-const float MENU_HEIGHT = 200;
-
-Menu::Menu(Game* game, std::vector<std::string> items)
-    : game(game) {
+Menu::Menu(Game* game, std::vector<std::string> items, Type type)
+    : game(game), type(type) {
     Reload(items);
 }
 
@@ -16,53 +13,84 @@ void Menu::Reload(std::vector<std::string> items) {
     if (graphics.size() > 0)
         graphics.clear();
 
-    bgRec.x = (game->screenWidth - MENU_WIDTH) / 2;
-    bgRec.y = (game->screenHeight - MENU_HEIGHT) / 2;
-    bgRec.width = MENU_WIDTH;
-    bgRec.height = MENU_HEIGHT;
+    float itemHeight = 50;
 
-    float xMargin = 0.1 * MENU_HEIGHT;
-    float yMargin = 0.1 * MENU_WIDTH;
-    float itemHeight = (MENU_HEIGHT - 2 * yMargin) / items.size();
+    if (type == Type::MAIN_MENU) {
+        float MENU_X = 70;
+        float MENU_Y = game->screenHeight / 2 + 50;
 
-    int i = 0;
-    for (auto item : items) {
-        graphics.push_back({
-            item,{
-                bgRec.x + xMargin,
-                bgRec.y + yMargin + i++ * (itemHeight + 2),
-                MENU_WIDTH - 2 * xMargin,
-                itemHeight
-            }
-            });
+        int i = 0;
+        for (auto item : items) {
+            graphics.push_back({
+                item,{
+                    MENU_X,
+                    MENU_Y + i++ * itemHeight,
+                    MENU_WIDTH,
+                    itemHeight
+                }
+                });
+        }
+        
+    } else {
+        float MENU_X = game->screenWidth / 2 - 200;
+        float MENU_Y = game->screenHeight / 2 - 100;
+
+        int i = 0;
+        for (auto item : items) {
+            graphics.push_back({
+                item,{
+                    MENU_X + i * 80,
+                    MENU_Y + i++ * itemHeight,
+                    MENU_WIDTH,
+                    itemHeight
+                }
+                });
+        }
     }
 }
 
 void Menu::Draw() {
     static Color bgColor = Fade(BLACK, 0.8);
-    static Color menuBgColor = Fade(GREEN, 0.8);
 
-    DrawRectangle(0, 0, game->screenWidth, game->screenHeight, bgColor);
-    DrawRectangleRounded(bgRec, 0.2, 8, menuBgColor);
+    if (type == Type::PAUSE_MENU) {
+        DrawTriangle({ 0, 50 }, { game->screenWidth, game->screenHeight - 50 }, { game->screenWidth, 50 }, GRAY);
+        DrawRectangle(0, 0, game->screenWidth, 50, GRAY);
+        DrawRectangle(0, 0, game->screenWidth, game->screenHeight, bgColor);
+        
 
-    int i = 0;
-    for (const auto& g : graphics) {
-        DrawRectangleRounded(g.rec, 0.2, 8, menuBgColor);
-        DrawText(g.name.c_str(), g.rec.x + 125 - 4 * g.name.size(), g.rec.y - 10 + g.rec.height / 2, 20, BLACK);
+        // Draw selected item
+        const MenuItem& item = graphics[position];
+        DrawRectangleRounded({ item.rec.x - 40, item.rec.y + item.rec.height / 2, 25, 5 }, 1, 1, WHITE);
+        DrawRectangleRounded({ item.rec.x + item.name.size() * 30, item.rec.y + item.rec.height / 2, 25, 5 }, 1, 1, WHITE);
+        DrawTextEx(game->font, item.name.c_str(), { item.rec.x, item.rec.y }, 60, 0, PINK);
+
+        for (const auto& g : graphics) {
+            if (item.name.c_str() != g.name.c_str())
+                DrawTextEx(game->font, g.name.c_str(), { g.rec.x, g.rec.y }, 54, 0, WHITE);
+        }
+        
+        DrawTexture(game->textures[BALL_MENU], 1000, 40, WHITE);
+    } else {
+        // Draw selected item
+        const MenuItem& item = graphics[position];
+        DrawRectangleRounded({ item.rec.x - 40, item.rec.y + item.rec.height / 2, 25, 5 }, 1, 1, WHITE);
+        DrawTextEx(game->font, item.name.c_str(), { item.rec.x, item.rec.y }, 60, 0, PINK);
+
+        for (const auto& g : graphics) {
+            if (g.name.c_str() != item.name.c_str())
+                DrawTextEx(game->font, g.name.c_str(), { g.rec.x, g.rec.y }, 54, 0, WHITE);
+        }
     }
 
-  // Draw selected item
-    const MenuItem& item = graphics[position];
-    DrawRectangleRounded(item.rec, 0.2, 8, BLACK);
-    DrawText(item.name.c_str(), item.rec.x + 127 - 4 * item.name.size(), item.rec.y - 10 + item.rec.height / 2, 20, menuBgColor);
+
 }
 
 void Menu::Update() {
     if (IsKeyPressed(KEY_UP)) {
-        position = (position <= 0) ? position = 0 : position - 1;
+        position = (position <= 0) ? position = graphics.size() - 1 : position - 1;
         PlaySound(game->audio[MENU_SELECT]);
     } else if (IsKeyPressed(KEY_DOWN)) {
-        position = (position >= graphics.size() - 1) ? position = graphics.size() - 1 : position + 1;
+        position = (position >= graphics.size() - 1) ? position = 0 : position + 1;
         PlaySound(game->audio[MENU_SELECT]);
     } else if (IsKeyPressed(KEY_ENTER)) {
         selected = graphics[position].name;

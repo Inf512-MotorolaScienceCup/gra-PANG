@@ -11,13 +11,13 @@
 
 Game::Game()
     : state(State::MOD_MENU),
-    mainMenu(this, { "Start", "Load", "Level", "Quit" }),
-    ingameMenu(this, { "Continue", "Save Game", "Back to Menu", "Quit" }),
-    saveMenu(this, FindSaveFiles()),
-    overwriteMenu(this, { "Overwrite?", "Cancel" }),
-    loadMenu(this, FindLoadFiles()),
-    modMenu(this, { "Mod 1", "Mod 2", "Mod 3" }),
-    diffLvlMenu(this, { "Easy", "Normal", "Hard", "Quit" }) {
+    mainMenu(this, { "Start", "Load", "Level", "Quit" }, Menu::Type::MAIN_MENU),
+    ingameMenu(this, { "Continue", "Save Game", "Back to Menu", "Quit" }, Menu::Type::PAUSE_MENU),
+    saveMenu(this, FindSaveFiles(), Menu::Type::MAIN_MENU),
+    overwriteMenu(this, { "Overwrite?", "Cancel" }, Menu::Type::MAIN_MENU),
+    loadMenu(this, FindLoadFiles(), Menu::Type::MAIN_MENU),
+    modMenu(this, { "Mod 1", "Mod 2", "Mod 3" }, Menu::Type::MAIN_MENU),
+    diffLvlMenu(this, { "Easy", "Normal", "Hard", "Quit" }, Menu::Type::MAIN_MENU) {
     InitWindow(screenWidth, screenHeight, "Pang");
     InitAudioDevice();
     SetExitKey(KEY_F10);
@@ -39,6 +39,8 @@ void Game::LoadTextures() {
         textures[i] = LoadTextureFromImage(image);
         UnloadImage(image);
     }
+    font = LoadFontEx("res/font/Organetto-Regular.ttf", 54, 0, 0);
+    SetTextureFilter(font.texture, TEXTURE_FILTER_TRILINEAR);
 }
 
 void Game::LoadAudio() {
@@ -66,6 +68,9 @@ void Game::Unload() {
     for (int i = 0; i < NUM_MUSIC; i++) {
         UnloadMusicStream(music[i]);
     }
+    ClearDroppedFiles();
+
+    UnloadFont(font);
 }
 
 int Game::MainLoop() {
@@ -87,19 +92,22 @@ void Game::Update() {
     if (GetKeyPressed() == KEY_ESCAPE) {
         if (state == State::PAUSED) {
             ChangeState(State::ACTIVE);
-            PlaySound(audio[MENU_ENTER]);
+            PlaySound(audio[MENU_BACK]);
         } else if (state == State::ACTIVE) {
             ChangeState(State::PAUSED);
-            PlaySound(audio[MENU_ENTER]);
+            PlaySound(audio[MENU_BACK]);
         } else if (state == State::SAVE_MENU) {
             ChangeState(State::PAUSED);
-            PlaySound(audio[MENU_ENTER]);
+            PlaySound(audio[MENU_BACK]);
         } else if (state == State::LOAD_MENU) {
             ChangeState(State::MAIN_MENU);
-            PlaySound(audio[MENU_ENTER]);
+            PlaySound(audio[MENU_BACK]);
         } else if (state == State::MAIN_MENU) {
             ChangeState(State::MOD_MENU);
-            PlaySound(audio[MENU_ENTER]);
+            PlaySound(audio[MENU_BACK]);
+        } else if (state == State::DIFFLVL_MENU) {
+            ChangeState(State::MOD_MENU);
+            PlaySound(audio[MENU_BACK]);
         }
     }  
 
@@ -748,7 +756,7 @@ void Game::SpawnLevel() {
         Spawn(Enemy::create(this, 770, 120, Enemy::Kind::BALL1, 1));
         Spawn(Enemy::create(this, 1120, 120, Enemy::Kind::BALL1, 1));
 
-        Spawn(new Ladder(this, 605, 500, 3, 20));
+        Spawn(new Ladder(this, 605, 495, 3, 60));
 
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
@@ -846,7 +854,7 @@ void Game::SpawnLevel() {
 
         Spawn(new Block(this, 640, 420, 620, 20, Block::Kind::PLATFORM_1));
 
-        Spawn(new Ladder(this, 640, 420, 4, 50));
+        Spawn(new Ladder(this, 640, 415, 4, 50));
         Spawn(new Powerup(this, 940, 420 - 64, Powerup::Kind::HEAL));
 
         Spawn(new Ice(this, 640, 410, 620, 10));
@@ -879,7 +887,7 @@ void Game::SpawnLevel() {
                 Spawn(new Block(this, 1180 - (220 - x * 100), 160 + x * 100, 100, 20, Block::Kind::PLATFORM_1));
             }
         }
-        Spawn(new Ladder(this, 603, 279, 6, 50));
+        Spawn(new Ladder(this, 603, 275, 6, 50));
 
         Spawn(new Block(this, 120, 80, 20, 200, Block::Kind::PLATFORM_1));
         Spawn(new Block(this, 220, 80, 20, 80, Block::Kind::PLATFORM_1));
@@ -1041,7 +1049,7 @@ void Game::DrawBackground() {
     if (textures[backTexture].width > 2560) {
         DrawTextureRec(textures[backTexture], backRec, { 0, 0 }, WHITE);
         if (backFrame++ % 8 == 0) {
-            backRec.x += 1398;
+            backRec.x += 1280;
             backFrame = 1;
         }
     } else {

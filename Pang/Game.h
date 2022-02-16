@@ -12,6 +12,7 @@
 
 enum TextureTypes {
     BACKGROUND_ANI,
+    BACKGROUND_ANI2,
     BACKGROUND1,
     BACKGROUND2,
     BACKGROUND3,
@@ -30,7 +31,6 @@ enum TextureTypes {
     BACKGROUND16,
     BACKGROUND17,
     BACKGROUND18,
-    BACKGROUND19,
     PLAYER,
     LADDER,
     WALL,
@@ -56,6 +56,7 @@ enum TextureTypes {
     HUD_BOOST,
     HUD_DOUBLE,
     ICE,
+    BALL_MENU,
 
     NUM_TEXTURES
 };
@@ -72,6 +73,7 @@ enum AudioTypes {
     BALL_BREAKING,
     MENU_SELECT,
     MENU_ENTER,
+    MENU_BACK,
     WALK,
     HARPUN,
     MINE,
@@ -110,36 +112,36 @@ public:
         ERROR
     } state;
 
-    const char *textureFiles[NUM_TEXTURES] = {"res/Background/forestHD.png",
-                                              "res/Background/bagno1.png",
-                                              "res/Background/jungla1.png",
-                                              "res/Background/jungla2.png",
-                                              "res/Background/jungla3.png",
-                                              "res/Background/las1.png",
-                                              "res/Background/las2.png",
-                                              "res/Background/las3.png",
-                                              "res/Background/morze1.png",
-                                              "res/Background/pustynia1.png",
-                                              "res/Background/pustynia2.png",
-                                              "res/Background/pustynia3.png",
-                                              "res/Background/pustynia4.png",
-                                              "res/Background/gory.png",
-                                              "res/Background/miasto1.png",
-                                              "res/Background/zima1.png",
-                                              "res/Background/zima2.png",
-                                              "res/Background/zima3.png",
-                                              "res/Background/zima4.png",
-                                              "res/Background/zima5.png",
+    const char *textureFiles[NUM_TEXTURES] = {"res/background/forestHD.png",
+                                              "res/background/landscape.png",
+                                              "res/background/bagno1.png",
+                                              "res/background/jungla1.png",
+                                              "res/background/jungla2.png",
+                                              "res/background/jungla3.png",
+                                              "res/background/las1.png",
+                                              "res/background/las2.png",
+                                              "res/background/las3.png",
+                                              "res/background/morze1.png",
+                                              "res/background/pustynia1.png",
+                                              "res/background/pustynia2.png",
+                                              "res/background/pustynia3.png",
+                                              "res/background/gory.png",
+                                              "res/background/miasto1.png",
+                                              "res/background/zima1.png",
+                                              "res/background/zima2.png",
+                                              "res/background/zima3.png",
+                                              "res/background/zima4.png",
+                                              "res/background/zima5.png",
                                               "res/spritesheet.png",
                                               "res/ladder.png",
                                               "res/wall.png",
                                               "res/platform1.png",
                                               "res/platform2.png",
-                                              "res/Ball/Explosion/enemyexplosion1.png",
-                                              "res/Ball/Ball_1.png",
-                                              "res/Ball/Ball_2.png",
-                                              "res/Ball/Ball_3.png",
-                                              "res/Ball/Ball_4.png",
+                                              "res/ball/Explosion/enemyexplosion1.png",
+                                              "res/ball/Ball_1.png",
+                                              "res/ball/Ball_2.png",
+                                              "res/ball/Ball_3.png",
+                                              "res/ball/Ball_4.png",
                                               "res/weapons/line_straight.png",
                                               "res/weapons/line_wiggled.png",
                                               "res/weapons/ending.png",
@@ -154,7 +156,8 @@ public:
                                               "res/hud/weapons.png",
                                               "res/hud/boost.png",
                                               "res/hud/double.png",
-                                              "res/ice.png"
+                                              "res/ice.png",
+                                              "res/ball/ball_menu.png"
                                               };
     Texture2D textures[NUM_TEXTURES];
 
@@ -169,6 +172,7 @@ public:
                                          "res/audio/ball-breaking.mp3",
                                          "res/audio/menu_select.mp3",
                                          "res/audio/menu_enter.mp3",
+                                         "res/audio/menu_back.mp3",
                                          "res/audio/walk.mp3",
                                          "res/audio/harpun.mp3",
                                          "res/audio/mine.mp3",
@@ -246,7 +250,9 @@ public:
     Player *player;
     Weapon *weapon;
 
-    TextureTypes backTexture;
+    Font font;
+
+    TextureTypes backTexture = BACKGROUND_ANI2;
     Rectangle backRec = { 0, 0, 1280, 720 };
     short int backFrame = 0;
 

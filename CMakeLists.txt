@@ -35,9 +35,9 @@ file(GLOB resources "./Pang/res/*")
 list(APPEND game_resources ${resources})
 
 add_executable(pang ${game_sources})
-target_link_libraries(pang raylib)
-target_link_libraries(pang dl)
-target_link_libraries(pang pthread)
+target_link_libraries(pang raylib winmm)
+#target_link_libraries(pang dl)
+#target_link_libraries(pang pthread)
 
 file(COPY ${game_resources} DESTINATION "res/")
 make_directory("saves")
