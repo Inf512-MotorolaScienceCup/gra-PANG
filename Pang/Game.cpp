@@ -38,6 +38,7 @@ void Game::LoadTextures() {
         Image image = LoadImage(textureFiles[i]);
         textures[i] = LoadTextureFromImage(image);
         UnloadImage(image);
+        SetTextureFilter(textures[i], TEXTURE_FILTER_TRILINEAR);
     }
     font = LoadFontEx("res/font/Organetto-Regular.ttf", 54, 0, 0);
     SetTextureFilter(font.texture, TEXTURE_FILTER_TRILINEAR);
@@ -295,6 +296,7 @@ void Game::Update() {
             ChangeState(State::DIFFLVL_MENU);
         else
             ChangeState(State::MAIN_MENU);
+        backTexture = BACKGROUND_ANI2;
         break;
     case Game::State::GAME_FINISHED:
         if (highScore < score)
@@ -319,20 +321,32 @@ void Game::ChangeState(State newState) {
     if (state == newState) return;
 
     switch (newState) {
+    case State::ACTIVE:
+        if (state == State::PAUSED && !endAnim) {
+            endAnim = true;
+            return;
+        }
+        break;
+    case State::PAUSED:
+        ingameMenu.animVec = { screenWidth, screenHeight - 50 };
+        break;
     case State::GAME_OVER:
         Unspawn();
-        sequenceFrameCounter = frameCounter + 3 * 60;
+        sequenceFrameCounter = frameCounter + 4 * 60;
+        animVec = { 0, 0 };
         PlaySound(audio[GAME_OVER]);
         break;
     case State::LEVEL_FINISHED:
         Unspawn();
         score += elapsedLevelTime * 100;
-        sequenceFrameCounter = frameCounter + 3 * 60;
+        sequenceFrameCounter = frameCounter + 4 * 60;
+        animVec = { 0, 0 };
         PlaySound(audio[LEVEL_COMPLETED]);
         break;
     case State::GAME_FINISHED:
         Unspawn();
-        sequenceFrameCounter = frameCounter + 3 * 60;
+        sequenceFrameCounter = frameCounter + 4 * 60;
+        animVec = { 0, 0 };
         //PlaySound(audio[GAME_COMPLETED]);
         break;
     case State::GAME_SAVED:
@@ -1113,24 +1127,33 @@ void Game::DrawSequence(const char* message) {
 }
 
 void Game::DrawEndLevel() {
+    if (animVec.y < screenHeight * 2)
+        animVec.y += 50;
     DrawRectangleRec({ 0, 0, screenWidth, screenHeight }, ColorAlpha(BLACK, 0.6f));
-    DrawText("Great job!", 520, 300, 40, GREEN);
-    DrawText(TextFormat("Time bonus: %d", elapsedLevelTime * 50), 500, 360, 30, GREEN);
-    DrawText(TextFormat("Your score: %d", score), 500, 410, 30, GREEN);
+    DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
+    DrawTextEx(font, "Great job!", { 500, animVec.y - 1200 }, 66, 0, RED);
+    DrawTextEx(font, TextFormat("Time bonus: %d", score), { 500, animVec.y - 1100 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 500, animVec.y - 1000 }, 50, 0, WHITE);
 }
 
 void Game::DrawGameOver() {
-    DrawRectangleRec({ 0, 0, screenWidth, screenHeight }, ColorAlpha(BLACK, 0.6f));
-    DrawText("Game over", 520, 300, 40, GREEN);
-    DrawText(TextFormat("Your score: %d", score), 500, 360, 30, GREEN);
+    if (animVec.y < screenHeight * 2)
+        animVec.y += 50;
+    DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500}, { 0, 0 }, 225, GRAY);
+    DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
+    DrawTextEx(font, "Game over", { 500, animVec.y - 1200 }, 66, 0, RED);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 500, animVec.y - 1100 }, 50, 0, WHITE);
 }
 
 void Game::DrawEndGame() {
-    DrawRectangleRec({ 0, 0, screenWidth, screenHeight }, ColorAlpha(BLACK, 0.6f));
-    DrawText("Game finished - Superb job!", 480, 300, 40, GREEN);
-    DrawText(TextFormat("Time bonus: %d", elapsedLevelTime * 50), 500, 360, 30, GREEN);
-    DrawText(TextFormat("Your score: %d", score), 500, 410, 30, GREEN);
-    DrawText(TextFormat("Highest score: %d", highScore), 500, 460, 30, GREEN);
+    if (animVec.y < screenHeight * 2)
+        animVec.y += 50;
+    DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
+    DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
+    DrawTextEx(font, "Game finished - Superb job!", { 500, animVec.y - 1200 }, 66, 0, RED);
+    DrawTextEx(font, TextFormat("Time bonus: %d", score), { 500, animVec.y - 1100 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 500, animVec.y - 1000 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Highest score: %d", score), { 500, animVec.y - 900 }, 50, 0, WHITE);
 }
 
 void Game::DrawLevelSelector() {

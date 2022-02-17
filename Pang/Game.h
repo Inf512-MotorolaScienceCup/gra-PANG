@@ -272,6 +272,8 @@ public:
 
     short int modNum;
     short int saveNum;
+    bool endAnim;
+    Vector2 animVec;
 
     int level = 1;
     int lives;

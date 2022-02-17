@@ -25,6 +25,7 @@ public:
     void Update();
 
     std::string selected;
+    Vector2 animVec;
 
   private:
     std::vector<MenuItem> graphics;
