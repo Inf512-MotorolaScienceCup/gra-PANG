@@ -13,9 +13,9 @@ Game::Game()
     : state(State::MOD_MENU),
     mainMenu(this, { "Start", "Load", "Level", "Quit" }, Menu::Type::MAIN_MENU),
     ingameMenu(this, { "Continue", "Save Game", "Back to Menu", "Quit" }, Menu::Type::PAUSE_MENU),
-    saveMenu(this, FindSaveFiles(), Menu::Type::MAIN_MENU),
-    overwriteMenu(this, { "Overwrite?", "Cancel" }, Menu::Type::MAIN_MENU),
-    loadMenu(this, FindLoadFiles(), Menu::Type::MAIN_MENU),
+    saveMenu(this, FindSaveFiles(), Menu::Type::PAUSE_MENU),
+    overwriteMenu(this, { "Overwrite?", "Cancel" }, Menu::Type::PAUSE_MENU),
+    loadMenu(this, FindLoadFiles(), Menu::Type::LOAD_MENU),
     modMenu(this, { "Mod 1", "Mod 2", "Mod 3" }, Menu::Type::MAIN_MENU),
     diffLvlMenu(this, { "Easy", "Normal", "Hard", "Quit" }, Menu::Type::MAIN_MENU) {
     InitWindow(screenWidth, screenHeight, "Pang");
@@ -324,36 +324,56 @@ void Game::ChangeState(State newState) {
     case State::ACTIVE:
         if (state == State::PAUSED && !endAnim) {
             endAnim = true;
+            newAnim = newState;
             return;
         }
         break;
     case State::PAUSED:
+        if (state == State::SAVE_MENU && !endAnim) {
+            endAnim = true;
+            newAnim = newState;
+            return;
+        }
         ingameMenu.animVec = { screenWidth, screenHeight - 50 };
+        break;
+    case State::SAVE_MENU:
+        if (state == State::PAUSED && !endAnim) {
+            endAnim = true;
+            newAnim = newState;
+            return;
+        }
+        saveMenu.animVec = { screenWidth, screenHeight - 50 };
         break;
     case State::GAME_OVER:
         Unspawn();
-        sequenceFrameCounter = frameCounter + 4 * 60;
+        frameCounter = 0;
+        sequenceFrameCounter = 4 * 60;
         animVec = { 0, 0 };
         PlaySound(audio[GAME_OVER]);
         break;
     case State::LEVEL_FINISHED:
         Unspawn();
         score += elapsedLevelTime * 100;
-        sequenceFrameCounter = frameCounter + 4 * 60;
+        frameCounter = 0;
+        sequenceFrameCounter = 4 * 60;
         animVec = { 0, 0 };
         PlaySound(audio[LEVEL_COMPLETED]);
         break;
     case State::GAME_FINISHED:
         Unspawn();
-        sequenceFrameCounter = frameCounter + 4 * 60;
+        frameCounter = 0;
+        sequenceFrameCounter = 4 * 60;
         animVec = { 0, 0 };
         //PlaySound(audio[GAME_COMPLETED]);
         break;
     case State::GAME_SAVED:
-        sequenceFrameCounter = frameCounter + 2 * 60;
+        frameCounter = 0;
+        sequenceFrameCounter = 2 * 60;
+        animVec = { 0, 0 };
         break;
     case State::ERROR:
-        sequenceFrameCounter = frameCounter + 2 * 60;
+        frameCounter = 0;
+        sequenceFrameCounter = 2 * 60;
         PlaySound(audio[ERROR]);
         break;
     }
@@ -1040,7 +1060,8 @@ void Game::Draw() {
             overwriteMenu.Draw();
             break;
         case State::GAME_SAVED:
-            DrawSequence("Game Saved");
+            //DrawSequence("Game Saved");
+            DrawGameSaved();
             break;
         case State::LOAD_MENU:
             loadMenu.Draw();
@@ -1072,49 +1093,49 @@ void Game::DrawBackground() {
 }
 
 void Game::DrawPanel() {
-    float y = wallThickness + 10;
+    float y = wallThickness + 5;
 
     DrawRectangleRec({wallThickness, wallThickness, screenWidth - 2 * wallThickness, panelHeight}, ColorAlpha(BLACK, 0.6f));
     //DrawFPS(wallThickness + 10, y);
-    DrawText(TextFormat("Level: %i", level), 40, y, 20, GREEN);
-    DrawText(TextFormat("Score: %03i", score), 200, y, 20, GREEN);
-    DrawText(TextFormat("Lives: %i", lives), 900, y, 20, GREEN);
-    DrawText(TextFormat("Time: %03i", elapsedLevelTime), 1150, y, 20, GREEN);
+    DrawTextEx(font, TextFormat("Level: %i", level), { 40, y }, 35, 0, WHITE);
+    DrawTextEx(font, TextFormat("Score: %03i", score), { 200, y }, 35, 0, WHITE);
+    DrawTextEx(font, TextFormat("Lives: %i", lives), { 900, y }, 35, 0, WHITE);
+    DrawTextEx(font, TextFormat("Time: %03i", elapsedLevelTime), { 1100, y }, 35, 0, WHITE);
     
     if (speedBoost != 1) {
-        DrawTexture(textures[HUD_BOOST], 340, y - 5, WHITE);
+        DrawTexture(textures[HUD_BOOST], 340, y, WHITE);
         if (timeLeft[0]) {
             std::time_t now = std::time(nullptr);
-            DrawText(TextFormat(": %i s", 5 - (now - timeLeft[0])), 365, y, 20, GREEN);
+            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[0])), { 365, y }, 35, 0, GREEN);
         }
     }
     if (multiWeapon != 0) {
-        DrawTexture(textures[HUD_DOUBLE], 420, y - 5, WHITE);
+        DrawTexture(textures[HUD_DOUBLE], 420, y, WHITE);
         if (timeLeft[1]) {
             std::time_t now = std::time(nullptr);
-            DrawText(TextFormat(": %i s", 5 - (now - timeLeft[1])), 445, y, 20, GREEN);
+            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[1])), { 445, y }, 35, 0, GREEN);
         }
     }
     if (stopTime) {
-        DrawTexture(textures[POWERUP_TIME], 500, y - 5, WHITE);
+        DrawTexture(textures[POWERUP_TIME], 500, y, WHITE);
         if (timeLeft[2]) {
             std::time_t now = std::time(nullptr);
-            DrawText(TextFormat(": %i s", 5 - (now - timeLeft[2])), 535, y, 20, GREEN);
+            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[2])), { 535, y }, 35, 0, GREEN);
         }
     }
     switch (weaponType) {
     case 2:
         hudWeapons.x = 0;
-        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y - 5 }, WHITE);
+        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y }, WHITE);
         break;
     case 3:
         hudWeapons.x = hudWeapons.width;
-        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y - 5}, WHITE);
+        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y }, WHITE);
         break;
     case 4:
         hudWeapons.x = 2 * hudWeapons.width;
-        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y - 5 }, WHITE);
-        DrawText(TextFormat("x%i", shootingLeft), 590, y, 20, GREEN);
+        DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y }, WHITE);
+        DrawTextEx(font, TextFormat("x%i", shootingLeft), { 590, y }, 35, 0, GREEN);
         break;
     default:
         break;
@@ -1126,19 +1147,33 @@ void Game::DrawSequence(const char* message) {
     DrawText(message, 520, 350, 40, GREEN);
 }
 
-void Game::DrawEndLevel() {
-    if (animVec.y < screenHeight * 2)
+void Game::DrawGameSaved() {
+    if (sequenceFrameCounter > frameCounter + sequenceFrameCounter - 30)
         animVec.y += 50;
-    DrawRectangleRec({ 0, 0, screenWidth, screenHeight }, ColorAlpha(BLACK, 0.6f));
+    else if (sequenceFrameCounter < frameCounter + 30)
+        animVec.y -= 50;
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
+    DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
+    DrawTextEx(font, "Game saved", { 485, animVec.y - 1200 }, 66, 0, WHITE);
+}
+
+void Game::DrawEndLevel() {
+    if (sequenceFrameCounter > frameCounter + sequenceFrameCounter - 30)
+        animVec.y += 50;
+    else if (sequenceFrameCounter < frameCounter + 30)
+        animVec.y -= 50;
+    DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
+    DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
     DrawTextEx(font, "Great job!", { 500, animVec.y - 1200 }, 66, 0, RED);
-    DrawTextEx(font, TextFormat("Time bonus: %d", score), { 500, animVec.y - 1100 }, 50, 0, WHITE);
-    DrawTextEx(font, TextFormat("Your score: %d", score), { 500, animVec.y - 1000 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Time bonus: %d", score), { 490, animVec.y - 1100 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 485, animVec.y - 1060 }, 50, 0, WHITE);
 }
 
 void Game::DrawGameOver() {
-    if (animVec.y < screenHeight * 2)
+    if (sequenceFrameCounter > frameCounter + sequenceFrameCounter - 30)
         animVec.y += 50;
+    else if (sequenceFrameCounter < frameCounter + 30)
+        animVec.y -= 50;
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500}, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
     DrawTextEx(font, "Game over", { 500, animVec.y - 1200 }, 66, 0, RED);
@@ -1146,14 +1181,16 @@ void Game::DrawGameOver() {
 }
 
 void Game::DrawEndGame() {
-    if (animVec.y < screenHeight * 2)
+    if (sequenceFrameCounter > frameCounter + sequenceFrameCounter - 30)
         animVec.y += 50;
+    else if (sequenceFrameCounter < frameCounter + 30)
+        animVec.y -= 50;
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
     DrawTextEx(font, "Game finished - Superb job!", { 500, animVec.y - 1200 }, 66, 0, RED);
-    DrawTextEx(font, TextFormat("Time bonus: %d", score), { 500, animVec.y - 1100 }, 50, 0, WHITE);
-    DrawTextEx(font, TextFormat("Your score: %d", score), { 500, animVec.y - 1000 }, 50, 0, WHITE);
-    DrawTextEx(font, TextFormat("Highest score: %d", score), { 500, animVec.y - 900 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Time bonus: %d", score), { 490, animVec.y - 1100 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 485, animVec.y - 1060 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Highest score: %d", score), { 485, animVec.y - 1020 }, 50, 0, WHITE);
 }
 
 void Game::DrawLevelSelector() {
@@ -1172,7 +1209,7 @@ void Game::DrawLevelSelector() {
                 color = RED;
         }
         DrawRectangleRec({ x, y, width, height }, color);
-        DrawText(TextFormat("%02i", i + 1), x, y, 30, BLACK);
+        DrawTextEx(font, TextFormat("%02i", i + 1), { x, y }, 30, 0, BLACK);
     }
     DrawRectangleRounded({ xOffset + (level - 1) * (width + space) - 10, y - 10, width + 20, height + 20 }, 0.2, 8, ColorAlpha(ORANGE, 0.6));
 }

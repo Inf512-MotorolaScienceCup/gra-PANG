@@ -16,7 +16,9 @@ class Menu {
 public:
     enum class Type{
         MAIN_MENU,
-        PAUSE_MENU
+        PAUSE_MENU,
+        SAVE_MENU,
+        LOAD_MENU
     } type;
 
     Menu(Game* game, std::vector<std::string> items, Type type);

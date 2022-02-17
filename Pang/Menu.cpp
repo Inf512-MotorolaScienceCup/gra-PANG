@@ -32,8 +32,8 @@ void Menu::Reload(std::vector<std::string> items) {
         }
         
     } else {
-        float MENU_X = game->screenWidth / 2 - 200;
-        float MENU_Y = game->screenHeight / 2 - 100;
+        float MENU_X = game->screenWidth / 2 - 50 * items.size();
+        float MENU_Y = game->screenHeight / 2 - 25 * items.size();
 
         int i = 0;
         for (auto item : items) {
@@ -53,20 +53,23 @@ void Menu::Draw() {
     static Color bgColor = Fade(BLACK, 0.8f);
 
     if (type == Type::PAUSE_MENU) {
-        Vector2 animSpeed = { 120, 62 };
+        Vector2 animSpeed = { 123, 67 };
         if (!game->endAnim) {
             if (animVec.x - animSpeed.x > 0 && animVec.y - animSpeed.y > 0) {
                 animVec.x -= animSpeed.x;
                 animVec.y -= animSpeed.y;
-            } else
+            }
+            else
                 animVec = { 0, 0 };
-        } else {
+        }
+        else {
             if (animVec.x < game->screenWidth && animVec.y < game->screenHeight - 50) {
                 animVec.x += animSpeed.x;
                 animVec.y += animSpeed.y;
-            } else {
+            }
+            else {
                 animVec = { game->screenWidth, game->screenHeight - 50 };
-                game->ChangeState(Game::State::ACTIVE);
+                game->ChangeState(game->newAnim);
                 game->endAnim = false;
             }
         }
@@ -81,7 +84,8 @@ void Menu::Draw() {
         if (animVec.y != 0) {
             recColor = Fade(WHITE, 100 / animVec.y);
             selColor = Fade(PINK, 100 / animVec.y);
-        } else {
+        }
+        else {
             recColor = WHITE;
             selColor = PINK;
         }
@@ -103,6 +107,8 @@ void Menu::Draw() {
 
             i++;
         }
+    } else if (type == Type::LOAD_MENU) {
+
     } else {
         // Draw selected item
         const MenuItem& item = graphics[position];

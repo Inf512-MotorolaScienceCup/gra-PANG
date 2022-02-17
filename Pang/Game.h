@@ -220,6 +220,7 @@ public:
     void DrawBackground();
     void DrawPanel();
     void DrawSequence(const char* message);
+    void DrawGameSaved();
     void DrawEndLevel();
     void DrawGameOver();
     void DrawEndGame();
@@ -273,6 +274,7 @@ public:
     short int modNum;
     short int saveNum;
     bool endAnim;
+    State newAnim;
     Vector2 animVec;
 
     int level = 1;
