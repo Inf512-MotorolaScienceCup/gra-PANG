@@ -4,7 +4,6 @@
 #include <vector>
 #include <ctime>
 #include <fstream>
-#include <string>
 
 #include "raylib.h"
 
@@ -247,7 +246,6 @@ public:
     void CheckTime();
 
     std::vector<Sprite*> GetSprites(Sprite::Type type);
-    std::string unixToHuman(time_t);
 
     short int numFiles;
 
@@ -293,10 +291,11 @@ public:
     int elapsedLevelTime;
 
     short int weaponType = 1;
-    short int previesWeapon;
+    short int previousWeapon;
     int shootingLeft;
-    std::time_t timeLeft[4];
+    std::time_t timeLeft[3];
     bool stopTime;
+    short int laserCooldown;
     short int speedBoost;
     short int multiWeapon = 0;
 };

@@ -263,7 +263,7 @@ void Player::Shooting() {
         game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height, game->weaponType);
         game->shootingLeft--;
         if (game->shootingLeft <= 0)
-            game->weaponType = 1;
+            game->weaponType = game->previousWeapon;
         break;
     default:
         if (game->shootingLeft == 0 || game->shootingLeft == -game->multiWeapon) {

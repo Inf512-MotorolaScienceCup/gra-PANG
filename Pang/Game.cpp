@@ -94,6 +94,8 @@ int Game::MainLoop() {
 
 void Game::Update() {
     frameCounter++;
+    if (laserCooldown > 0)
+        laserCooldown--;
 
     if (GetKeyPressed() == KEY_ESCAPE) {
         if (state == State::PAUSED) {
@@ -574,6 +576,9 @@ void Game::SpawnLevel() {
         // distanceToGround must be properly calculated
         Spawn(new Ladder(this, 200, 395, 4, 25));
         Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::HEAL));
+        Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::BOOST));
+        Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::DOUBLE));
+        Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::TIME));
 
         Spawn(new Ice(this, 700, 690, 150, 10));
 
@@ -1158,28 +1163,28 @@ void Game::DrawPanel() {
     //DrawFPS(wallThickness + 10, y);
     DrawTextEx(font, TextFormat("Level: %i", level), { 40, y }, 35, 0, WHITE);
     DrawTextEx(font, TextFormat("Score: %03i", score), { 200, y }, 35, 0, WHITE);
-    DrawTextEx(font, TextFormat("Lives: %i", lives), { 900, y }, 35, 0, WHITE);
-    DrawTextEx(font, TextFormat("Time: %03i", elapsedLevelTime), { 1100, y }, 35, 0, WHITE);
+    DrawTextEx(font, TextFormat("Lives: %i", lives), { 970, y }, 35, 0, WHITE);
+    DrawTextEx(font, TextFormat("Time: %03i", elapsedLevelTime), { 1120, y }, 35, 0, WHITE);
     
     if (speedBoost != 1) {
-        DrawTexture(textures[HUD_BOOST], 340, y, WHITE);
+        DrawTexture(textures[HUD_BOOST], 400, y, WHITE);
         if (timeLeft[0]) {
             std::time_t now = std::time(nullptr);
-            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[0])), { 365, y }, 35, 0, GREEN);
+            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[0])), { 425, y }, 35, 0, WHITE);
         }
     }
     if (multiWeapon != 0) {
-        DrawTexture(textures[HUD_DOUBLE], 420, y, WHITE);
+        DrawTexture(textures[HUD_DOUBLE], 490, y, WHITE);
         if (timeLeft[1]) {
             std::time_t now = std::time(nullptr);
-            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[1])), { 445, y }, 35, 0, GREEN);
+            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[1])), { 515, y }, 35, 0, WHITE);
         }
     }
     if (stopTime) {
-        DrawTexture(textures[POWERUP_TIME], 500, y, WHITE);
+        DrawTexture(textures[POWERUP_TIME], 740, y, WHITE);
         if (timeLeft[2]) {
             std::time_t now = std::time(nullptr);
-            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[2])), { 535, y }, 35, 0, GREEN);
+            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[2])), { 775, y }, 35, 0, WHITE);
         }
     }
     switch (weaponType) {
@@ -1492,6 +1497,9 @@ void Game::AddWeapon(float x, float y, int type) {
         PlaySound(audio[HARPUN]);
         break;
     case 2:
+        if (laserCooldown)
+            return;
+        laserCooldown = 15;
         weapon = new Weapon(this, x, y, Weapon::Kind::WEAPON2);
         spriteMap[Sprite::Type::WEAPON].push_back(weapon);
         sprites.push_back(weapon);
@@ -1578,7 +1586,7 @@ void Game::PickAction(Powerup::Kind kind) {
         if (change == weaponType)
             weaponType = 1;
         else if (change == 4) {
-            previesWeapon = weaponType;
+            previousWeapon = weaponType;
             weaponType = change;
             shootingLeft = 5;
             break;
@@ -1592,7 +1600,7 @@ void Game::PickAction(Powerup::Kind kind) {
 
 void Game::CheckTime() {
     std::time_t now = std::time(nullptr);
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
         if (timeLeft[i] + 5 <= now) {
             switch (i) {
             case 0:
@@ -1607,8 +1615,6 @@ void Game::CheckTime() {
                 stopTime = false;
                 timeLeft[i] = 0;
                 break;
-            case 3:
-                break;
             default:
                 break;
             }
@@ -1620,91 +1626,4 @@ std::vector<Sprite*> Game::GetSprites(Sprite::Type type) {
     if (spriteMap.find(type) == spriteMap.end())
         return {};
     return spriteMap[type];
-}
-
-std::string Game::unixToHuman(time_t seconds) {
-    std::string ans = "";
-
-    int daysOfMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-
-    long int currYear, daysTillNow, extraTime,
-        extraDays, index, date, month, hours,
-        minutes, secondss, flag = 0;
-
-    daysTillNow = seconds / (24 * 60 * 60);
-    extraTime = seconds % (24 * 60 * 60);
-    currYear = 1970;
-
-    while (daysTillNow >= 365) {
-        if (currYear % 400 == 0
-            || (currYear % 4 == 0
-                && currYear % 100 != 0)) {
-            daysTillNow -= 366;
-        } else
-            daysTillNow -= 365;
-        currYear += 1;
-    }
-
-    extraDays = daysTillNow + 1;
-
-    if (currYear % 400 == 0 || (currYear % 4 == 0  && currYear % 100 != 0))
-        flag = 1;
-
-    month = 0, index = 0;
-    if (flag == 1) {
-        while (true) {
-            if (index == 1) {
-                if (extraDays - 29 < 0)
-                    break;
-                month += 1;
-                extraDays -= 29;
-            } else {
-                if (extraDays - daysOfMonth[index] < 0)
-                    break;
-                month += 1;
-                extraDays -= daysOfMonth[index];
-            }
-            index += 1;
-        }
-    } else {
-        while (true) {
-
-            if (extraDays - daysOfMonth[index] < 0)
-                break;
-            month += 1;
-            extraDays -= daysOfMonth[index];
-            index += 1;
-        }
-    }
-
-    if (extraDays > 0) {
-        month += 1;
-        date = extraDays;
-    } else {
-        if (month == 2 && flag == 1)
-            date = 29;
-        else
-            date = daysOfMonth[month - 1];
-    }
-
-    hours = extraTime / 3600;
-    minutes = (extraTime % 3600) / 60;
-    secondss = (extraTime % 3600) % 60;
-
-    char buffer[100];
-    snprintf(buffer, 100, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d", currYear, month, date, hours, minutes, secondss);
-/*
-    ans += std::to_string(date);
-    ans += "/";
-    ans += std::to_string(month);
-    ans += "/";
-    ans += std::to_string(currYear);
-    ans += " ";
-    ans += std::to_string(hours);
-    ans += ":";
-    ans += std::to_string(minutes);
-    ans += ":";
-    ans += std::to_string(secondss);
-*/
-    return buffer;
 }
