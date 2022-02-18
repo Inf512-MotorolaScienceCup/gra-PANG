@@ -4,6 +4,7 @@
 #include <vector>
 #include <ctime>
 #include <fstream>
+#include <string>
 
 #include "raylib.h"
 
@@ -100,6 +101,7 @@ public:
         MOD_MENU,
         DIFFLVL_MENU,
         LEVEL_SELECTOR,
+        RANKING,
         SAVE_MENU,
         OVERWRITE_MENU,
         LOAD_MENU,
@@ -224,7 +226,9 @@ public:
     void DrawEndLevel();
     void DrawGameOver();
     void DrawEndGame();
+    void DrawLoadMenu();
     void DrawLevelSelector();
+    void DrawRanking();
 
     void WriteGameData(std::ofstream&);
     void ReadGameData(std::ifstream&);
@@ -243,6 +247,7 @@ public:
     void CheckTime();
 
     std::vector<Sprite*> GetSprites(Sprite::Type type);
+    std::string unixToHuman(time_t);
 
     short int numFiles;
 
@@ -276,11 +281,12 @@ public:
     bool endAnim;
     State newAnim;
     Vector2 animVec;
+    float animColor;
 
     int level = 1;
     int lives;
     int score;
-    int highScore;
+    int rankScore[10];
 
     std::time_t endLevelTime;
     int levelTime;

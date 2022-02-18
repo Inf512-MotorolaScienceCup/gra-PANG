@@ -15,23 +15,7 @@ void Menu::Reload(std::vector<std::string> items) {
 
     float itemHeight = 50;
 
-    if (type == Type::MAIN_MENU) {
-        float MENU_X = 70;
-        float MENU_Y = game->screenHeight / 2 + 50;
-
-        int i = 0;
-        for (auto item : items) {
-            graphics.push_back({
-                item,{
-                    MENU_X,
-                    MENU_Y + i++ * itemHeight,
-                    MENU_WIDTH,
-                    itemHeight
-                }
-                });
-        }
-        
-    } else {
+    if (type == Type::PAUSE_MENU) {
         float MENU_X = game->screenWidth / 2 - 50 * items.size();
         float MENU_Y = game->screenHeight / 2 - 25 * items.size();
 
@@ -46,11 +30,43 @@ void Menu::Reload(std::vector<std::string> items) {
                 }
                 });
         }
+    } else if (type == Type::MAIN_MENU) {
+        float MENU_X = 70;
+        float MENU_Y = game->screenHeight / 2 + 50;
+
+        int i = 0;
+        for (auto item : items) {
+            graphics.push_back({
+                item,{
+                    MENU_X,
+                    MENU_Y + i++ * itemHeight,
+                    MENU_WIDTH,
+                    itemHeight
+                }
+                });
+        }
+    } else {
+        float MENU_X = 400;
+        float MENU_Y = 200;
+
+        int i = 0;
+        for (auto item : items) {
+            graphics.push_back({
+                item,{
+                    MENU_X,
+                    MENU_Y + i++ * (itemHeight + 50),
+                    MENU_WIDTH,
+                    itemHeight
+                }
+                });
+        }
     }
 }
 
 void Menu::Draw() {
     static Color bgColor = Fade(BLACK, 0.8f);
+    static Color recColor;
+    static Color selColor;
 
     if (type == Type::PAUSE_MENU) {
         Vector2 animSpeed = { 123, 67 };
@@ -58,20 +74,24 @@ void Menu::Draw() {
             if (animVec.x - animSpeed.x > 0 && animVec.y - animSpeed.y > 0) {
                 animVec.x -= animSpeed.x;
                 animVec.y -= animSpeed.y;
-            }
-            else
+            } else
                 animVec = { 0, 0 };
-        }
-        else {
+        } else {
             if (animVec.x < game->screenWidth && animVec.y < game->screenHeight - 50) {
                 animVec.x += animSpeed.x;
                 animVec.y += animSpeed.y;
-            }
-            else {
+            } else {
                 animVec = { game->screenWidth, game->screenHeight - 50 };
                 game->ChangeState(game->newAnim);
                 game->endAnim = false;
             }
+        }
+        if (animVec.y != 0) {
+            recColor = Fade(WHITE, 100 / animVec.y);
+            selColor = Fade(PINK, 100 / animVec.y);
+        } else {
+            recColor = WHITE;
+            selColor = PINK;
         }
         DrawTriangle({ 0 - animVec.x, 50 - animVec.y }, { game->screenWidth - animVec.x, game->screenHeight - 50 - animVec.y }, { game->screenWidth - animVec.x, 50 - animVec.y }, GRAY);
         DrawRectangle(0 - animVec.x, 0 - animVec.y, game->screenWidth, 50, GRAY);
@@ -79,19 +99,95 @@ void Menu::Draw() {
 
         // Draw selected item
         const MenuItem& item = graphics[position];
-        Color recColor;
-        Color selColor;
-        if (animVec.y != 0) {
-            recColor = Fade(WHITE, 100 / animVec.y);
-            selColor = Fade(PINK, 100 / animVec.y);
-        }
-        else {
-            recColor = WHITE;
-            selColor = PINK;
-        }
+        
         short int textSpeed = 3;
         DrawRectangleRounded({ item.rec.x - 40 - animVec.x / textSpeed, item.rec.y + item.rec.height / 2, 25, 5 }, 1, 1, recColor);
         DrawRectangleRounded({ item.rec.x + item.name.size() * 30 - animVec.x / textSpeed, item.rec.y + item.rec.height / 2, 25, 5 }, 1, 1, recColor);
+        DrawTextEx(game->font, item.name.c_str(), { item.rec.x - animVec.x / textSpeed, item.rec.y }, 60, 0, selColor);
+
+        short int i = 2;
+        for (const auto& g : graphics) {
+            Color color;
+            if (animVec.x != 0)
+                color = Fade(WHITE, 50 / (animVec.x * i));
+            else
+                color = WHITE;
+
+            if (item.name.c_str() != g.name.c_str())
+                DrawTextEx(game->font, g.name.c_str(), { g.rec.x - animVec.x * i / textSpeed, g.rec.y }, 54, 0, color);
+            i++;
+        }
+    } else if (type == Type::LOAD_MENU) {
+        float animSpeed = 75;
+        if (!game->endAnim) {
+            if (animVec.x - animSpeed > 0)
+                animVec.x -= animSpeed;
+            else
+                animVec = { 0, 0 };
+        } else {
+            if (animVec.x < game->screenWidth && animVec.y < game->screenHeight - 50) {
+                animVec.x += animSpeed;
+            } else {
+                animVec = { game->screenWidth, game->screenHeight - 50 };
+                game->ChangeState(game->newAnim);
+                game->endAnim = false;
+            }
+        }
+        if (animVec.x != 0) {
+            recColor = Fade(WHITE, 100 / animVec.x);
+            selColor = Fade(PINK, 100 / animVec.x);
+        } else {
+            recColor = WHITE;
+            selColor = PINK;
+        }
+        DrawRectangle(0 - animVec.x, 0, game->screenWidth, game->screenHeight, bgColor);
+
+        // Draw selected item
+        const MenuItem& item = graphics[position];
+        DrawTextEx(game->font, "Load game", { 490 - animVec.x, 100 }, 66, 0, selColor);
+        short int textSpeed = 3;
+        DrawRectangleRounded({ item.rec.x - 40 - animVec.x / textSpeed, item.rec.y + item.rec.height / 2, 25, 5 }, 1, 1, recColor);
+        DrawTextEx(game->font, item.name.c_str(), { item.rec.x - animVec.x / textSpeed, item.rec.y }, 60, 0, selColor);
+
+        short int i = 2;
+        for (const auto& g : graphics) {
+            Color color;
+            if (animVec.x != 0)
+                color = Fade(WHITE, 50 / (animVec.x * i));
+            else
+                color = WHITE;
+
+            if (g.name.c_str() != item.name.c_str())
+                DrawTextEx(game->font, g.name.c_str(), { g.rec.x - animVec.x * i / textSpeed, g.rec.y }, 54, 0, color);
+            i++;
+        }
+    } else {
+        float animSpeed = 75;
+        if (!game->endAnim) {
+            if (animVec.x - animSpeed > 0)
+                animVec.x -= animSpeed;
+            else
+                animVec = { 0, 0 };
+        } else {
+            if (animVec.x < game->screenWidth && animVec.y < game->screenHeight - 50) {
+                animVec.x += animSpeed;
+            } else {
+                animVec = { game->screenWidth, game->screenHeight - 50 };
+                game->ChangeState(game->newAnim);
+                game->endAnim = false;
+            }
+        }
+        if (animVec.x != 0) {
+            recColor = Fade(WHITE, 100 / animVec.x);
+            selColor = Fade(PINK, 100 / animVec.x);
+        } else {
+            recColor = WHITE;
+            selColor = PINK;
+        }
+        // Draw selected item
+        const MenuItem& item = graphics[position];
+        short int textSpeed = 3;
+        DrawRectangleRounded({ item.rec.x - 40 - animVec.x / textSpeed, item.rec.y + item.rec.height / 2, 25, 5 }, 1, 1, recColor);
         DrawTextEx(game->font, item.name.c_str(), { item.rec.x - animVec.x / textSpeed, item.rec.y }, 60, 0, selColor);
 
         short int i = 2;
@@ -102,26 +198,11 @@ void Menu::Draw() {
             else
                 color = WHITE;
 
-            if (item.name.c_str() != g.name.c_str())
+            if (g.name.c_str() != item.name.c_str())
                 DrawTextEx(game->font, g.name.c_str(), { g.rec.x - animVec.x * i / textSpeed, g.rec.y }, 54, 0, color);
-
             i++;
         }
-    } else if (type == Type::LOAD_MENU) {
-
-    } else {
-        // Draw selected item
-        const MenuItem& item = graphics[position];
-        DrawRectangleRounded({ item.rec.x - 40, item.rec.y + item.rec.height / 2, 25, 5 }, 1, 1, WHITE);
-        DrawTextEx(game->font, item.name.c_str(), { item.rec.x, item.rec.y }, 60, 0, PINK);
-
-        for (const auto& g : graphics) {
-            if (g.name.c_str() != item.name.c_str())
-                DrawTextEx(game->font, g.name.c_str(), { g.rec.x, g.rec.y }, 54, 0, WHITE);
-        }
     }
-
-
 }
 
 void Menu::Update() {
@@ -135,4 +216,8 @@ void Menu::Update() {
         selected = graphics[position].name;
         PlaySound(game->audio[MENU_ENTER]);
     }
+}
+
+int Menu::GetPosition() {
+    return position;
 }

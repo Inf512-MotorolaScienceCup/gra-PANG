@@ -17,7 +17,6 @@ public:
     enum class Type{
         MAIN_MENU,
         PAUSE_MENU,
-        SAVE_MENU,
         LOAD_MENU
     } type;
 
@@ -25,6 +24,7 @@ public:
     void Reload(std::vector<std::string> items);
     void Draw();
     void Update();
+    int GetPosition();
 
     std::string selected;
     Vector2 animVec;

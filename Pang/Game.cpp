@@ -11,7 +11,7 @@
 
 Game::Game()
     : state(State::MOD_MENU),
-    mainMenu(this, { "Start", "Load", "Level", "Quit" }, Menu::Type::MAIN_MENU),
+    mainMenu(this, { "Start", "Load", "Level", "Ranking", "Quit" }, Menu::Type::MAIN_MENU),
     ingameMenu(this, { "Continue", "Save Game", "Back to Menu", "Quit" }, Menu::Type::PAUSE_MENU),
     saveMenu(this, FindSaveFiles(), Menu::Type::PAUSE_MENU),
     overwriteMenu(this, { "Overwrite?", "Cancel" }, Menu::Type::PAUSE_MENU),
@@ -48,14 +48,19 @@ void Game::LoadAudio() {
     for (int i = 0; i < NUM_AUDIO; i++) {
         audio[i] = LoadSound(audioFiles[i]);
     }
-    SetSoundVolume(audio[BALL_BOUNCE], 0.2f);
+    SetSoundVolume(audio[BALL_BOUNCE], 0.1f);
     SetSoundVolume(audio[WALK], 0.5f);
+    SetSoundVolume(audio[HARPUN], 0.3f);
 
     for (int i = 0; i < NUM_MUSIC; i++) {
         music[i] = LoadMusicStream(musicFiles[i]);
         music[i].looping = true;
     }
-    SetMusicVolume(music[BACKGROUND_A], 0.7f);
+    SetMusicVolume(music[BACKGROUND_A], 0.1f);
+    SetMusicVolume(music[BACKGROUND_B], 0.05f);
+    SetMusicVolume(music[BACKGROUND_C], 0.15f);
+    SetMusicVolume(music[BACKGROUND_D], 0.15f);
+    SetMusicVolume(music[BACKGROUND_E], 0.1f);
 }
 
 void Game::Unload() {
@@ -109,6 +114,9 @@ void Game::Update() {
         } else if (state == State::DIFFLVL_MENU) {
             ChangeState(State::MOD_MENU);
             PlaySound(audio[MENU_BACK]);
+        } else if (state == State::RANKING) {
+            ChangeState(State::MAIN_MENU);
+            PlaySound(audio[MENU_BACK]);
         }
     }  
 
@@ -123,6 +131,9 @@ void Game::Update() {
             mainMenu.selected = "";
         } else if (mainMenu.selected == "Level") {
             ChangeState(State::LEVEL_SELECTOR);
+            mainMenu.selected = "";
+        } else if (mainMenu.selected == "Ranking") {
+            ChangeState(State::RANKING);
             mainMenu.selected = "";
         }
         mainMenu.Update();
@@ -292,6 +303,20 @@ void Game::Update() {
             StopMusicStream(music[backMusic]);
             backMusic = NUM_MUSIC;
         }
+        if (modNum == 2) {
+            for (int i = 0; i < 10; i++) {
+                if (rankScore[i] < score) {
+                    if (i != 9) {
+                        for (int j = 9; j > i; j--) {
+                            rankScore[j] = rankScore[j - 1];
+                        }
+                        rankScore[i] = score;
+                    } else
+                        rankScore[i] = score;
+                    break;
+                }
+            }
+        }
         if (modNum == 1)
             ChangeState(State::DIFFLVL_MENU);
         else
@@ -299,8 +324,17 @@ void Game::Update() {
         backTexture = BACKGROUND_ANI2;
         break;
     case Game::State::GAME_FINISHED:
-        if (highScore < score)
-            highScore = score;
+        for (int i = 0; i < 10; i++) {
+            if (rankScore[i] < score) {
+                if (i != 9) {
+                    for (int j = 9; j > i; j--) {
+                        rankScore[j] = rankScore[j - 1];
+                    }
+                    rankScore[i] = score;
+                } else 
+                    rankScore[i] = score;
+            }
+        }
 
         if (sequenceFrameCounter > frameCounter) return;
 
@@ -336,6 +370,20 @@ void Game::ChangeState(State newState) {
         }
         ingameMenu.animVec = { screenWidth, screenHeight - 50 };
         break;
+    case State::MOD_MENU:
+        modMenu.animVec = { 200, 0 };
+        break;
+    case State::DIFFLVL_MENU:
+        diffLvlMenu.animVec = { 200, 0 };
+        break;
+    case State::MAIN_MENU:
+        mainMenu.animVec = { 200, 0 };
+        if (state == State::LOAD_MENU && !endAnim) {
+            endAnim = true;
+            newAnim = newState;
+            return;
+        }
+        break;
     case State::SAVE_MENU:
         if (state == State::PAUSED && !endAnim) {
             endAnim = true;
@@ -343,6 +391,13 @@ void Game::ChangeState(State newState) {
             return;
         }
         saveMenu.animVec = { screenWidth, screenHeight - 50 };
+        break;
+    case State::LOAD_MENU:
+        loadMenu.animVec = { screenWidth, 0 };
+        animVec = { 600, 0 };
+        break;
+    case State::RANKING:
+        animVec = { screenWidth - 300, 0 };
         break;
     case State::GAME_OVER:
         Unspawn();
@@ -1053,6 +1108,9 @@ void Game::Draw() {
         case State::LEVEL_SELECTOR:
             DrawLevelSelector();
             break;
+        case State::RANKING:
+            DrawRanking();
+            break;
         case State::SAVE_MENU:
             saveMenu.Draw();
             break;
@@ -1065,6 +1123,7 @@ void Game::Draw() {
             break;
         case State::LOAD_MENU:
             loadMenu.Draw();
+            DrawLoadMenu();
             break;
         case State::ERROR:
             DrawSequence("Unable to save file");
@@ -1193,6 +1252,31 @@ void Game::DrawEndGame() {
     DrawTextEx(font, TextFormat("Highest score: %d", score), { 485, animVec.y - 1020 }, 50, 0, WHITE);
 }
 
+void Game::DrawLoadMenu() {
+    if (animVec.x > 50 && !endAnim) {
+        animVec.x -= 50;
+        animColor = 0;
+    } else if (endAnim) {
+        animVec.x += 50;
+        animColor = 0;
+    } else {
+        animVec.x = 0;
+        if (animColor < 1)
+            animColor += 0.05f;
+        else
+            animColor = 1;
+    }
+    int pos = loadMenu.GetPosition();
+    time_t modTime;
+    if (FileExists(TextFormat("saves/s%d.psf", pos))) {
+        modTime = GetFileModTime(TextFormat("saves/s%d.psf", pos));
+        char buf[100];
+        errno_t e = ctime_s(buf, 100, &modTime);
+        DrawRectangle(680 + animVec.x, 330, 550, 150, DARKGRAY);
+        DrawTextEx(font, TextFormat("Date: %s", buf), { 690 + animVec.x, 350 }, 40, 0, Fade(WHITE, animColor));
+    }
+}
+
 void Game::DrawLevelSelector() {
     float xOffset = 150;
     float y = 200;
@@ -1212,6 +1296,30 @@ void Game::DrawLevelSelector() {
         DrawTextEx(font, TextFormat("%02i", i + 1), { x, y }, 30, 0, BLACK);
     }
     DrawRectangleRounded({ xOffset + (level - 1) * (width + space) - 10, y - 10, width + 20, height + 20 }, 0.2, 8, ColorAlpha(ORANGE, 0.6));
+}
+
+void Game::DrawRanking() {
+    if (animVec.x > 50) {
+        animVec.x -= 50;
+        animColor = 0;
+    } else {
+        animVec.x = 0;
+        if (animColor < 1)
+            animColor += 0.05f;
+        else
+            animColor = 1;
+    }
+    DrawRectangle(animVec.x, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.8f));
+    DrawTextEx(font, "Ranking", { 500 + animVec.x, 75 }, 66, 0, Fade(PINK, 50 / (animVec.x + 1)));
+    for (int i = 0; i < 10; i++) {
+        int x;
+        if (i == 9)
+            x = 480;
+        else
+            x = 490;
+        if (rankScore[i] != 0)
+            DrawTextEx(font, TextFormat("%i. %03i", i + 1, rankScore[i]), { x + animVec.x, 150.0f + i * 50 }, 60, 0, Fade(WHITE, animColor));
+    }
 }
 
 void Game::WriteGameData(std::ofstream& s) {
@@ -1305,11 +1413,12 @@ void Game::LoadGame(int fileNum) {
 
             loadFile.close();
             std::cout << "Load complete\n";
+            PlaySound(audio[LEVEL_START]);
+            if (backMusic != NUM_MUSIC)
+                PlayMusicStream(music[backMusic]);
         } else {
             std::cout << "Unable to open file";
         }
-        if (backMusic != NUM_MUSIC)
-            PlayMusicStream(music[backMusic]);
     }
 }
 
@@ -1319,7 +1428,9 @@ void Game::SaveUsrData() {
     }
     std::ofstream saveFile("saves/s0.psf", std::ios_base::binary);
     if (saveFile.is_open()) {
-        Write(saveFile, &highScore);
+        for (int i = 0; i < 10; i++) {
+            Write(saveFile, &rankScore[i]);
+        }
         saveFile.close();
     }
 }
@@ -1328,7 +1439,11 @@ void Game::LoadUsrData() {
     if (DirectoryExists("saves")) {
         std::ifstream loadFile("saves/s0.psf", std::ios_base::binary);
         if (loadFile.is_open()) {
-            Read(loadFile, &highScore);
+            for (int i = 0; i < 10; i++) {
+                Read(loadFile, &rankScore[i]);
+                if (rankScore[i] < 0)
+                    rankScore[i] = 0;
+            }
             loadFile.close();
         }
     }
@@ -1505,4 +1620,91 @@ std::vector<Sprite*> Game::GetSprites(Sprite::Type type) {
     if (spriteMap.find(type) == spriteMap.end())
         return {};
     return spriteMap[type];
+}
+
+std::string Game::unixToHuman(time_t seconds) {
+    std::string ans = "";
+
+    int daysOfMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+    long int currYear, daysTillNow, extraTime,
+        extraDays, index, date, month, hours,
+        minutes, secondss, flag = 0;
+
+    daysTillNow = seconds / (24 * 60 * 60);
+    extraTime = seconds % (24 * 60 * 60);
+    currYear = 1970;
+
+    while (daysTillNow >= 365) {
+        if (currYear % 400 == 0
+            || (currYear % 4 == 0
+                && currYear % 100 != 0)) {
+            daysTillNow -= 366;
+        } else
+            daysTillNow -= 365;
+        currYear += 1;
+    }
+
+    extraDays = daysTillNow + 1;
+
+    if (currYear % 400 == 0 || (currYear % 4 == 0  && currYear % 100 != 0))
+        flag = 1;
+
+    month = 0, index = 0;
+    if (flag == 1) {
+        while (true) {
+            if (index == 1) {
+                if (extraDays - 29 < 0)
+                    break;
+                month += 1;
+                extraDays -= 29;
+            } else {
+                if (extraDays - daysOfMonth[index] < 0)
+                    break;
+                month += 1;
+                extraDays -= daysOfMonth[index];
+            }
+            index += 1;
+        }
+    } else {
+        while (true) {
+
+            if (extraDays - daysOfMonth[index] < 0)
+                break;
+            month += 1;
+            extraDays -= daysOfMonth[index];
+            index += 1;
+        }
+    }
+
+    if (extraDays > 0) {
+        month += 1;
+        date = extraDays;
+    } else {
+        if (month == 2 && flag == 1)
+            date = 29;
+        else
+            date = daysOfMonth[month - 1];
+    }
+
+    hours = extraTime / 3600;
+    minutes = (extraTime % 3600) / 60;
+    secondss = (extraTime % 3600) % 60;
+
+    char buffer[100];
+    snprintf(buffer, 100, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d", currYear, month, date, hours, minutes, secondss);
+/*
+    ans += std::to_string(date);
+    ans += "/";
+    ans += std::to_string(month);
+    ans += "/";
+    ans += std::to_string(currYear);
+    ans += " ";
+    ans += std::to_string(hours);
+    ans += ":";
+    ans += std::to_string(minutes);
+    ans += ":";
+    ans += std::to_string(secondss);
+*/
+    return buffer;
 }
