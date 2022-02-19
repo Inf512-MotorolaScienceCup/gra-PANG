@@ -281,19 +281,20 @@ public:
     Vector2 animVec;
     float animColor;
 
-    int level = 1;
-    int lives;
-    int score;
-    int rankScore[10];
+    short int level = 1;
+    short int lives;
+    short int score;
+    short int rankScore[10];
 
     std::time_t endLevelTime;
-    int levelTime;
+    short int levelTime;
     int elapsedLevelTime;
 
     short int weaponType = 1;
     short int previousWeapon;
-    int shootingLeft;
-    std::time_t timeLeft[3];
+    short int shootingLeft;
+    std::time_t lifeTime[3];
+    short int timeLeft[3];
     bool stopTime;
     short int laserCooldown;
     short int speedBoost;

@@ -51,6 +51,7 @@ Player::Player(Game *game, std::ifstream& s)
     Read(s, &speed.y);
     Read(s, &climbing);
     Read(s, &onIce);
+    Read(s, &frameCounter);
     spriteSheet = game->textures[PLAYER];
     moveRightRec = { 0.0f, 11 * 64.0f, 64.0f, 64.0f };
     moveLeftRec = { 0.0f, 9 * 64.0f, 64.0f, 64.0f };
@@ -63,10 +64,9 @@ void Player::Draw() {
     //DrawRectangleRec(position.rectangle, GREEN);
     //DrawRectangleRec(position.hitBox(), RED);
 
-    if (hitBall) {
-        if (checkTime()) {
+    if (frameCounter) {
+        if (timeLeft()) {
             color = WHITE;
-            hitBall = 0;
             changeColor = 0;
         } else {
             if (changeColor <= 5)
@@ -218,7 +218,7 @@ void Player::Collision(Sprite *sprite) {
         }
     } else if (sprite->type == Sprite::Type::ENEMY) {
         game->lives--;
-        hitBall = std::time(nullptr);
+        frameCounter = 1;
         speed.y -= 10;
         PlaySound(game->audio[HEALTH_LOSE]);
     } else if (sprite->type == Sprite::Type::LADDER) {
@@ -252,6 +252,7 @@ void Player::Save(std::ofstream& s) {
     Write(s, &speed.y);
     Write(s, &climbing);
     Write(s, &onIce);
+    Write(s, &frameCounter);
 }
 
 void Player::Shooting() {
@@ -274,11 +275,12 @@ void Player::Shooting() {
     }
 }
 
-bool Player::checkTime() {
-    std::time_t now = std::time(nullptr);
-    if (hitBall + 4 <= now) {
+bool Player::timeLeft() {
+    if (frameCounter > 60 * 4) {
+        frameCounter = 0;
         return true;
     }
+    frameCounter++;
     return false;
 }
 
@@ -546,21 +548,7 @@ void Enemy::duality(Sprite* sprite) {
     PlaySound(game->audio[BALL_BREAKING]);
     game->AddPowerup(position.center.x, position.center.y);
 }
-/*
-Sprite* Enemy::checkCollision() {
-    for (auto sprite : game->sprites) {
-        if (sprite->type == Sprite::Type::BLOCK && IsCollision(this, sprite)) {
-            //std::cout << "PLAYER collided with BLOCK:" << std::endl;
-            return sprite;
-        }
-        else if (sprite->type == Sprite::Type::WEAPON && IsCollision(this, sprite)) {
-            //std::cout << "PLAYER collided with WEAPON:" << std::endl;
-            return sprite;
-        }
-    }
-    return 0;
-}
-*/
+
 // Weapon
 Weapon::Weapon(Game *game, float x, float y, Kind kind)
     : Sprite(game, Position(x, y, 0, 0), Type::WEAPON), kind(kind) {
@@ -589,6 +577,7 @@ Weapon::Weapon(Game *game, float x, float y, Kind kind)
     }
     position.hbRectangle.width = position.rectangle.width;
     position.hbRectangle.height = position.rectangle.height;
+    frameCounter = 0;
 }
 
 Weapon::Weapon(Game *game, std::ifstream& s)
@@ -598,7 +587,7 @@ Weapon::Weapon(Game *game, std::ifstream& s)
     Read(s, &numElements);
     Read(s, &cooldown);
     Read(s, &stopMoving);
-    Read(s, &lifeTime);
+    Read(s, &frameCounter);
     Read(s, &block);
 
     switch (kind) {
@@ -690,7 +679,7 @@ void Weapon::Move() {
                 break;
             }
         } else {
-            checkTime();
+            timeLeft();
             if (!block || block->state == Sprite::State::FINISHED) {
                 state = State::FINISHED;
                 game->shootingLeft++;
@@ -703,7 +692,6 @@ void Weapon::Collision(Sprite *sprite) {
     if (sprite->type == Sprite::Type::BLOCK) {
         if (kind == Kind::WEAPON3) {
             stopMoving = true;
-            lifeTime = std::time(nullptr);
             overlap = sprite->position.rectangle.y + sprite->position.rectangle.height - position.rectangle.y;
             position.rectangle.y += overlap;
             position.rectangle.height -= overlap;
@@ -734,20 +722,19 @@ void Weapon::Save(std::ofstream& s) {
     Write(s, &numElements);
     Write(s, &cooldown);
     Write(s, &stopMoving);
-    Write(s, &lifeTime);
+    Write(s, &frameCounter);
     Write(s, &block);
 }
 
-void Weapon::checkTime() {
-    std::time_t now = std::time(nullptr);
-    if (lifeTime + 5 <= now) {
+void Weapon::timeLeft() {
+    if (frameCounter > 60 * 8)
         state = State::FINISHED;
-        game->shootingLeft++;
-    } else if (lifeTime + 4 <= now) {
+    else if (frameCounter > 60 * 4)
         color = RED;
-    } else if (lifeTime + 3 <= now) {
+    else if (frameCounter > 60 * 3)
         color = YELLOW;
-    }
+
+    frameCounter++;
 }
 
 // Ladder
@@ -803,12 +790,15 @@ Powerup::Powerup(Game *game, float x, float y, Kind kind)
     position.rectangle.height = texture->height;
     position.hbRectangle.width = texture->width;
     position.hbRectangle.height = texture->height;
+    
+    frameCounter = 0;
 }
 
 Powerup::Powerup(Game *game, std::ifstream& s)
     : Sprite(game, s, Type::POWERUP) {
     Read(s, &speedY);
     Read(s, &kind);
+    Read(s, &frameCounter);
 
     switch (kind) {
     case Kind::BOOST:
@@ -836,7 +826,8 @@ Powerup::Powerup(Game *game, std::ifstream& s)
 
 void Powerup::Draw() {
     if (state == State::ACTIVE) {
-        DrawTexture(*texture, position.rectangle.x, position.rectangle.y, WHITE);
+        timeLeft();
+        DrawTexture(*texture, position.rectangle.x, position.rectangle.y, Fade(WHITE, color));
     }
 }
 
@@ -863,6 +854,26 @@ void Powerup::Save(std::ofstream& s) {
     position.Save(s);
     Write(s, &speedY);
     Write(s, &kind);
+    Write(s, &frameCounter);
+}
+
+void Powerup::timeLeft() {
+    if (frameCounter > 60 * 8)
+        state = State::FINISHED;
+    else if (frameCounter > 60 * 7 + 30)
+        color += 0.03f;
+    else if (frameCounter > 60 * 7)
+        color -= 0.03f;
+    else if (frameCounter > 60 * 6 + 30)
+        color += 0.03f;
+    else if (frameCounter > 60 * 6)
+        color -= 0.03f;
+    else if (frameCounter > 60 * 5 + 30)
+        color += 0.03f;
+    else if (frameCounter > 60 * 5)
+        color -= 0.03f;
+
+    frameCounter++;
 }
 
 //Ice

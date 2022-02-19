@@ -59,8 +59,8 @@ public:
     virtual void Collision(Sprite*);
     virtual void Save(std::ofstream&);
     void Shooting();
-    bool checkTime();
-    time_t hitBall;
+    bool timeLeft();
+    int frameCounter;
 
 private:
     Vector2 speed;
@@ -157,7 +157,7 @@ public:
     virtual void Move();
     virtual void Collision(Sprite*);
     virtual void Save(std::ofstream&);
-    void checkTime();
+    void timeLeft();
 
 private:
     Kind kind;
@@ -169,7 +169,7 @@ private:
     int cooldown = 0;
     bool stopMoving;
     int overlap;
-    std::time_t lifeTime;
+    int frameCounter;
     Sprite* block;
 };
 
@@ -202,11 +202,14 @@ public:
     virtual void Move();
     virtual void Collision(Sprite*);
     virtual void Save(std::ofstream&);
+    void timeLeft();
 
 private:
     Texture2D* texture;
     Kind kind;
+    float color = 1;
     float speedY;
+    int frameCounter;
 };
 
 class Ice : public Sprite {

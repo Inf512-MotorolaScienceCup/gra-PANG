@@ -94,8 +94,11 @@ int Game::MainLoop() {
 
 void Game::Update() {
     frameCounter++;
-    if (laserCooldown > 0)
-        laserCooldown--;
+
+    for (int i = 0; i < 4; i++) {
+        if (lifeTime[i] != 0)
+            CheckTime();
+    }
 
     if (GetKeyPressed() == KEY_ESCAPE) {
         if (state == State::PAUSED) {
@@ -265,13 +268,11 @@ void Game::Update() {
         }
         MoveSprites();
 
+        if (laserCooldown > 0)
+            laserCooldown--;
+
         if (backMusic != NUM_MUSIC)
             UpdateMusicStream(music[backMusic]);
-
-        for (int i = 0; i < 4; i++) {
-            if (timeLeft != 0)
-                CheckTime();
-        }
         break;
     case Game::State::PAUSED:
         if (ingameMenu.selected == "Save Game") {
@@ -450,7 +451,7 @@ void Game::CheckCollision() {
     for (auto& enemy : GetSprites(Sprite::Type::ENEMY)) {
         if (IsCollision(player, enemy)) {
         // std::cout << "PLAYER collided with ENEMY:" << std::endl;
-            if (!player->hitBall)
+            if (!player->frameCounter)
                 player->Collision(enemy);
         }
     }
@@ -1168,23 +1169,23 @@ void Game::DrawPanel() {
     
     if (speedBoost != 1) {
         DrawTexture(textures[HUD_BOOST], 400, y, WHITE);
-        if (timeLeft[0]) {
+        if (lifeTime[0]) {
             std::time_t now = std::time(nullptr);
-            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[0])), { 425, y }, 35, 0, WHITE);
+            DrawTextEx(font, TextFormat(": %i s", timeLeft[0]), { 425, y }, 35, 0, WHITE);
         }
     }
     if (multiWeapon != 0) {
         DrawTexture(textures[HUD_DOUBLE], 490, y, WHITE);
-        if (timeLeft[1]) {
+        if (lifeTime[1]) {
             std::time_t now = std::time(nullptr);
-            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[1])), { 515, y }, 35, 0, WHITE);
+            DrawTextEx(font, TextFormat(": %i s", timeLeft[1]), { 515, y }, 35, 0, WHITE);
         }
     }
     if (stopTime) {
         DrawTexture(textures[POWERUP_TIME], 740, y, WHITE);
-        if (timeLeft[2]) {
+        if (lifeTime[2]) {
             std::time_t now = std::time(nullptr);
-            DrawTextEx(font, TextFormat(": %i s", 5 - (now - timeLeft[2])), { 775, y }, 35, 0, WHITE);
+            DrawTextEx(font, TextFormat(": %i s", timeLeft[2]), { 775, y }, 35, 0, WHITE);
         }
     }
     switch (weaponType) {
@@ -1273,8 +1274,8 @@ void Game::DrawLoadMenu() {
     }
     int pos = loadMenu.GetPosition();
     time_t modTime;
-    if (FileExists(TextFormat("saves/s%d.psf", pos))) {
-        modTime = GetFileModTime(TextFormat("saves/s%d.psf", pos));
+    if (FileExists(TextFormat("saves/s%d.psf", pos + 1))) {
+        modTime = GetFileModTime(TextFormat("saves/s%d.psf", pos + 1));
         char buf[100];
         errno_t e = ctime_s(buf, 100, &modTime);
         DrawRectangle(680 + animVec.x, 330, 550, 150, DARKGRAY);
@@ -1331,11 +1332,16 @@ void Game::WriteGameData(std::ofstream& s) {
     Write(s, &level);
     Write(s, &lives);
     Write(s, &score);
+    Write(s, &speedBoost);
+    Write(s, &multiWeapon);
+    Write(s, &stopTime);
     Write(s, &backTexture);
     Write(s, &backMusic);
 
     Write(s, &levelTime);
     Write(s, &elapsedLevelTime);
+    for (int i = 0; i < 3; i++)
+        Write(s, &timeLeft[i]);
 
     size_t numSprites = sprites.size();
     Write(s, &numSprites);
@@ -1349,6 +1355,9 @@ void Game::ReadGameData(std::ifstream& s) {
     Read(s, &level);
     Read(s, &lives);
     Read(s, &score);
+    Read(s, &speedBoost);
+    Read(s, &multiWeapon);
+    Read(s, &stopTime);
     Read(s, &backTexture);
     Read(s, &backMusic);
 
@@ -1356,6 +1365,11 @@ void Game::ReadGameData(std::ifstream& s) {
     Read(s, &elapsedLevelTime);
     std::time_t now = std::time(nullptr);
     endLevelTime = now + elapsedLevelTime;
+
+    for (int i = 0; i < 3; i++) {
+        Read(s, &timeLeft[i]);
+        lifeTime[i] = now + timeLeft[i];
+    }
 
     int numSprites = 0;
     Read(s, &numSprites);
@@ -1564,14 +1578,16 @@ void Game::PickAction(Powerup::Kind kind) {
     switch (kind) {
     case Powerup::Kind::BOOST:
         speedBoost = 2;
-        timeLeft[0] = std::time(nullptr);
+        timeLeft[0] = 5;
+        lifeTime[0] = std::time(nullptr) + timeLeft[0];
         break;
     case Powerup::Kind::DOUBLE:
         if (weaponType == 4)
             shootingLeft *= 2;
         else {
             multiWeapon = 1;
-            timeLeft[1] = std::time(nullptr);
+            timeLeft[1] = 5;
+            lifeTime[1] = std::time(nullptr) + timeLeft[1];
         }
         break;
     case Powerup::Kind::HEAL:
@@ -1579,7 +1595,8 @@ void Game::PickAction(Powerup::Kind kind) {
         break;
     case Powerup::Kind::TIME:
         stopTime = true;
-        timeLeft[2] = std::time(nullptr);
+        timeLeft[2] = 5;
+        lifeTime[2] = std::time(nullptr) + timeLeft[2];
         break;
     case Powerup::Kind::WEAPON:
         int change = GetRandomValue(2, 4);
@@ -1600,23 +1617,28 @@ void Game::PickAction(Powerup::Kind kind) {
 
 void Game::CheckTime() {
     std::time_t now = std::time(nullptr);
-    for (int i = 0; i < 3; i++) {
-        if (timeLeft[i] + 5 <= now) {
-            switch (i) {
-            case 0:
-                speedBoost = 1;
+    if (state == State::PAUSED || state == State::SAVE_MENU) {
+        for (int i = 0; i < 3; i++)
+            lifeTime[i] = now + timeLeft[i];
+    } else {
+        for (int i = 0; i < 3; i++) {
+            timeLeft[i] = lifeTime[i] - now;
+            if (timeLeft[i] <= 0) {
                 timeLeft[i] = 0;
-                break;
-            case 1:
-                multiWeapon = 0;
-                timeLeft[i] = 0;
-                break;
-            case 2:
-                stopTime = false;
-                timeLeft[i] = 0;
-                break;
-            default:
-                break;
+                lifeTime[i] = 0;
+                switch (i) {
+                case 0:
+                    speedBoost = 1;
+                    break;
+                case 1:
+                    multiWeapon = 0;
+                    break;
+                case 2:
+                    stopTime = false;
+                    break;
+                default:
+                    break;
+                }
             }
         }
     }
