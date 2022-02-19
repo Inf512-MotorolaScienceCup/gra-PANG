@@ -128,7 +128,7 @@ void Game::Update() {
     switch (state) {
     case Game::State::MAIN_MENU:
         if (mainMenu.selected == "Start") {
-            StartGame(level);
+            ChangeState(State::GAME_START);
             mainMenu.selected = "";
         } else if (mainMenu.selected == "Load") {
             ChangeState(State::LOAD_MENU);
@@ -161,16 +161,16 @@ void Game::Update() {
         break;
     case Game::State::DIFFLVL_MENU:
         if (diffLvlMenu.selected == "Easy") {
-            int randLvl = GetRandomValue(1, 5);
-            StartGame(randLvl);
+            level = GetRandomValue(1, 5);
+            ChangeState(State::GAME_START);
             diffLvlMenu.selected = "";
         } else if (diffLvlMenu.selected == "Normal") {
-            int randLvl = GetRandomValue(6, 10);
-            StartGame(randLvl);
+            level = GetRandomValue(6, 10);
+            ChangeState(State::GAME_START);
             diffLvlMenu.selected = "";
         } else if (diffLvlMenu.selected == "Hard") {
-            int randLvl = GetRandomValue(11, 15);
-            StartGame(randLvl);
+            level = GetRandomValue(11, 15);
+            ChangeState(State::GAME_START);
             diffLvlMenu.selected = "";
         }
         diffLvlMenu.Update();
@@ -178,7 +178,7 @@ void Game::Update() {
     case Game::State::LEVEL_SELECTOR:
         if (IsKeyPressed(KEY_ENTER)) {
             PlaySound(audio[MENU_ENTER]);
-            StartGame(level);
+            ChangeState(State::GAME_START);
         } else if (IsKeyPressed(KEY_ESCAPE)) {
             ChangeState(State::MAIN_MENU);
         } else if (IsKeyPressed(KEY_RIGHT)) {
@@ -311,6 +311,11 @@ void Game::Update() {
         else
             RestartLevel();
         break;
+    case Game::State::GAME_START:
+        if (sequenceFrameCounter > frameCounter) return;
+
+        StartGame();
+        break;
     case Game::State::GAME_OVER:
         if (sequenceFrameCounter > frameCounter) return;
 
@@ -423,12 +428,18 @@ void Game::ChangeState(State newState) {
         break;
     case State::LEVEL_FINISHED:
         Unspawn();
-        timeBonus = elapsedLevelTime * 100;
+        timeBonus = elapsedLevelTime * 25;
         score += timeBonus;
         frameCounter = 0;
         sequenceFrameCounter = 4 * 60;
         animVec = { 0, 0 };
         PlaySound(audio[LEVEL_COMPLETED]);
+        break;
+    case State::GAME_START:
+        frameCounter = 0;
+        sequenceFrameCounter = 60;
+        animVec = { screenWidth * 2, 0 };
+        PlaySound(audio[LEVEL_START]);
         break;
     case State::GAME_FINISHED:
         Unspawn();
@@ -1085,11 +1096,9 @@ void Game::Unspawn() {
     spriteMap.clear();
 }
 
-void Game::StartGame(int newLevel) {
-    level = newLevel;
+void Game::StartGame() {
     score = 0;
     lives = 5;
-    PlaySound(audio[LEVEL_START]);
     RestartLevel();
 }
 
@@ -1131,6 +1140,9 @@ void Game::Draw() {
             //DrawSequence("Great Job!");
             DrawEndLevel();
             break;
+        case State::GAME_START:
+            DrawGameStart();
+            break;
         case State::GAME_OVER:
             //DrawSequence("Game Over!");
             DrawGameOver();
@@ -1161,7 +1173,7 @@ void Game::Draw() {
             DrawLoadMenu();
             break;
         case State::ERROR:
-            DrawSequence("Unable to save file");
+            //DrawSequence("Unable to save file");
             break;
     }
 
@@ -1236,11 +1248,6 @@ void Game::DrawPanel() {
     }
 }
 
-void Game::DrawSequence(const char* message) {
-    DrawRectangleRec({0, 0, screenWidth, screenHeight}, ColorAlpha(BLACK, 0.6f));
-    DrawText(message, 520, 350, 40, GREEN);
-}
-
 void Game::DrawGameSaved() {
     if (sequenceFrameCounter > frameCounter + sequenceFrameCounter - 30)
         animVec.y += 50;
@@ -1248,7 +1255,14 @@ void Game::DrawGameSaved() {
         animVec.y -= 50;
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
-    DrawTextEx(font, "Game saved", { 485, animVec.y - 1200 }, 66, 0, WHITE);
+    DrawTextEx(font, "Game saved", { 485, animVec.y - 1240 }, 66, 0, WHITE);
+}
+
+void Game::DrawGameStart() {
+    animVec.x -= 42;
+
+    DrawRectangle(-screenWidth + animVec.x, 0, screenWidth, screenHeight, GRAY);
+    DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
 }
 
 void Game::DrawEndLevel() {
@@ -1258,9 +1272,9 @@ void Game::DrawEndLevel() {
         animVec.y -= 50;
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
-    DrawTextEx(font, "Great job!", { 500, animVec.y - 1200 }, 66, 0, RED);
-    DrawTextEx(font, TextFormat("Time bonus: %d", timeBonus), { 480, animVec.y - 1100 }, 50, 0, WHITE);
-    DrawTextEx(font, TextFormat("Your score: %d", score), { 480, animVec.y - 1060 }, 50, 0, WHITE);
+    DrawTextEx(font, "Great job!", { 497, animVec.y - 1240 }, 66, 0, RED);
+    DrawTextEx(font, TextFormat("Time bonus: %d", timeBonus), { 480, animVec.y - 1140 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 475, animVec.y - 1100 }, 50, 0, WHITE);
 }
 
 void Game::DrawGameOver() {
@@ -1270,8 +1284,8 @@ void Game::DrawGameOver() {
         animVec.y -= 50;
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500}, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
-    DrawTextEx(font, "Game over", { 500, animVec.y - 1200 }, 66, 0, RED);
-    DrawTextEx(font, TextFormat("Your score: %d", score), { 500, animVec.y - 1100 }, 50, 0, WHITE);
+    DrawTextEx(font, "Game over", { 497, animVec.y - 1240 }, 66, 0, RED);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 475, animVec.y - 1120 }, 50, 0, WHITE);
 }
 
 void Game::DrawEndGame() {
@@ -1281,10 +1295,10 @@ void Game::DrawEndGame() {
         animVec.y -= 50;
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
-    DrawTextEx(font, "Game finished - Superb job!", { 500, animVec.y - 1200 }, 66, 0, RED);
-    DrawTextEx(font, TextFormat("Time bonus: %d", timeBonus), { 490, animVec.y - 1100 }, 50, 0, WHITE);
-    DrawTextEx(font, TextFormat("Your score: %d", score), { 480, animVec.y - 1060 }, 50, 0, WHITE);
-    DrawTextEx(font, TextFormat("Highest score: %d", rankScore[0]), { 480, animVec.y - 1020 }, 50, 0, WHITE);
+    DrawTextEx(font, "Game finished - Superb job!", { 500, animVec.y - 1240 }, 66, 0, RED);
+    DrawTextEx(font, TextFormat("Time bonus: %d", timeBonus), { 490, animVec.y - 1140 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 475, animVec.y - 1100 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Highest score: %d", rankScore[0]), { 475, animVec.y - 1060 }, 50, 0, WHITE);
 }
 
 void Game::DrawLoadMenu() {

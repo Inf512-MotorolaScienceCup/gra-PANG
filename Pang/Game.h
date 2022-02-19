@@ -111,6 +111,7 @@ public:
         ACTIVE,
         PAUSED,
         LEVEL_FINISHED,
+        GAME_START,
         GAME_OVER,
         GAME_FINISHED,
         GAME_SAVED,
@@ -221,15 +222,15 @@ public:
     void Spawn(Sprite *sprite);
     void SpawnLevel();
     void Unspawn();
-    void StartGame(int newLevel = 1);
+    void StartGame();
     void RestartLevel();
 
     void Draw();
     void DrawSprites();
     void DrawBackground();
     void DrawPanel();
-    void DrawSequence(const char* message);
     void DrawGameSaved();
+    void DrawGameStart();
     void DrawEndLevel();
     void DrawGameOver();
     void DrawEndGame();
