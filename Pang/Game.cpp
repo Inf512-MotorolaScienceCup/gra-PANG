@@ -583,75 +583,29 @@ void Game::Spawn(Sprite* sprite) {
 void Game::SpawnLevel() {
     switch (level) {
     case 1:
-        Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 450, 500, 150, wallThickness, Block::Kind::PLATFORM_2));
-
-        // y value must always be 5-10 points lower than block value
-        // distanceToGround must be properly calculated
-        Spawn(new Ladder(this, 200, 395, 4, 25));
-        Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::HEAL));
-        Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::BOOST));
-        Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::DOUBLE));
-        Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::TIME));
-
-        Spawn(new Ice(this, 700, 690, 150, 10));
-
-        Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
-
-        player = new Player(this, { 200,400 - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-        backTexture = BACKGROUND_ANI;
-        backMusic = BACKGROUND_A;
-        levelTime = 60;
-        break;
-    case 2:
-        Spawn(new Block(this, 100, 500, 150, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 500, 500, 150, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Kind::PLATFORM_2));
-        Spawn(new Block(this, 700, 400, 150, wallThickness, Block::Kind::PLATFORM_2));
-
-        Spawn(new Ladder(this, 200, 395, 4, 25));
-
-        Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
-        Spawn(Enemy::create(this, 500, 400, Enemy::Kind::BALL1, 1));
-
-
-        player = new Player(this, { 200,400 - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-        Spawn(new Powerup(this, 1050, 720 - 20 - 64, Powerup::Kind::HEAL));
-        backMusic = BACKGROUND_B;
-        backTexture = BACKGROUND_ANI;
-        levelTime = 60;
-        break;
-    case 3:
-        for (int x = 32; x > 0; x--) {
-            Spawn(new Block(this, 20, 60 + x * 20, (32 - x) * 20, wallThickness, Block::Kind::PLATFORM_1));
-            Spawn(new Block(this, 20 + 620 + x * 20, 60 + x * 20, (32 - x) * 20, wallThickness, Block::Kind::PLATFORM_1));
+        for (int x = 16; x > 0; x--) {
+            Spawn(new Block(this, 20, 40 + x * 40, (16 - x) * 40, 40, Block::Kind::PLATFORM_1));
+            Spawn(new Block(this, 620 + x * 40, 40 + x * 40, (16 - x) * 40, 40, Block::Kind::PLATFORM_1));
         }
         //  Spawn(new Block(this, 23 * 20, 260, 380, wallThickness, Block::Kind::PLATFORM_2));
         //  Spawn(new Block(this, 16 * 20, 400, 660, wallThickness, Block::Kind::PLATFORM_2));
 
-        for (int x = 0; x < 33; x++) {
-            if (x < 19) {
-                Spawn(new Block(this, 460 + x * 20, 260, 20, wallThickness, Block::Kind::PLATFORM_2));
+        for (int x = 0; x < 15; x++) {
+            if (x < 9) {
+                Spawn(new Block(this, 460 + x * 40, 260, 40, wallThickness, Block::Kind::PLATFORM_2));
             }
-            Spawn(new Block(this, 320 + x * 20, 400, 20, wallThickness, Block::Kind::PLATFORM_2));
+            Spawn(new Block(this, 340 + x * 40, 380, 40, wallThickness, Block::Kind::PLATFORM_2));
         }
-
-
-
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
         Spawn(Enemy::create(this, 620, 300, Enemy::Kind::BALL3, 1));
         Spawn(Enemy::create(this, 620, 160, Enemy::Kind::BALL3, -1));
-        backMusic = BACKGROUND_C;
+        backMusic = BACKGROUND_A;
         backTexture = BACKGROUND1;
         levelTime = 160;
         break;
-    case 4:
+    case 2:
         Spawn(new Block(this, 20, 80, 500, 450, Block::Kind::PLATFORM_1));
         Spawn(new Block(this, 760, 80, 500, 450, Block::Kind::PLATFORM_1));
 
@@ -667,11 +621,154 @@ void Game::SpawnLevel() {
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_D;
+        backMusic = BACKGROUND_A;
         backTexture = BACKGROUND2;
         levelTime = 160;
         break;
+
+
+    case 3:
+        Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 450, 500, 150, wallThickness, Block::Kind::PLATFORM_2));
+
+        // y value must always be 5-10 points lower than block value
+        // distanceToGround must be properly calculated
+        Spawn(new Ladder(this, 200, 395, 4, 25));
+        Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::HEAL));
+
+        Spawn(new Ice(this, 700, 690, 150, 10));
+
+        Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
+
+        player = new Player(this, { 200,400 - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+        backTexture = BACKGROUND_ANI;
+        backMusic = BACKGROUND_A;
+        levelTime = 60;
+        break;
+    case 4:
+        Spawn(new Block(this, 20, 550, 220, wallThickness, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 240, 550, 60, wallThickness, Block::Kind::PLATFORM_2));
+        Spawn(new Block(this, 300, 550, 680, wallThickness, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 980, 550, 60, wallThickness, Block::Kind::PLATFORM_2));
+        Spawn(new Block(this, 1040, 550, 220, wallThickness, Block::Kind::PLATFORM_1));
+        Spawn(Enemy::create(this, 900, 200, Enemy::Kind::BALL1, -1));
+
+        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+        backMusic = BACKGROUND_A;
+        backTexture = BACKGROUND4;
+        levelTime = 160;
+        break;
     case 5:
+        for (int x = 1; x < 10; x++) {
+            Spawn(new Block(this, x * (1260 / 10), 80, 20, 540, Block::Kind::PLATFORM_1));
+            if (x % 2 == 0) {
+                Spawn(Enemy::create(this, x * (1260 / 10) + 50, 120, Enemy::Kind::BALL4, 1));
+            }
+        }    //                       x     y                          wymiary 64-64                
+        player = new Player(this, { 420,screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+        backMusic = BACKGROUND_B;
+        backTexture = BACKGROUND8;
+        levelTime = 160;
+        break;
+    case 6:
+
+        Spawn(new Block(this, 20, 550, 180, 20, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 430, 380, 80, 20, Block::Kind::PLATFORM_2));
+        Spawn(new Block(this, 940, 280, 80, 20, Block::Kind::PLATFORM_2));
+        Spawn(new Block(this, 740, 480, 220, 20, Block::Kind::PLATFORM_2));
+
+        Spawn(Enemy::create(this, 1000, 200, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 100, 500, Enemy::Kind::BALL2, 1));
+
+        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+        backMusic = BACKGROUND_B;
+        backTexture = BACKGROUND10;
+        levelTime = 160;
+        break;
+    case 7:
+
+        Spawn(new Block(this, 20, 660, 400, 40, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 860, 660, 400, 40, Block::Kind::PLATFORM_1));
+
+        Spawn(new Block(this, 430, 380, 80, 20, Block::Kind::PLATFORM_2));
+        Spawn(new Block(this, 940, 280, 80, 20, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 720, 480, 220, 20, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 520, 330, 120, 20, Block::Kind::PLATFORM_2));
+        Spawn(new Block(this, 60, 230, 120, 20, Block::Kind::PLATFORM_1));
+
+        Spawn(Enemy::create(this, 1000, 200, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 100, 500, Enemy::Kind::BALL2, 1));
+
+        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+        backMusic = BACKGROUND_B;
+        backTexture = BACKGROUND14;
+        levelTime = 160;
+        break;
+    case 8:
+        for (int x = 0; x < 15; x++) {
+            if (!(x == 6 || x == 7)) {
+                Spawn(new Block(this, 20 + x * 40, 140 + x * 20, 40, wallThickness, Block::Kind::PLATFORM_1));
+                Spawn(new Block(this, 1220 - x * 40, 140 + x * 20, 40, wallThickness, Block::Kind::PLATFORM_1));
+            }
+        }
+        Spawn(Enemy::create(this, 600, 150, Enemy::Kind::BALL1, 1));
+
+        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+        backMusic = BACKGROUND_B;
+        backTexture = BACKGROUND5;
+        levelTime = 160;
+        break;
+    case 9:
+
+        Spawn(new Block(this, 20, 500, 1000, wallThickness, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 1020, 500, 240, wallThickness, Block::Kind::PLATFORM_2));
+
+        Spawn(new Block(this, 260, 300, 1000, wallThickness, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 20, 300, 240, wallThickness, Block::Kind::PLATFORM_2));
+
+        Spawn(new Ladder(this, 200, 295, 3, 55));
+        Spawn(new Ladder(this, 1020, 495, 3, 55));
+
+        Spawn(Enemy::create(this, 600, 150, Enemy::Kind::BALL2, 1));
+        Spawn(Enemy::create(this, 600, 350, Enemy::Kind::BALL2, -1));
+        Spawn(Enemy::create(this, 600, 550, Enemy::Kind::BALL2, 1));
+
+        Spawn(new Powerup(this, 460, 500 - 64, Powerup::Kind::HEAL));
+
+        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+
+        backMusic = BACKGROUND_C;
+        backTexture = BACKGROUND7;
+        levelTime = 160;
+        break;
+    case 10:
+        for (int x = 1; x < 11; x++) {
+            Spawn(Enemy::create(this, x * 60 + 500, 80 + x * 60, Enemy::Kind::BALL4, 1));
+        }
+        Spawn(new Powerup(this, 800, 720 - 10 - 64, Powerup::Kind::HEAL));
+
+        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+        backTexture = BACKGROUND6;
+        backMusic = BACKGROUND_C;
+        levelTime = 160;
+        break;
+    case 11:
         Spawn(new Block(this, 20, 550, 1050, wallThickness, Block::Kind::PLATFORM_1));
         Spawn(new Block(this, 135, 300, 1145, wallThickness, Block::Kind::PLATFORM_1));
 
@@ -702,90 +799,31 @@ void Game::SpawnLevel() {
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_E;
+        backMusic = BACKGROUND_C;
         backTexture = BACKGROUND3;
         levelTime = 160;
         break;
-    case 6:
-        Spawn(new Block(this, 20, 550, 220, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 240, 550, 60, wallThickness, Block::Kind::PLATFORM_2));
-        Spawn(new Block(this, 300, 550, 680, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 980, 550, 60, wallThickness, Block::Kind::PLATFORM_2));
-        Spawn(new Block(this, 1040, 550, 220, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(Enemy::create(this, 900, 200, Enemy::Kind::BALL1, -1));
+    case 12:
+        Spawn(new Block(this, 100, 500, 150, wallThickness, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 500, 500, 150, wallThickness, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Kind::PLATFORM_2));
+        Spawn(new Block(this, 700, 400, 150, wallThickness, Block::Kind::PLATFORM_2));
 
-        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        Spawn(new Ladder(this, 200, 395, 4, 25));
+
+        Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 500, 400, Enemy::Kind::BALL1, 1));
+
+
+        player = new Player(this, { 200,400 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backTexture = BACKGROUND4;
-        levelTime = 160;
+        Spawn(new Powerup(this, 1050, 720 - 20 - 64, Powerup::Kind::HEAL));
+        backMusic = BACKGROUND_C;
+        backTexture = BACKGROUND_ANI;
+        levelTime = 60;
         break;
-    case 7:
-        for (int x = 0; x < 15; x++) {
-            if (!(x == 6 || x == 7)) {
-                Spawn(new Block(this, 20 + x * 40, 140 + x * 20, 40, wallThickness, Block::Kind::PLATFORM_1));
-                Spawn(new Block(this, 1220 - x * 40, 140 + x * 20, 40, wallThickness, Block::Kind::PLATFORM_1));
-            }
-        }
-        Spawn(Enemy::create(this, 600, 150, Enemy::Kind::BALL1, 1));
-
-        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-        backTexture = BACKGROUND5;
-        levelTime = 160;
-        break;
-    case 8:
-        for (int x = 1; x < 11; x++) {
-            Spawn(Enemy::create(this, x * 60 + 500, 80 + x * 60, Enemy::Kind::BALL4, 1));
-        }
-        Spawn(new Powerup(this, 800, 720 - 10 - 64, Powerup::Kind::HEAL));
-
-        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-        backTexture = BACKGROUND6;
-        backMusic = BACKGROUND_D;
-        levelTime = 160;
-        break;
-    case 9:
-
-        Spawn(new Block(this, 20, 500, 1000, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 1020, 500, 240, wallThickness, Block::Kind::PLATFORM_2));
-
-        Spawn(new Block(this, 260, 300, 1000, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 20, 300, 240, wallThickness, Block::Kind::PLATFORM_2));
-
-        Spawn(new Ladder(this, 200, 295, 3, 55));
-        Spawn(new Ladder(this, 1020, 495, 3, 55));
-
-        Spawn(Enemy::create(this, 600, 150, Enemy::Kind::BALL2, 1));
-        Spawn(Enemy::create(this, 600, 350, Enemy::Kind::BALL2, -1));
-        Spawn(Enemy::create(this, 600, 550, Enemy::Kind::BALL2, 1));
-
-        Spawn(new Powerup(this, 760, 300 - 64, Powerup::Kind::HEAL));
-
-        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-
-        backTexture = BACKGROUND7;
-        levelTime = 160;
-        break;
-    case 10:
-        for (int x = 1; x < 10; x++) {
-            Spawn(new Block(this, x * (1260 / 10), 80, 20, 540, Block::Kind::PLATFORM_1));
-            if (x % 2 == 0) {
-                Spawn(Enemy::create(this, x * (1260 / 10) + 50, 120, Enemy::Kind::BALL4, 1));
-            }
-        }    //                       x     y                          wymiary 64-64                
-        player = new Player(this, { 420,screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-        backTexture = BACKGROUND8;
-        levelTime = 160;
-        break;
-    case 11:
+    case 13:
         Spawn(new Block(this, 20, 560, 1240, 20, Block::Kind::PLATFORM_1));
 
         Spawn(new Ladder(this, 300, 555, 2, 55));
@@ -798,10 +836,11 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
+        backMusic = BACKGROUND_D;
         backTexture = BACKGROUND9;
         levelTime = 160;
         break;
-    case 12:
+    case 14:
         Spawn(new Block(this, 20, 500, 200, 20, Block::Kind::PLATFORM_1));
         Spawn(new Block(this, 220, 500, 80, 20, Block::Kind::PLATFORM_2));
         Spawn(new Block(this, 300, 500, 300, 20, Block::Kind::PLATFORM_1));
@@ -816,10 +855,40 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
+        backMusic = BACKGROUND_D;
         backTexture = BACKGROUND10;
         levelTime = 160;
         break;
-    case 13:
+    case 15:
+        for (int x = 0; x < 14; x++) {
+            Spawn(new Block(this, x * 80 + 80, 200, 80, 20, Block::Kind::PLATFORM_2));
+        }
+
+        Spawn(new Block(this, 630, 80, 20, 120, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 320, 80, 20, 120, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 940, 80, 20, 120, Block::Kind::PLATFORM_1));
+
+        Spawn(new Block(this, 20, 200, 60, 20, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 1200, 200, 60, 20, Block::Kind::PLATFORM_1));
+
+        Spawn(new Block(this, 480, 600, 320, 20, Block::Kind::PLATFORM_1));
+        Spawn(new Block(this, 560, 500, 160, 20, Block::Kind::PLATFORM_1));
+
+        Spawn(Enemy::create(this, 150, 120, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 390, 120, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 770, 120, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 1120, 120, Enemy::Kind::BALL1, 1));
+
+        Spawn(new Ladder(this, 605, 495, 3, 60));
+
+        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+        backMusic = BACKGROUND_D;
+        backTexture = BACKGROUND12;
+        levelTime = 160;
+        break;
+    case 16:
         Spawn(new Block(this, 500, 400, 720, 20, Block::Kind::PLATFORM_1));
 
         Spawn(new Block(this, 540, 240, 140, 20, Block::Kind::PLATFORM_1));
@@ -836,43 +905,19 @@ void Game::SpawnLevel() {
 
         Spawn(Enemy::create(this, 590, 120, Enemy::Kind::BALL1, 1));
         Spawn(Enemy::create(this, 1020, 120, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 660, 120, Enemy::Kind::BALL1, 1));
 
-        Spawn(new Powerup(this, 1060, 240 - 64, Powerup::Kind::HEAL));
+        Spawn(new Powerup(this, 1045, 240 - 64, Powerup::Kind::HEAL));
+        Spawn(new Powerup(this, 705, 240 - 64, Powerup::Kind::HEAL));
 
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
+        backMusic = BACKGROUND_D;
         backTexture = BACKGROUND11;
         levelTime = 160;
         break;
-    case 14:
-        for (int x = 1; x <= 62; x++) {
-            Spawn(new Block(this, x * 20, 200, 20, 20, Block::Kind::PLATFORM_2));
-        }
-
-        Spawn(new Block(this, 630, 80, 20, 120, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 320, 80, 20, 120, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 940, 80, 20, 120, Block::Kind::PLATFORM_1));
-
-
-
-        Spawn(new Block(this, 480, 600, 320, 20, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 560, 500, 160, 20, Block::Kind::PLATFORM_1));
-
-        Spawn(Enemy::create(this, 150, 120, Enemy::Kind::BALL1, 1));
-        Spawn(Enemy::create(this, 390, 120, Enemy::Kind::BALL1, 1));
-        Spawn(Enemy::create(this, 770, 120, Enemy::Kind::BALL1, 1));
-        Spawn(Enemy::create(this, 1120, 120, Enemy::Kind::BALL1, 1));
-
-        Spawn(new Ladder(this, 605, 495, 3, 60));
-
-        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-        backTexture = BACKGROUND12;
-        levelTime = 160;
-        break;
-    case 15:
+    case 17:
         for (int x = 0; x <= 62; x++) {
             Spawn(new Block(this, x * 80, 200, 80, 20, Block::Kind::PLATFORM_2));
         }
@@ -896,47 +941,11 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
+        backMusic = BACKGROUND_E;
         backTexture = BACKGROUND13;
         levelTime = 160;
         break;
-    case 16:
-
-        Spawn(new Block(this, 20, 550, 180, 20, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 430, 380, 80, 20, Block::Kind::PLATFORM_2));
-        Spawn(new Block(this, 940, 280, 80, 20, Block::Kind::PLATFORM_2));
-        Spawn(new Block(this, 740, 480, 220, 20, Block::Kind::PLATFORM_2));
-
-        Spawn(Enemy::create(this, 1000, 200, Enemy::Kind::BALL1, 1));
-        Spawn(Enemy::create(this, 100, 500, Enemy::Kind::BALL2, 1));
-
-        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-        backTexture = BACKGROUND10;
-        levelTime = 160;
-        break;
-    case 17:
-
-        Spawn(new Block(this, 20, 660, 400, 40, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 860, 660, 400, 40, Block::Kind::PLATFORM_1));
-
-        Spawn(new Block(this, 430, 380, 80, 20, Block::Kind::PLATFORM_2));
-        Spawn(new Block(this, 940, 280, 80, 20, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 720, 480, 220, 20, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 520, 330, 120, 20, Block::Kind::PLATFORM_2));
-        Spawn(new Block(this, 60, 230, 120, 20, Block::Kind::PLATFORM_1));
-
-        Spawn(Enemy::create(this, 1000, 200, Enemy::Kind::BALL1, 1));
-        Spawn(Enemy::create(this, 100, 500, Enemy::Kind::BALL2, 1));
-
-        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-        backTexture = BACKGROUND14;
-        levelTime = 160;
-        break;
     case 18:
-
         Spawn(new Block(this, 20, 580, 100, 20, Block::Kind::PLATFORM_2));
         Spawn(new Block(this, 120, 480, 20, 120, Block::Kind::PLATFORM_1));
         Spawn(new Block(this, 20, 460, 120, 20, Block::Kind::PLATFORM_1));
@@ -958,8 +967,6 @@ void Game::SpawnLevel() {
         Spawn(Enemy::create(this, 50, 135, Enemy::Kind::BALL2, 1));
         Spawn(Enemy::create(this, 350, 120, Enemy::Kind::BALL2, -1));
 
-
-
         Spawn(new Block(this, 640, 420, 620, 20, Block::Kind::PLATFORM_1));
 
         Spawn(new Ladder(this, 640, 415, 4, 50));
@@ -972,10 +979,27 @@ void Game::SpawnLevel() {
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
+        backMusic = BACKGROUND_E;
         backTexture = BACKGROUND15;
         levelTime = 160;
         break;
     case 19:
+        for (int x = 1; x < 8; x++) {
+            Spawn(Enemy::create(this, x * 60 + 200, 100 + x * 50, Enemy::Kind::BALL3, 1));
+        }
+
+        Spawn(new Block(this, 200, 500, 800, 20, Block::Kind::PLATFORM_1));
+
+        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        sprites.push_back(player);
+
+        Spawn(new Powerup(this, 620, 700 - 64, Powerup::Kind::HEAL));
+
+        backMusic = BACKGROUND_E;
+        backTexture = BACKGROUND18;
+        levelTime = 160;
+        break;
+    case 20:
         for (int x = 0; x < 4; x++) {
             Spawn(new Block(this, 540 - x * 100, 280 + x * 100, 100, 20, Block::Kind::PLATFORM_1));
             Spawn(new Block(this, (1240 - (520 - x * 100)) - 80, 280 + x * 100, 100, 20, Block::Kind::PLATFORM_1));
@@ -987,12 +1011,22 @@ void Game::SpawnLevel() {
                 Spawn(new Block(this, (1240 - (520 - x * 100)) - 0, 300 + x * 100, 20, 100, Block::Kind::PLATFORM_1));
                 Spawn(new Block(this, 540 - x * 100, 300 + x * 100, 20, 100, Block::Kind::PLATFORM_1));
             }
-            if (x <= 2 && x >= 0) {
+            if (x <= 2) {
                 Spawn(new Block(this, 320 - x * 100, 80 + x * 100, 20, 100, Block::Kind::PLATFORM_2));
-                Spawn(new Block(this, 220 - x * 100, 160 + x * 100, 100, 20, Block::Kind::PLATFORM_1));
+                if (x == 2 || x == 1)
+                    Spawn(new Block(this, 220 - x * 100, 160 + x * 100, 100, 20, Block::Kind::PLATFORM_2));
+                else 
+                    Spawn(new Block(this, 220 - x * 100, 160 + x * 100, 100, 20, Block::Kind::PLATFORM_1));
 
                 Spawn(new Block(this, 1260 - (320 - x * 100), 80 + x * 100, 20, 100, Block::Kind::PLATFORM_2));
-                Spawn(new Block(this, 1180 - (220 - x * 100), 160 + x * 100, 100, 20, Block::Kind::PLATFORM_1));
+
+
+                if (x == 2 || x == 1)
+                    Spawn(new Block(this, 1180 - (220 - x * 100), 160 + x * 100, 100, 20, Block::Kind::PLATFORM_2));
+                else
+                    Spawn(new Block(this, 1180 - (220 - x * 100), 160 + x * 100, 100, 20, Block::Kind::PLATFORM_1));
+                
+
             }
         }
         Spawn(new Ladder(this, 603, 275, 6, 50));
@@ -1008,11 +1042,9 @@ void Game::SpawnLevel() {
         Spawn(Enemy::create(this, 140, 140, Enemy::Kind::BALL2, -1));
         Spawn(Enemy::create(this, 280, 130, Enemy::Kind::BALL2, -1));
 
-        Spawn(Enemy::create(this, 1190, 140, Enemy::Kind::BALL1, 1));
+        Spawn(Enemy::create(this, 1200, 140, Enemy::Kind::BALL1, 1));
         Spawn(Enemy::create(this, 1080, 140, Enemy::Kind::BALL2, -1));
         Spawn(Enemy::create(this, 980, 140, Enemy::Kind::BALL2, -1));
-
-
 
         Spawn(Enemy::create(this, 620, 140, Enemy::Kind::BALL1, -1));
 
@@ -1021,42 +1053,24 @@ void Game::SpawnLevel() {
 
         Spawn(new Powerup(this, 620, 280 - 64, Powerup::Kind::HEAL));
 
+        backMusic = BACKGROUND_E;
         backTexture = BACKGROUND16;
         levelTime = 160;
         break;
-    case 20:
+    case 21:
 
         Spawn(Enemy::create(this, 890, 140, Enemy::Kind::BALL1, 1));
         Spawn(Enemy::create(this, 280, 240, Enemy::Kind::BALL1, -1));
         Spawn(Enemy::create(this, 980, 440, Enemy::Kind::BALL1, -1));
         Spawn(Enemy::create(this, 920, 410, Enemy::Kind::BALL1, -1));
 
-
-
-
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
         Spawn(new Powerup(this, 620, 280 - 64, Powerup::Kind::HEAL));
 
+        backMusic = BACKGROUND_E;
         backTexture = BACKGROUND17;
-        levelTime = 160;
-        break;
-    case 21:
-
-        for (int x = 1; x < 8; x++) {
-            Spawn(Enemy::create(this, x * 60 + 200, 100 + x * 50, Enemy::Kind::BALL3, 1));
-        }
-
-
-        Spawn(new Block(this, 200, 500, 800, 20, Block::Kind::PLATFORM_1));
-
-        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
-        sprites.push_back(player);
-
-        Spawn(new Powerup(this, 620, 700 - 64, Powerup::Kind::HEAL));
-
-        backTexture = BACKGROUND18;
         levelTime = 160;
         break;
 
@@ -1313,7 +1327,7 @@ void Game::DrawLevelSelector() {
         DrawRectangleRec({ x, y, width, height }, color);
         DrawTextEx(font, TextFormat("%02i", i + 1), { x, y }, 30, 0, BLACK);
     }
-    DrawRectangleRounded({ xOffset + (level - 1) * (width + space) - 10, y - 10, width + 20, height + 20 }, 0.2, 8, ColorAlpha(ORANGE, 0.6));
+    DrawRectangleRounded({ xOffset + (level - 1) * (width + space) - 10, y - 10, width + 20, height + 20 }, 0.2f, 8, ColorAlpha(ORANGE, 0.6));
 }
 
 void Game::DrawRanking() {
@@ -1660,6 +1674,9 @@ void Game::PickAction(Powerup::Kind kind) {
         timeLeft[2] = 5;
         lifeTime[2] = std::time(nullptr) + timeLeft[2];
         break;
+    case Powerup::Kind::SCORE:
+        AddScore(1000);
+        break;
     case Powerup::Kind::WEAPON:
         int change = GetRandomValue(2, 4);
         if (change == weaponType)
@@ -1673,9 +1690,6 @@ void Game::PickAction(Powerup::Kind kind) {
             weaponType = change;
 
         shootingLeft = 0;
-        break;
-    case Powerup::Kind::SCORE:
-        AddScore(1000);
         break;
     }
 }
