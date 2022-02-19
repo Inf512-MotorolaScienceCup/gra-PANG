@@ -777,6 +777,9 @@ Powerup::Powerup(Game *game, float x, float y, Kind kind)
     case Kind::WEAPON:
         texture = &game->textures[POWERUP_WEAPON];
         break;
+    case Kind::SCORE:
+        texture = &game->textures[POWERUP_SCORE];
+        break;
     }
 
     position.rectangle.width = texture->width;
