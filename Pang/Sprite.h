@@ -193,7 +193,8 @@ public:
         DOUBLE,
         HEAL,
         TIME,
-        WEAPON
+        WEAPON,
+        SCORE
     };
 
     Powerup(Game* game, float x, float y, Kind kind);

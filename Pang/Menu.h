@@ -27,6 +27,7 @@ public:
     int GetPosition();
 
     std::string selected;
+    std::string remove;
     Vector2 animVec;
 
   private:

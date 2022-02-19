@@ -52,11 +52,15 @@ enum TextureTypes {
     POWERUP_WEAPON,
     POWERUP_DOUBLE,
     POWERUP_HEAL,
+    POWERUP_SCORE,
     HUD_WEAPONS,
     HUD_BOOST,
     HUD_DOUBLE,
     ICE,
     BALL_MENU,
+    ENTER_ICON,
+    ESC_ICON,
+    BACKSPACE_ICON,
 
     NUM_TEXTURES
 };
@@ -154,11 +158,15 @@ public:
                                               "res/powerups/anchor.png",
                                               "res/powerups/double.png",
                                               "res/powerups/heart.png",
+                                              "res/powerups/score.png",
                                               "res/hud/weapons.png",
                                               "res/hud/boost.png",
                                               "res/hud/double.png",
                                               "res/ice.png",
-                                              "res/ball/ball_menu.png"
+                                              "res/ball/ball_menu.png",
+                                              "res/enter_icon.png",
+                                              "res/esc_icon.png",
+                                              "res/backspace_icon.png"
                                               };
     Texture2D textures[NUM_TEXTURES];
 
@@ -228,6 +236,7 @@ public:
     void DrawLoadMenu();
     void DrawLevelSelector();
     void DrawRanking();
+    void DrawIcons();
 
     void WriteGameData(std::ofstream&);
     void ReadGameData(std::ifstream&);
@@ -235,6 +244,7 @@ public:
     void LoadGame(int);
     void SaveUsrData();
     void LoadUsrData();
+    void RemoveSave(int);
     std::vector<std::string> FindLoadFiles();
     std::vector<std::string> FindSaveFiles();
 
@@ -283,8 +293,9 @@ public:
 
     short int level = 1;
     short int lives;
-    short int score;
-    short int rankScore[10];
+    unsigned int score;
+    unsigned int timeBonus;
+    unsigned int rankScore[10];
 
     std::time_t endLevelTime;
     short int levelTime;

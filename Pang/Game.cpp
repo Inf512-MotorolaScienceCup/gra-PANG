@@ -249,6 +249,18 @@ void Game::Update() {
             LoadGame(4);
             ChangeState(State::ACTIVE);
             loadMenu.selected = "";
+        } else if (loadMenu.remove == "Save 1") {
+            RemoveSave(1);
+            loadMenu.remove = "";
+        } else if (loadMenu.remove == "Save 2") {
+            RemoveSave(2);
+            loadMenu.remove = "";
+        } else if (loadMenu.remove == "Save 3") {
+            RemoveSave(3);
+            loadMenu.remove = "";
+        } else if (loadMenu.remove == "Save 4") {
+            RemoveSave(4);
+            loadMenu.remove = "";
         }
         loadMenu.Update();
         break;
@@ -381,7 +393,7 @@ void Game::ChangeState(State newState) {
         break;
     case State::MAIN_MENU:
         mainMenu.animVec = { 200, 0 };
-        if (state == State::LOAD_MENU && !endAnim) {
+        if ((state == State::LOAD_MENU || state == State::RANKING) && !endAnim) {
             endAnim = true;
             newAnim = newState;
             return;
@@ -411,7 +423,8 @@ void Game::ChangeState(State newState) {
         break;
     case State::LEVEL_FINISHED:
         Unspawn();
-        score += elapsedLevelTime * 100;
+        timeBonus = elapsedLevelTime * 100;
+        score += timeBonus;
         frameCounter = 0;
         sequenceFrameCounter = 4 * 60;
         animVec = { 0, 0 };
@@ -1109,13 +1122,15 @@ void Game::Draw() {
             DrawGameOver();
             break;
         case State::GAME_FINISHED:
-            DrawSequence("You Won!");
+            DrawEndGame();
             break;
         case State::LEVEL_SELECTOR:
             DrawLevelSelector();
+            DrawIcons();
             break;
         case State::RANKING:
             DrawRanking();
+            DrawIcons();
             break;
         case State::SAVE_MENU:
             saveMenu.Draw();
@@ -1200,7 +1215,7 @@ void Game::DrawPanel() {
     case 4:
         hudWeapons.x = 2 * hudWeapons.width;
         DrawTextureRec(textures[HUD_WEAPONS], hudWeapons, { 620, y }, WHITE);
-        DrawTextEx(font, TextFormat("x%i", shootingLeft), { 590, y }, 35, 0, GREEN);
+        DrawTextEx(font, TextFormat("x%i", shootingLeft), { 590, y }, 35, 0, WHITE);
         break;
     default:
         break;
@@ -1230,8 +1245,8 @@ void Game::DrawEndLevel() {
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
     DrawTextEx(font, "Great job!", { 500, animVec.y - 1200 }, 66, 0, RED);
-    DrawTextEx(font, TextFormat("Time bonus: %d", score), { 490, animVec.y - 1100 }, 50, 0, WHITE);
-    DrawTextEx(font, TextFormat("Your score: %d", score), { 485, animVec.y - 1060 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Time bonus: %d", timeBonus), { 480, animVec.y - 1100 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 480, animVec.y - 1060 }, 50, 0, WHITE);
 }
 
 void Game::DrawGameOver() {
@@ -1253,24 +1268,21 @@ void Game::DrawEndGame() {
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
     DrawTextEx(font, "Game finished - Superb job!", { 500, animVec.y - 1200 }, 66, 0, RED);
-    DrawTextEx(font, TextFormat("Time bonus: %d", score), { 490, animVec.y - 1100 }, 50, 0, WHITE);
-    DrawTextEx(font, TextFormat("Your score: %d", score), { 485, animVec.y - 1060 }, 50, 0, WHITE);
-    DrawTextEx(font, TextFormat("Highest score: %d", score), { 485, animVec.y - 1020 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Time bonus: %d", timeBonus), { 490, animVec.y - 1100 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Your score: %d", score), { 480, animVec.y - 1060 }, 50, 0, WHITE);
+    DrawTextEx(font, TextFormat("Highest score: %d", rankScore[0]), { 480, animVec.y - 1020 }, 50, 0, WHITE);
 }
 
 void Game::DrawLoadMenu() {
-    if (animVec.x > 50 && !endAnim) {
-        animVec.x -= 50;
-        animColor = 0;
-    } else if (endAnim) {
+    if (endAnim) {
         animVec.x += 50;
+        animColor = 0;
+    } else if (animVec.x > 50) {
+        animVec.x -= 50;
         animColor = 0;
     } else {
         animVec.x = 0;
-        if (animColor < 1)
-            animColor += 0.05f;
-        else
-            animColor = 1;
+        animColor = (animColor < 1) ? animColor + 0.05f : animColor = 1;
     }
     int pos = loadMenu.GetPosition();
     time_t modTime;
@@ -1305,26 +1317,46 @@ void Game::DrawLevelSelector() {
 }
 
 void Game::DrawRanking() {
-    if (animVec.x > 50) {
+    if (endAnim) {
+        animVec.x += 50;
+        animColor = 0;
+        if (animVec.x >= screenWidth) {
+            ChangeState(State::MAIN_MENU);
+            endAnim = false;
+        }
+    } else if (animVec.x > 50) {
         animVec.x -= 50;
         animColor = 0;
     } else {
         animVec.x = 0;
-        if (animColor < 1)
-            animColor += 0.05f;
-        else
-            animColor = 1;
+        animColor = (animColor < 1) ? animColor + 0.05f : animColor = 1;
+        //if (animColor < 1)
+        //    animColor += 0.05f;
+        //else
+        //    animColor = 1;
     }
     DrawRectangle(animVec.x, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.8f));
     DrawTextEx(font, "Ranking", { 500 + animVec.x, 75 }, 66, 0, Fade(PINK, 50 / (animVec.x + 1)));
     for (int i = 0; i < 10; i++) {
-        int x;
-        if (i == 9)
-            x = 480;
-        else
-            x = 490;
+        int x = (i == 9) ? x = 480 : x = 490;
         if (rankScore[i] != 0)
             DrawTextEx(font, TextFormat("%i. %03i", i + 1, rankScore[i]), { x + animVec.x, 150.0f + i * 50 }, 60, 0, Fade(WHITE, animColor));
+    }
+}
+
+void Game::DrawIcons() {
+    if (state != State::MOD_MENU) {
+        float x = (state == State::RANKING) ? x = 70 : x = 250;
+        DrawTexture(textures[ESC_ICON], x, screenHeight - 45, WHITE);
+        DrawTextEx(font, "Back", { x + 40, screenHeight - 50 }, 40, 0, WHITE);
+    }
+    if (state != State::RANKING) {
+        DrawTexture(textures[ENTER_ICON], 70, screenHeight - 50, WHITE);
+        DrawTextEx(font, "Select", { 120, screenHeight - 50 }, 40, 0, WHITE);
+    }
+    if (state == State::LOAD_MENU) {
+        DrawTexture(textures[BACKSPACE_ICON], 390, screenHeight - 45, WHITE);
+        DrawTextEx(font, "Delete", { 443, screenHeight - 50 }, 40, 0, WHITE);
     }
 }
 
@@ -1332,9 +1364,13 @@ void Game::WriteGameData(std::ofstream& s) {
     Write(s, &level);
     Write(s, &lives);
     Write(s, &score);
+    Write(s, &weaponType);
+    Write(s, &previousWeapon);
+
     Write(s, &speedBoost);
     Write(s, &multiWeapon);
     Write(s, &stopTime);
+
     Write(s, &backTexture);
     Write(s, &backMusic);
 
@@ -1355,9 +1391,13 @@ void Game::ReadGameData(std::ifstream& s) {
     Read(s, &level);
     Read(s, &lives);
     Read(s, &score);
+    Read(s, &weaponType);
+    Read(s, &previousWeapon);
+
     Read(s, &speedBoost);
     Read(s, &multiWeapon);
     Read(s, &stopTime);
+
     Read(s, &backTexture);
     Read(s, &backMusic);
 
@@ -1468,6 +1508,18 @@ void Game::LoadUsrData() {
     }
 }
 
+void Game::RemoveSave(int i) {
+    if (FileExists(TextFormat("saves/s%d.psf", i))) {
+        system("cd");
+        system(TextFormat("del saves\\s%d.psf", i));
+        if (FileExists(TextFormat("saves/s%d.psf", i)))
+            system(TextFormat("rm saves/s%d.psf", i));
+        else
+            printf("Success");
+    }
+    loadMenu.Reload(FindLoadFiles());
+}
+
 std::vector<std::string> Game::FindLoadFiles() {
     std::vector<std::string> fileNames;
 
@@ -1542,11 +1594,17 @@ void Game::AddPowerup(float x, float y) {
     int chance = GetRandomValue(1, 4);
     if (chance == 1) {
         int kindNum;
-        if (weaponType == 2)
-            kindNum = GetRandomValue(2, 4);
-        else
-            kindNum = GetRandomValue(1, 4);
-
+        if (modNum != 3) {
+            if (weaponType == 2)
+                kindNum = GetRandomValue(2, 4);
+            else
+                kindNum = GetRandomValue(1, 4);
+        } else {
+            if (weaponType == 2)
+                kindNum = GetRandomValue(2, 5);
+            else
+                kindNum = GetRandomValue(1, 5);
+        }
         Sprite* s;
         switch (kindNum) {
         case 1:
@@ -1569,6 +1627,10 @@ void Game::AddPowerup(float x, float y) {
             spriteMap[Sprite::Type::POWERUP].push_back(s);
             sprites.push_back(s);
             break;
+        case 5:
+            s = new Powerup(this, x, y, Powerup::Kind::SCORE);
+            spriteMap[Sprite::Type::POWERUP].push_back(s);
+            sprites.push_back(s);
         }
     }
 }
@@ -1611,6 +1673,9 @@ void Game::PickAction(Powerup::Kind kind) {
             weaponType = change;
 
         shootingLeft = 0;
+        break;
+    case Powerup::Kind::SCORE:
+        AddScore(1000);
         break;
     }
 }

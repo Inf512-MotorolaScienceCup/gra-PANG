@@ -13,9 +13,10 @@ void Menu::Reload(std::vector<std::string> items) {
     if (graphics.size() > 0)
         graphics.clear();
 
-    float itemHeight = 50;
+    
 
     if (type == Type::PAUSE_MENU) {
+        float itemHeight = 50;
         float MENU_X = game->screenWidth / 2 - 50 * items.size();
         float MENU_Y = game->screenHeight / 2 - 25 * items.size();
 
@@ -31,8 +32,9 @@ void Menu::Reload(std::vector<std::string> items) {
                 });
         }
     } else if (type == Type::MAIN_MENU) {
+        float itemHeight = 45;
         float MENU_X = 70;
-        float MENU_Y = game->screenHeight / 2 + 50;
+        float MENU_Y = game->screenHeight / 2 + 40;
 
         int i = 0;
         for (auto item : items) {
@@ -46,6 +48,7 @@ void Menu::Reload(std::vector<std::string> items) {
                 });
         }
     } else {
+        float itemHeight = 50;
         float MENU_X = 400;
         float MENU_Y = 200;
 
@@ -203,6 +206,7 @@ void Menu::Draw() {
             i++;
         }
     }
+    game->DrawIcons();
 }
 
 void Menu::Update() {
@@ -215,7 +219,13 @@ void Menu::Update() {
     } else if (IsKeyPressed(KEY_ENTER)) {
         selected = graphics[position].name;
         PlaySound(game->audio[MENU_ENTER]);
+    } else if (IsKeyPressed(KEY_BACKSPACE)) {
+        if (type == Type::LOAD_MENU) {
+            remove = graphics[position].name;
+            PlaySound(game->audio[MENU_ENTER]);
+        }
     }
+
 }
 
 int Menu::GetPosition() {

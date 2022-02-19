@@ -261,13 +261,15 @@ void Player::Shooting() {
         game->AddWeapon(position.rectangle.x + position.rectangle.width / 2, position.rectangle.y, game->weaponType);
         break;
     case 4:
-        game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height, game->weaponType);
-        game->shootingLeft--;
-        if (game->shootingLeft <= 0)
-            game->weaponType = game->previousWeapon;
+        if (speed.y < 3) {
+            game->AddWeapon(position.rectangle.x, position.rectangle.y + position.rectangle.height, game->weaponType);
+            game->shootingLeft--;
+            if (game->shootingLeft <= 0)
+                game->weaponType = game->previousWeapon;
+        }
         break;
     default:
-        if (game->shootingLeft == 0 || game->shootingLeft == -game->multiWeapon) {
+        if (speed.y < 3 && (game->shootingLeft == 0 || game->shootingLeft == -game->multiWeapon)) {
             game->AddWeapon(position.rectangle.x + position.rectangle.width / 2, position.rectangle.y + position.rectangle.height, game->weaponType);
             game->shootingLeft--;
         }
@@ -424,27 +426,18 @@ Enemy::Enemy(Game *game, std::ifstream& s)
 }
 
 void Enemy::Draw() {
-    //DrawCircle(position.center.x, position.center.y, position.radius, RED);
-    if (state == State::ACTIVE) {
+    if (state == State::ACTIVE)
         DrawTextureRec(spriteSheet[kind], stand, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
-        //DrawCircleLines(position.center.x, position.center.y, position.radius, RED);
-        //if (cooldown % 5 == 0) {
-        //    if (stand.x < sizeX * frameNumber) stand.x += sizeX;
-        //    else stand.x = 0.0;
-        //}
-        //cooldown++;
-        //if (cooldown == 5) cooldown = 0;
-    }
-    else if (state == State::FINISHING) {
+    else if (state == State::FINISHING)
         DrawFinish();
-    }
-
 }
 
 void Enemy::Move() {
-    if (state != State::ACTIVE || game->stopTime) {
+    if (state != State::ACTIVE || game->stopTime)
         return;
-    }
+
+    if (position.center.x < 10 || position.center.x > game->screenWidth - 10 || position.center.y < 5 || position.center.y > game->screenHeight - 5)
+        state = State::FINISHING;
 
     speed.y += gravity;
 
@@ -815,6 +808,9 @@ Powerup::Powerup(Game *game, std::ifstream& s)
         break;
     case Kind::WEAPON:
         texture = &game->textures[POWERUP_WEAPON];
+        break;
+    case Kind::SCORE:
+        texture = &game->textures[POWERUP_SCORE];
         break;
     }
 
