@@ -176,17 +176,15 @@ void Player::Move() {
                     PlaySound(game->audio[WALK]);
             } else {
                 direction = Direction::NONE;
-                if (speed.x > 0.2) {
+                if (speed.x > 0.2)
                     speed.x -= 0.2f;
-                    if (!IsSoundPlaying(game->audio[WALK]))
-                        PlaySound(game->audio[WALK]);
-                }  else if (speed.x < -0.2) {
+                else if (speed.x < -0.2) 
                     speed.x += 0.2f;
-                    if (!IsSoundPlaying(game->audio[WALK]))
-                        PlaySound(game->audio[WALK]);
-                }
-                else
+                else {
                     speed.x = 0;
+                    if (IsSoundPlaying(game->audio[WALK]))
+                        StopSound(game->audio[WALK]);
+                }
             }
         }
 
