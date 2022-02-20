@@ -192,6 +192,7 @@ void Menu::Draw() {
         short int textSpeed = 3;
         DrawRectangleRounded({ item.rec.x - 40 - animVec.x / textSpeed, item.rec.y + item.rec.height / 2, 25, 5 }, 1, 1, recColor);
         DrawTextEx(game->font, item.name.c_str(), { item.rec.x - animVec.x / textSpeed, item.rec.y }, 60, 0, selColor);
+        DrawTexture(game->textures[TITLE], 450, 90, WHITE);
 
         short int i = 2;
         for (const auto& g : graphics) {

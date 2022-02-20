@@ -176,12 +176,15 @@ void Player::Move() {
                     PlaySound(game->audio[WALK]);
             } else {
                 direction = Direction::NONE;
-                if (IsSoundPlaying(game->audio[WALK]))
-                    PlaySound(game->audio[WALK]);
-                if (speed.x > 0.2)
+                if (speed.x > 0.2) {
                     speed.x -= 0.2f;
-                else if (speed.x < -0.2)
+                    if (!IsSoundPlaying(game->audio[WALK]))
+                        PlaySound(game->audio[WALK]);
+                }  else if (speed.x < -0.2) {
                     speed.x += 0.2f;
+                    if (!IsSoundPlaying(game->audio[WALK]))
+                        PlaySound(game->audio[WALK]);
+                }
                 else
                     speed.x = 0;
             }
@@ -646,7 +649,7 @@ void Weapon::Draw() {
 }
 
 void Weapon::Move() {
-    if (state == State::ACTIVE && cooldown++ % 5 == 0) {
+    if (state == State::ACTIVE && cooldown++ % 4 == 0) {
         if (!stopMoving) {
             switch (kind) {
             case Kind::WEAPON1:

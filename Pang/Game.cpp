@@ -16,7 +16,7 @@ Game::Game()
     saveMenu(this, FindSaveFiles(), Menu::Type::PAUSE_MENU),
     overwriteMenu(this, { "Overwrite?", "Cancel" }, Menu::Type::PAUSE_MENU),
     loadMenu(this, FindLoadFiles(), Menu::Type::LOAD_MENU),
-    modMenu(this, { "Mod 1", "Mod 2", "Mod 3" }, Menu::Type::MAIN_MENU),
+    modMenu(this, { "Mod 1", "Mod 2", "Mod 3", "Quit" }, Menu::Type::MAIN_MENU),
     diffLvlMenu(this, { "Easy", "Normal", "Hard", "Quit" }, Menu::Type::MAIN_MENU) {
     InitWindow(screenWidth, screenHeight, "Pang");
     InitAudioDevice();
@@ -82,7 +82,7 @@ void Game::Unload() {
 int Game::MainLoop() {
     LoadUsrData();
 
-    while (!WindowShouldClose() && ingameMenu.selected != "Quit" && mainMenu.selected != "Quit" && diffLvlMenu.selected != "Quit") {
+    while (!WindowShouldClose() && ingameMenu.selected != "Quit" && mainMenu.selected != "Quit" && diffLvlMenu.selected != "Quit" && modMenu.selected != "Quit") {
         Update();
         CheckCollision();
         Draw();
@@ -151,10 +151,12 @@ void Game::Update() {
         } else if (modMenu.selected == "Mod 2") {
             ChangeState(State::MAIN_MENU);
             modNum = 2;
+            level = 1;
             modMenu.selected = "";
         } else if (modMenu.selected == "Mod 3") {
             ChangeState(State::MAIN_MENU);
             modNum = 3;
+            level = 16;
             modMenu.selected = "";
         }
         modMenu.Update();
@@ -182,14 +184,28 @@ void Game::Update() {
         } else if (IsKeyPressed(KEY_ESCAPE)) {
             ChangeState(State::MAIN_MENU);
         } else if (IsKeyPressed(KEY_RIGHT)) {
-            if (level < NUM_LEVELS) {
-                level += 1;
-                PlaySoundMulti(audio[MENU_SELECT]);
+            if (modNum == 2) {
+                if (level < 15) {
+                    level += 1;
+                    PlaySoundMulti(audio[MENU_SELECT]);
+                }
+            } else {
+                if (level < NUM_LEVELS) {
+                    level += 1;
+                    PlaySoundMulti(audio[MENU_SELECT]);
+                }
             }
         } else if (IsKeyPressed(KEY_LEFT)) {
-            if (level > 1) {
-                level -= 1;
-                PlaySoundMulti(audio[MENU_SELECT]);
+            if (modNum == 2) {
+                if (level > 1) {
+                    level -= 1;
+                    PlaySoundMulti(audio[MENU_SELECT]);
+                }
+            } else {
+                if (level > 16) {
+                    level -= 1;
+                    PlaySoundMulti(audio[MENU_SELECT]);
+                }
             }
         }
         break;
@@ -306,10 +322,17 @@ void Game::Update() {
         if (sequenceFrameCounter > frameCounter) return;
 
         level += 1;
-        if (level > NUM_LEVELS)
-            ChangeState(State::GAME_FINISHED);
-        else
-            RestartLevel();
+        if (modNum == 2) {
+            if (level > 15)
+                ChangeState(State::GAME_FINISHED);
+            else
+                RestartLevel();
+        } else {
+            if (level > NUM_LEVELS)
+                ChangeState(State::GAME_FINISHED);
+            else
+                RestartLevel();
+        }
         break;
     case Game::State::GAME_START:
         if (sequenceFrameCounter > frameCounter) return;
@@ -387,6 +410,11 @@ void Game::ChangeState(State newState) {
             endAnim = true;
             newAnim = newState;
             return;
+        } else if (state == State::ACTIVE) {
+            for (int i = 0; i < NUM_AUDIO; i++) {
+                if (IsSoundPlaying(audio[i]))
+                    StopSound(audio[i]);
+            }
         }
         ingameMenu.animVec = { screenWidth, screenHeight - 50 };
         break;
@@ -398,7 +426,7 @@ void Game::ChangeState(State newState) {
         break;
     case State::MAIN_MENU:
         mainMenu.animVec = { 200, 0 };
-        if ((state == State::LOAD_MENU || state == State::RANKING) && !endAnim) {
+        if ((state == State::LOAD_MENU || state == State::RANKING || state == State::LEVEL_SELECTOR) && !endAnim) {
             endAnim = true;
             newAnim = newState;
             return;
@@ -416,11 +444,22 @@ void Game::ChangeState(State newState) {
         loadMenu.animVec = { screenWidth, 0 };
         animVec = { 600, 0 };
         break;
+    case State::LEVEL_SELECTOR:
+        if (modNum == 2)
+            level = 1;
+        else
+            level = 16;
+        animVec = { screenWidth - 300, 0 };
+        break;
     case State::RANKING:
         animVec = { screenWidth - 300, 0 };
         break;
     case State::GAME_OVER:
         Unspawn();
+        for (int i = 0; i < NUM_AUDIO; i++) {
+            if (IsSoundPlaying(audio[i]))
+                StopSound(audio[i]);
+        }
         frameCounter = 0;
         sequenceFrameCounter = 4 * 60;
         animVec = { 0, 0 };
@@ -428,6 +467,10 @@ void Game::ChangeState(State newState) {
         break;
     case State::LEVEL_FINISHED:
         Unspawn();
+        for (int i = 0; i < NUM_AUDIO; i++) {
+            if (IsSoundPlaying(audio[i]))
+                StopSound(audio[i]);
+        }
         timeBonus = elapsedLevelTime * 25;
         score += timeBonus;
         frameCounter = 0;
@@ -442,6 +485,10 @@ void Game::ChangeState(State newState) {
         PlaySound(audio[LEVEL_START]);
         break;
     case State::GAME_FINISHED:
+        for (int i = 0; i < NUM_AUDIO; i++) {
+            if (IsSoundPlaying(audio[i]))
+                StopSound(audio[i]);
+        }
         Unspawn();
         frameCounter = 0;
         sequenceFrameCounter = 4 * 60;
@@ -466,7 +513,6 @@ void Game::CheckCollision() {
     // Collision Player<->Block
     for (auto& block : GetSprites(Sprite::Type::BLOCK)) {
         if (IsCollision(player, block)) {
-            // std::cout << "PLAYER collided with BLOCK:" << std::endl;
             player->Collision(block);
         }
     }
@@ -474,7 +520,6 @@ void Game::CheckCollision() {
     // Collision Player<->Enemy
     for (auto& enemy : GetSprites(Sprite::Type::ENEMY)) {
         if (IsCollision(player, enemy)) {
-        // std::cout << "PLAYER collided with ENEMY:" << std::endl;
             if (!player->frameCounter)
                 player->Collision(enemy);
         }
@@ -483,7 +528,6 @@ void Game::CheckCollision() {
     // Collision Player<->Ladder
     for (auto& ladder : GetSprites(Sprite::Type::LADDER)) {
         if (IsCollision(player, ladder)) {
-            // std::cout << "PLAYER collided with LADDER:" << std::endl;
             player->Collision(ladder);
         }
     }
@@ -491,7 +535,6 @@ void Game::CheckCollision() {
     // Collision Player<->Powerup
     for (auto& powerup : GetSprites(Sprite::Type::POWERUP)) {
         if (IsCollision(player, powerup)) {
-            // std::cout << "PLAYER collided with LADDER:" << std::endl;
             player->Collision(powerup);
             powerup->Collision(player);
         }
@@ -500,7 +543,6 @@ void Game::CheckCollision() {
     // Collision Player<->Ice
     for (auto& ice : GetSprites(Sprite::Type::ICE)) {
         if (IsCollision(player, ice)) {
-            // std::cout << "PLAYER collided with LADDER:" << std::endl;
             player->Collision(ice);
         }
     }
@@ -515,7 +557,6 @@ void Game::CheckCollision() {
                 auto& v = spriteMap[Sprite::Type::ENEMY];
                 size_t numEnemies = 0;
                 for_each(v.begin(), v.end(), [&](Sprite* sprite) { if (sprite->type == Sprite::Type::ENEMY && sprite->state == Sprite::State::ACTIVE) numEnemies += 1; });
-                // std::cout << "Enemy Left:" << spriteMap[Sprite::Type::ENEMY].size() << " / " << numEnemies << std::endl;
                 if (numEnemies <= 0) {
                     ChangeState(State::LEVEL_FINISHED);
                 }
@@ -569,7 +610,7 @@ void Game::Spawn() {
     Spawn(new Block(this, 0, 0, wallThickness, screenHeight, Block::Kind::WALL));
     Spawn(new Block(this, screenWidth - wallThickness, 0, wallThickness, screenHeight, Block::Kind::WALL));
 
-    weaponType = 3;
+    weaponType = 1;
     shootingLeft = 0;
     speedBoost = 1;
 
@@ -577,11 +618,6 @@ void Game::Spawn() {
 
     if (backMusic != NUM_MUSIC)
         PlayMusicStream(music[backMusic]);
-    // weapon = new Weapon(this, 0, 0, 20, 0, PURPLE);
-    // sprites.push_back(weapon);
-
-    //player = new Player(this, {400, screenHeight - wallThickness - 64, 64, 64, 12, 10, 40, 54});
-    //sprites.push_back(player);
 
     endLevelTime = std::time(nullptr) + levelTime;
 }
@@ -598,8 +634,6 @@ void Game::SpawnLevel() {
             Spawn(new Block(this, 20, 40 + x * 40, (16 - x) * 40, 40, Block::Kind::PLATFORM_1));
             Spawn(new Block(this, 620 + x * 40, 40 + x * 40, (16 - x) * 40, 40, Block::Kind::PLATFORM_1));
         }
-        //  Spawn(new Block(this, 23 * 20, 260, 380, wallThickness, Block::Kind::PLATFORM_2));
-        //  Spawn(new Block(this, 16 * 20, 400, 660, wallThickness, Block::Kind::PLATFORM_2));
 
         for (int x = 0; x < 15; x++) {
             if (x < 9) {
@@ -612,7 +646,7 @@ void Game::SpawnLevel() {
 
         Spawn(Enemy::create(this, 620, 300, Enemy::Kind::BALL3, 1));
         Spawn(Enemy::create(this, 620, 160, Enemy::Kind::BALL3, -1));
-        backMusic = BACKGROUND_A;
+        backMusic = BACKGROUND_C;
         backTexture = BACKGROUND1;
         levelTime = 160;
         break;
@@ -647,8 +681,6 @@ void Game::SpawnLevel() {
         Spawn(new Ladder(this, 200, 395, 4, 25));
         Spawn(new Powerup(this, 280, 400 - 64, Powerup::Kind::HEAL));
 
-        Spawn(new Ice(this, 700, 690, 150, 10));
-
         Spawn(Enemy::create(this, 400, 200, Enemy::Kind::BALL1, 1));
 
         player = new Player(this, { 200,400 - 64, 64, 64, 12, 10, 40, 54 });
@@ -669,7 +701,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_A;
+        backMusic = BACKGROUND_D;
         backTexture = BACKGROUND4;
         levelTime = 160;
         break;
@@ -700,7 +732,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_B;
+        backMusic = BACKGROUND_C;
         backTexture = BACKGROUND10;
         levelTime = 160;
         break;
@@ -722,7 +754,7 @@ void Game::SpawnLevel() {
         sprites.push_back(player);
 
         backMusic = BACKGROUND_B;
-        backTexture = BACKGROUND14;
+        backTexture = BACKGROUND11;
         levelTime = 160;
         break;
     case 8:
@@ -737,7 +769,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_B;
+        backMusic = BACKGROUND_C;
         backTexture = BACKGROUND5;
         levelTime = 160;
         break;
@@ -776,7 +808,7 @@ void Game::SpawnLevel() {
         sprites.push_back(player);
 
         backTexture = BACKGROUND6;
-        backMusic = BACKGROUND_C;
+        backMusic = BACKGROUND_D;
         levelTime = 160;
         break;
     case 11:
@@ -810,14 +842,13 @@ void Game::SpawnLevel() {
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_C;
+        backMusic = BACKGROUND_A;
         backTexture = BACKGROUND3;
         levelTime = 160;
         break;
     case 12:
-        Spawn(new Block(this, 100, 500, 150, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 500, 500, 150, wallThickness, Block::Kind::PLATFORM_1));
-        Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Kind::PLATFORM_2));
+        Spawn(new Block(this, 500, 500, 150, wallThickness, Block::Kind::PLATFORM_2));
+        Spawn(new Block(this, 200, 400, 150, wallThickness, Block::Kind::PLATFORM_1));
         Spawn(new Block(this, 700, 400, 150, wallThickness, Block::Kind::PLATFORM_2));
 
         Spawn(new Ladder(this, 200, 395, 4, 25));
@@ -830,7 +861,7 @@ void Game::SpawnLevel() {
         sprites.push_back(player);
 
         Spawn(new Powerup(this, 1050, 720 - 20 - 64, Powerup::Kind::HEAL));
-        backMusic = BACKGROUND_C;
+        backMusic = BACKGROUND_A;
         backTexture = BACKGROUND_ANI;
         levelTime = 60;
         break;
@@ -847,7 +878,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_D;
+        backMusic = BACKGROUND_E;
         backTexture = BACKGROUND9;
         levelTime = 160;
         break;
@@ -866,7 +897,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_D;
+        backMusic = BACKGROUND_E;
         backTexture = BACKGROUND10;
         levelTime = 160;
         break;
@@ -895,7 +926,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_D;
+        backMusic = BACKGROUND_E;
         backTexture = BACKGROUND12;
         levelTime = 160;
         break;
@@ -914,6 +945,8 @@ void Game::SpawnLevel() {
 
         Spawn(new Ladder(this, 505, 395, 4, 20));
 
+        Spawn(new Ice(this, 600, 390, 500, 10));
+
         Spawn(Enemy::create(this, 590, 120, Enemy::Kind::BALL1, 1));
         Spawn(Enemy::create(this, 1020, 120, Enemy::Kind::BALL1, 1));
         Spawn(Enemy::create(this, 660, 120, Enemy::Kind::BALL1, 1));
@@ -924,8 +957,8 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_D;
-        backTexture = BACKGROUND11;
+        backMusic = BACKGROUND_E;
+        backTexture = BACKGROUND14;
         levelTime = 160;
         break;
     case 17:
@@ -952,7 +985,7 @@ void Game::SpawnLevel() {
         player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
-        backMusic = BACKGROUND_E;
+        backMusic = BACKGROUND_D;
         backTexture = BACKGROUND13;
         levelTime = 160;
         break;
@@ -1077,6 +1110,8 @@ void Game::SpawnLevel() {
 
         player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
+
+        Spawn(new Ice(this, wallThickness, screenHeight - wallThickness - 10, screenWidth - 2 * wallThickness, 10));
 
         Spawn(new Powerup(this, 620, 280 - 64, Powerup::Kind::HEAL));
 
@@ -1295,7 +1330,7 @@ void Game::DrawEndGame() {
         animVec.y -= 50;
     DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
-    DrawTextEx(font, "Game finished - Superb job!", { 500, animVec.y - 1240 }, 66, 0, RED);
+    DrawTextEx(font, "Game finished - Superb job!", { 300, animVec.y - 1240 }, 66, 0, RED);
     DrawTextEx(font, TextFormat("Time bonus: %d", timeBonus), { 490, animVec.y - 1140 }, 50, 0, WHITE);
     DrawTextEx(font, TextFormat("Your score: %d", score), { 475, animVec.y - 1100 }, 50, 0, WHITE);
     DrawTextEx(font, TextFormat("Highest score: %d", rankScore[0]), { 475, animVec.y - 1060 }, 50, 0, WHITE);
@@ -1324,24 +1359,59 @@ void Game::DrawLoadMenu() {
 }
 
 void Game::DrawLevelSelector() {
-    float xOffset = 150;
-    float y = 200;
-    float width = 40;
-    float height = 40;
-    float space = 10;
-    for (int i = 0; i < NUM_LEVELS; i++) {
-        float x = xOffset + i * (width + space);
-        Color color = GREEN;
-        if (i > 4) {
-            if (i < 10)
-                color = YELLOW;
-            else
-                color = RED;
+    if (endAnim) {
+        animVec.x += 50;
+        animColor = 0;
+        if (animVec.x >= screenWidth) {
+            ChangeState(State::MAIN_MENU);
+            endAnim = false;
         }
-        DrawRectangleRec({ x, y, width, height }, color);
-        DrawTextEx(font, TextFormat("%02i", i + 1), { x, y }, 30, 0, BLACK);
+    } else if (animVec.x > 50) {
+        animVec.x -= 50;
+        animColor = 0;
+    } else {
+        animVec.x = 0;
+        animColor = (animColor < 1) ? animColor + 0.05f : animColor = 1;
     }
-    DrawRectangleRounded({ xOffset + (level - 1) * (width + space) - 10, y - 10, width + 20, height + 20 }, 0.2f, 8, ColorAlpha(ORANGE, 0.6));
+    DrawRectangle(animVec.x, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.8f));
+    DrawTextEx(font, "Select level", { 460 + animVec.x, 75 }, 66, 0, Fade(PINK, 50 / (animVec.x + 1)));
+    if (modNum == 2) {
+        float xOffset = 210;
+        float y = 300;
+        float width = 40;
+        float height = 40;
+        float space = 10;
+        for (int i = 0; i < 15; i++) {
+            float x = xOffset + i * (width + space) + 50 * (i / 5);
+            Color color = GREEN;
+            if (i > 4) {
+                if (i < 10)
+                    color = YELLOW;
+                else
+                    color = RED;
+            }
+            DrawRectangleRec({ x + animVec.x, y, width, height }, color);
+            DrawTextEx(font, TextFormat("%02i", i + 1), { x + 6 + animVec.x, y + 5}, 30, 0, BLACK);
+        }
+        DrawRectangleRounded({ xOffset + (level - 1) * (width + space) - 10 + 50 * ((level - 1) / 5) + animVec.x, y - 10, width + 20, height + 20 }, 0.2f, 8, ColorAlpha(ORANGE, 0.6));
+        DrawTextEx(font, "Easy", { xOffset + 70 + animVec.x, y + 100 }, 50, 0, Fade(GREEN, 50 / (animVec.x + 1)));
+        DrawTextEx(font, "Normal", { xOffset + 340 + animVec.x, y + 100 }, 50, 0, Fade(YELLOW, 50 / (animVec.x + 1)));
+        DrawTextEx(font, "Hard", { xOffset + 670 + animVec.x, y + 100 }, 50, 0, Fade(RED, 50 / (animVec.x + 1)));
+    } else {
+        float xOffset = 450;
+        float y = 300;
+        float width = 40;
+        float height = 40;
+        float space = 20;
+        for (int i = 15; i < NUM_LEVELS; i++) {
+            float x = xOffset + (i - 15) * (width + space);
+            Color color = GOLD;
+            DrawRectangleRec({ x + animVec.x, y, width, height }, color);
+            DrawTextEx(font, TextFormat("%02i", i - 14), { x + 6 + animVec.x, y + 5}, 30, 0, BLACK);
+        }
+        DrawRectangleRounded({ xOffset + (level - 16) * (width + space) - 10 + animVec.x, y - 10, width + 20, height + 20 }, 0.2f, 8, ColorAlpha(RED, 0.6));
+        DrawTextEx(font, "Special levels", { 470 + animVec.x, y + 100 }, 50, 0, Fade(GOLD, 50 / (animVec.x + 1)));
+    }
 }
 
 void Game::DrawRanking() {
@@ -1358,10 +1428,6 @@ void Game::DrawRanking() {
     } else {
         animVec.x = 0;
         animColor = (animColor < 1) ? animColor + 0.05f : animColor = 1;
-        //if (animColor < 1)
-        //    animColor += 0.05f;
-        //else
-        //    animColor = 1;
     }
     DrawRectangle(animVec.x, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.8f));
     DrawTextEx(font, "Ranking", { 500 + animVec.x, 75 }, 66, 0, Fade(PINK, 50 / (animVec.x + 1)));

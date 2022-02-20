@@ -61,6 +61,7 @@ enum TextureTypes {
     ENTER_ICON,
     ESC_ICON,
     BACKSPACE_ICON,
+    TITLE,
 
     NUM_TEXTURES
 };
@@ -167,7 +168,8 @@ public:
                                               "res/ball/ball_menu.png",
                                               "res/enter_icon.png",
                                               "res/esc_icon.png",
-                                              "res/backspace_icon.png"
+                                              "res/backspace_icon.png",
+                                              "res/title.png"
                                               };
     Texture2D textures[NUM_TEXTURES];
 
@@ -296,7 +298,7 @@ public:
     short int lives;
     unsigned int score;
     unsigned int timeBonus;
-    unsigned int rankScore[10];
+    unsigned int rankScore[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
     std::time_t endLevelTime;
     short int levelTime;
