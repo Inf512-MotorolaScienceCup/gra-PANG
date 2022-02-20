@@ -569,7 +569,7 @@ void Game::Spawn() {
     Spawn(new Block(this, 0, 0, wallThickness, screenHeight, Block::Kind::WALL));
     Spawn(new Block(this, screenWidth - wallThickness, 0, wallThickness, screenHeight, Block::Kind::WALL));
 
-    weaponType = 2;
+    weaponType = 3;
     shootingLeft = 0;
     speedBoost = 1;
 
@@ -1190,7 +1190,7 @@ void Game::DrawBackground() {
     if (textures[backTexture].width > 2560) {
         DrawTextureRec(textures[backTexture], backRec, { 0, 0 }, WHITE);
         if (backFrame++ % 8 == 0) {
-            backRec.x += 1280;
+            backRec.x = (backRec.x + 1280 < textures[backTexture].width) ? backRec.x + 1280 : backRec.x = 0;
             backFrame = 1;
         }
     } else {
@@ -1439,7 +1439,7 @@ void Game::ReadGameData(std::ifstream& s) {
         lifeTime[i] = now + timeLeft[i];
     }
 
-    int numSprites = 0;
+    size_t numSprites = 0;
     Read(s, &numSprites);
 
     for (int i = 0; i < numSprites; i++) {

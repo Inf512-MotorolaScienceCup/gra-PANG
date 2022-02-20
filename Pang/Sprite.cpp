@@ -720,11 +720,12 @@ void Weapon::Save(std::ofstream& s) {
 }
 
 void Weapon::timeLeft() {
-    if (frameCounter > 60 * 8)
+    if (frameCounter > 12 * 4) {
         state = State::FINISHED;
-    else if (frameCounter > 60 * 4)
+        game->shootingLeft++;
+    } else if (frameCounter > 12 * 3)
         color = RED;
-    else if (frameCounter > 60 * 3)
+    else if (frameCounter > 12 * 2)
         color = YELLOW;
 
     frameCounter++;

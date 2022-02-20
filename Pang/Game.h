@@ -287,7 +287,7 @@ public:
 
     short int modNum;
     short int saveNum;
-    bool endAnim;
+    bool endAnim = false;
     State newAnim;
     Vector2 animVec;
     float animColor;
@@ -307,7 +307,7 @@ public:
     short int shootingLeft;
     std::time_t lifeTime[3];
     short int timeLeft[3];
-    bool stopTime;
+    bool stopTime = false;
     short int laserCooldown;
     short int speedBoost;
     short int multiWeapon = 0;

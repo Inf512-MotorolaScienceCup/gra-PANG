@@ -73,7 +73,7 @@ private:
     Rectangle hurtRec;
     int cooldown = 0;
     bool climbing = false;
-    bool collision;
+    bool collision = false;
     //int zone = 10;
     bool onIce = false;
     short int changeColor = 0;
@@ -164,10 +164,10 @@ private:
     Texture2D* texture[2] = { nullptr , nullptr };
     Rectangle moveTexture;
     Color color = WHITE;
-    int numElements;
+    int numElements = 0;
     const float speedY = 21;
     int cooldown = 0;
-    bool stopMoving;
+    bool stopMoving = false;
     int overlap;
     int frameCounter;
     Sprite* block;
