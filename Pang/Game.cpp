@@ -422,10 +422,12 @@ void Game::ChangeState(State newState) {
         modMenu.animVec = { 200, 0 };
         break;
     case State::DIFFLVL_MENU:
+        ingameMenu.Reload({ "Continue", "Back to Menu", "Quit" });
         diffLvlMenu.animVec = { 200, 0 };
         break;
     case State::MAIN_MENU:
         mainMenu.animVec = { 200, 0 };
+        ingameMenu.Reload({ "Continue", "Save Game", "Back to Menu", "Quit" });
         if ((state == State::LOAD_MENU || state == State::RANKING || state == State::LEVEL_SELECTOR) && !endAnim) {
             endAnim = true;
             newAnim = newState;
@@ -1685,6 +1687,8 @@ void Game::AddScore(int score) {
 }
 
 void Game::AddPowerup(float x, float y) {
+    if (modNum == 1) return;
+
     int chance = GetRandomValue(1, 4);
     if (chance == 1) {
         int kindNum;
