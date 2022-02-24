@@ -1395,7 +1395,7 @@ void Game::DrawLevelSelector() {
             DrawRectangleRec({ x + animVec.x, y, width, height }, color);
             DrawTextEx(font, TextFormat("%02i", i + 1), { x + 6 + animVec.x, y + 5}, 30, 0, BLACK);
         }
-        DrawRectangleRounded({ xOffset + (level - 1) * (width + space) - 10 + 50 * ((level - 1) / 5) + animVec.x, y - 10, width + 20, height + 20 }, 0.2f, 8, ColorAlpha(ORANGE, 0.6));
+        DrawRectangleRounded({ xOffset + (level - 1) * (width + space) - 10 + 50 * ((level - 1) / 5) + animVec.x, y - 10, width + 20, height + 20 }, 0.2f, 8, ColorAlpha(ORANGE, 0.6f));
         DrawTextEx(font, "Easy", { xOffset + 70 + animVec.x, y + 100 }, 50, 0, Fade(GREEN, 50 / (animVec.x + 1)));
         DrawTextEx(font, "Normal", { xOffset + 340 + animVec.x, y + 100 }, 50, 0, Fade(YELLOW, 50 / (animVec.x + 1)));
         DrawTextEx(font, "Hard", { xOffset + 670 + animVec.x, y + 100 }, 50, 0, Fade(RED, 50 / (animVec.x + 1)));
