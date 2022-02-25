@@ -18,7 +18,8 @@ public:
         WEAPON,
         LADDER,
         POWERUP,
-        ICE
+        ICE,
+        CRAB
     } type;
 
     enum class Direction {
@@ -63,7 +64,7 @@ public:
     int frameCounter;
 
 private:
-    Vector2 speed;
+    Vector2 speed = { 0, 0 };
     Color color = WHITE;
     Texture2D spriteSheet;
     Rectangle moveRightRec;
@@ -106,6 +107,7 @@ public:
         BALL2,
         BALL3,
         BALL4,
+        CRAB,
 
         NUM_KINDS
     };
@@ -131,7 +133,7 @@ private:
     Rectangle stand;
     Rectangle standExplode;
     Color color;
-    Vector2 speed;
+    Vector2 speed = { 0, 0 };
     int cooldown = 0;
     float maxSpeedY;
     float gravity = 0.3f;
@@ -209,13 +211,13 @@ private:
     Texture2D* texture;
     Kind kind;
     float color = 1;
-    float speedY;
+    float speedY = 0;
     int frameCounter;
 };
 
 class Ice : public Sprite {
 public:
-    Ice(Game *game, float x, float y, float width, float height);
+    Ice(Game* game, float x, float y, float width, float height);
     Ice(Game* game, std::ifstream&);
     virtual void Draw();
     virtual void Save(std::ofstream&);
@@ -223,4 +225,21 @@ public:
 private:
     Texture2D* texture;
     Rectangle textRec;
+};
+
+class Crab : public Sprite {
+public:
+    Crab(Game* game, float x, float y, int heading);
+    Crab(Game* game, std::ifstream&);
+    virtual void Draw();
+    virtual void Move();
+    virtual void Collision(Sprite*);
+    virtual void Save(std::ofstream&);
+
+private:
+    Texture2D * texture;
+    Rectangle moveTexture;
+    Vector2 speed;
+    short int frameCounter;
+    bool stopMoving = false;
 };

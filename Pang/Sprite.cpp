@@ -217,7 +217,7 @@ void Player::Collision(Sprite *sprite) {
 
             speed.y = 0;
         }
-    } else if (sprite->type == Sprite::Type::ENEMY) {
+    } else if (sprite->type == Sprite::Type::ENEMY || sprite->type == Sprite::Type::CRAB) {
         game->lives--;
         frameCounter = 1;
         speed.y -= 10;
@@ -322,7 +322,7 @@ Block::Block(Game* game, std::ifstream& s)
 
 void Block::Draw() {
     // DrawRectangleRec(position.rectangle, color);    
-    DrawTextureTiled(*texture, {0, 0, 20, 20}, position.rectangle, {0, 0}, 0, 1, WHITE);
+    DrawTextureTiled(*texture, { 0, 0, 20, 20 }, position.rectangle, { 0, 0 }, 0, 1, WHITE);
 }
 
 void Block::Collision(Sprite* sprite) {
@@ -418,17 +418,17 @@ Enemy::Enemy(Game *game, std::ifstream& s)
         spriteExplode[BALL3] = game->textures[EXPLOSION];
         spriteExplode[BALL4] = game->textures[EXPLOSION];
     }
-
+    
     sizeX = spriteSheet[kind].height;
     sizeY = spriteSheet[kind].height;
 
+    standExplode = { 0.0f, 0.0f, spriteExplode[kind].width / 12.0f, 47 };
     stand = { 0.0f, 0.0f, sizeX, sizeY };
-    standExplode = { 0.0f, 0.0f, spriteExplode[kind].width / 12.0f, /*sizeY*/47 };
 }
 
 void Enemy::Draw() {
     if (state == State::ACTIVE)
-        DrawTextureRec(spriteSheet[kind], stand, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
+            DrawTextureRec(spriteSheet[kind], stand, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
     else if (state == State::FINISHING)
         DrawFinish();
 }
@@ -696,7 +696,7 @@ void Weapon::Collision(Sprite *sprite) {
             if (kind == Kind::WEAPON1 && game->shootingLeft < 0)
                 game->shootingLeft++;
         }
-    } else if (sprite->type == Sprite::Type::ENEMY) {
+    } else if (sprite->type == Sprite::Type::ENEMY || sprite->type == Sprite::Type::CRAB) {
         state = State::FINISHING;
         if (kind == Kind::WEAPON4) {
             PlaySound(game->audio[MINE_EXP_SOUND]);
@@ -896,4 +896,76 @@ void Ice::Draw() {
 void Ice::Save(std::ofstream& s) {
     Write(s, &type);
     position.Save(s);
+}
+
+Crab::Crab(Game* game, float x, float y, int heading)
+    : Sprite(game, Position(x, y, 0, 0), Type::CRAB) {
+    texture = &game->textures[CRAB];
+    position.rectangle.width = texture->width / 4;
+    position.hbRectangle.width = position.rectangle.width;
+    position.rectangle.height = texture->height;
+    position.hbRectangle.height = position.rectangle.height;
+    moveTexture = { 0, 0, position.rectangle.width, position.rectangle.height };
+    frameCounter = 0;
+
+    speed.x = 1.7 * heading;
+    speed.y = 0;
+}
+
+Crab::Crab(Game* game, std::ifstream& s)
+    : Sprite(game, s, Type::CRAB) {
+    Read(s, &speed);
+    Read(s, &frameCounter);
+    texture = &game->textures[CRAB];
+    moveTexture = { 0, 0, position.rectangle.width, position.rectangle.height };
+}
+
+void Crab::Draw() {
+    if (state == State::ACTIVE) {
+        DrawTextureRec(*texture, moveTexture, { position.rectangle.x, position.rectangle.y }, WHITE);
+        if (frameCounter++ % 10 == 0) {
+            moveTexture.x = (moveTexture.x + moveTexture.width >= texture->width) ? moveTexture.x = 0 : moveTexture.x + moveTexture.width;
+            frameCounter = 1;
+            std::cout << position.rectangle.x << "," << position.rectangle.y << "," << position.rectangle.width << "," << position.rectangle.height << std::endl;
+        }
+    }
+}
+
+void Crab::Move() {
+    if (state == State::ACTIVE) {
+        speed.y += 0.5;
+
+        position.rectangle.x += speed.x;
+        position.rectangle.y += speed.y;
+    }
+}
+
+void Crab::Collision(Sprite* sprite) {
+    if (state == State::ACTIVE) {
+        if (sprite->type == Sprite::Type::BLOCK) {
+            bool collision = CheckCollisionRecs({ position.rectangle.x, position.rectangle.y - speed.y, position.rectangle.width, position.rectangle.height }, sprite->position.rectangle);
+            if (collision) {
+                if (speed.x > 0) {
+                    position.rectangle.x = sprite->position.rectangle.x - position.rectangle.width - 1;
+                    speed.x *= -1;
+                } else {
+                    position.rectangle.x = sprite->position.rectangle.x + sprite->position.rectangle.width + 1;
+                    speed.x *= -1;
+                }
+            } else {
+                position.rectangle.y = sprite->position.rectangle.y - position.rectangle.height - 1;
+                speed.y = 0;
+            }
+        } else if (sprite->type == Sprite::Type::WEAPON) {
+            game->AddPowerup(position.rectangle.x, position.rectangle.y - 10);
+            state = State::FINISHED;
+        }
+    }
+}
+
+void Crab::Save(std::ofstream& s) {
+    Write(s, &type);
+    position.Save(s);
+    Write(s, &speed);
+    Write(s, &frameCounter);
 }

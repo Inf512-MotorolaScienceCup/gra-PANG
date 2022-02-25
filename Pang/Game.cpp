@@ -38,7 +38,7 @@ void Game::LoadTextures() {
         Image image = LoadImage(textureFiles[i]);
         textures[i] = LoadTextureFromImage(image);
         UnloadImage(image);
-        SetTextureFilter(textures[i], TEXTURE_FILTER_TRILINEAR);
+        SetTextureFilter(textures[i], TEXTURE_FILTER_BILINEAR);
     }
     font = LoadFontEx("res/font/Organetto-Regular.ttf", 54, 0, 0);
     SetTextureFilter(font.texture, TEXTURE_FILTER_TRILINEAR);
@@ -549,6 +549,14 @@ void Game::CheckCollision() {
         }
     }
 
+    // Collision Player<->Crab
+    for (auto& crab : GetSprites(Sprite::Type::CRAB)) {
+        if (IsCollision(player, crab)) {
+            if (!player->frameCounter)
+                player->Collision(crab);
+        }
+    }
+
     // Collision Weapon<->Enemy
     for (auto& weapon : GetSprites(Sprite::Type::WEAPON)) {
         for (auto& enemy : GetSprites(Sprite::Type::ENEMY)) {
@@ -577,6 +585,17 @@ void Game::CheckCollision() {
         }
     }
 
+    // Collision Weapon<->Crab
+    for (auto& weapon : GetSprites(Sprite::Type::WEAPON)) {
+        for (auto& crab : GetSprites(Sprite::Type::CRAB)) {
+            if (IsCollision(weapon, crab)) {
+                crab->Collision(weapon);
+                weapon->Collision(crab);
+                break;
+            }
+        }
+    }
+
     // Collision Enemy<->Block
     for (auto& enemy : GetSprites(Sprite::Type::ENEMY)) {
         for (auto& block : GetSprites(Sprite::Type::BLOCK)) {
@@ -591,6 +610,15 @@ void Game::CheckCollision() {
         for (auto& block : GetSprites(Sprite::Type::BLOCK)) {
             if (IsCollision(powerup, block)) {
                 powerup->Collision(block);
+            }
+        }
+    }
+
+    // Collision Crab<->Block
+    for (auto& crab : GetSprites(Sprite::Type::CRAB)) {
+        for (auto& block : GetSprites(Sprite::Type::BLOCK)) {
+            if (IsCollision(crab, block)) {
+                crab->Collision(block);
             }
         }
     }
@@ -953,10 +981,12 @@ void Game::SpawnLevel() {
         Spawn(Enemy::create(this, 1020, 120, Enemy::Kind::BALL1, 1));
         Spawn(Enemy::create(this, 660, 120, Enemy::Kind::BALL1, 1));
 
+        Spawn(new Crab(this, 700, 720 - 20 - 64, -1));
+
         Spawn(new Powerup(this, 1045, 240 - 64, Powerup::Kind::HEAL));
         Spawn(new Powerup(this, 705, 240 - 64, Powerup::Kind::HEAL));
 
-        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        player = new Player(this, { 200, 720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
         backMusic = BACKGROUND_E;
@@ -984,7 +1014,10 @@ void Game::SpawnLevel() {
             Spawn(new Powerup(this, (i * 313) - 150, 120, Powerup::Kind::HEAL));
         }
 
-        player = new Player(this, { 200,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        Spawn(new Crab(this, 700, 720 - 20 - 64, -1));
+        Spawn(new Crab(this, 700, 720 - 20 - 64, 1));
+
+        player = new Player(this, { 200, 720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
         backMusic = BACKGROUND_D;
@@ -1021,8 +1054,9 @@ void Game::SpawnLevel() {
         Spawn(new Ice(this, 640, 410, 620, 10));
         Spawn(new Ice(this, 20, 690, 220, 10));
 
+        Spawn(new Crab(this, 1000, 390, -1));
 
-        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        player = new Player(this, { 600, 720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
         backMusic = BACKGROUND_E;
@@ -1036,7 +1070,12 @@ void Game::SpawnLevel() {
 
         Spawn(new Block(this, 200, 500, 800, 20, Block::Kind::PLATFORM_1));
 
-        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        Spawn(new Crab(this, 1100, 720 - 20 - 64, -1));
+        Spawn(new Crab(this, 100, 720 - 20 - 64, 1));
+        Spawn(new Crab(this, 700, 470, -1));
+        Spawn(new Crab(this, 500, 470, 1));
+
+        player = new Player(this, { 600, 720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
         Spawn(new Powerup(this, 620, 700 - 64, Powerup::Kind::HEAL));
@@ -1094,7 +1133,10 @@ void Game::SpawnLevel() {
 
         Spawn(Enemy::create(this, 620, 140, Enemy::Kind::BALL1, -1));
 
-        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        Spawn(new Crab(this, 1000, 720 - 20 - 64, -1));
+        Spawn(new Crab(this, 100, 720 - 20 - 64, 1));
+
+        player = new Player(this, { 600, 720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
         Spawn(new Powerup(this, 620, 280 - 64, Powerup::Kind::HEAL));
@@ -1110,7 +1152,9 @@ void Game::SpawnLevel() {
         Spawn(Enemy::create(this, 980, 440, Enemy::Kind::BALL1, -1));
         Spawn(Enemy::create(this, 920, 410, Enemy::Kind::BALL1, -1));
 
-        player = new Player(this, { 600,720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
+        Spawn(new Crab(this, 1100, 720 - 20 - 64, -1));
+
+        player = new Player(this, { 600, 720 - 20 - 64, 64, 64, 12, 10, 40, 54 });
         sprites.push_back(player);
 
         Spawn(new Ice(this, wallThickness, screenHeight - wallThickness - 10, screenWidth - 2 * wallThickness, 10));
@@ -1290,7 +1334,7 @@ void Game::DrawGameSaved() {
         animVec.y += 50;
     else if (sequenceFrameCounter < frameCounter + 30)
         animVec.y -= 50;
-    DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
+    DrawRectanglePro({ screenWidth / 2, animVec.y, 1600, 1600 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
     DrawTextEx(font, "Game saved", { 485, animVec.y - 1240 }, 66, 0, WHITE);
 }
@@ -1307,7 +1351,7 @@ void Game::DrawEndLevel() {
         animVec.y += 50;
     else if (sequenceFrameCounter < frameCounter + 30)
         animVec.y -= 50;
-    DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
+    DrawRectanglePro({ screenWidth / 2, animVec.y, 1600, 1600 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
     DrawTextEx(font, "Great job!", { 497, animVec.y - 1240 }, 66, 0, RED);
     DrawTextEx(font, TextFormat("Time bonus: %d", timeBonus), { 480, animVec.y - 1140 }, 50, 0, WHITE);
@@ -1319,7 +1363,7 @@ void Game::DrawGameOver() {
         animVec.y += 50;
     else if (sequenceFrameCounter < frameCounter + 30)
         animVec.y -= 50;
-    DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500}, { 0, 0 }, 225, GRAY);
+    DrawRectanglePro({ screenWidth / 2, animVec.y, 1600, 1600}, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
     DrawTextEx(font, "Game over", { 497, animVec.y - 1240 }, 66, 0, RED);
     DrawTextEx(font, TextFormat("Your score: %d", score), { 475, animVec.y - 1120 }, 50, 0, WHITE);
@@ -1330,7 +1374,7 @@ void Game::DrawEndGame() {
         animVec.y += 50;
     else if (sequenceFrameCounter < frameCounter + 30)
         animVec.y -= 50;
-    DrawRectanglePro({ screenWidth / 2, animVec.y, 1500, 1500 }, { 0, 0 }, 225, GRAY);
+    DrawRectanglePro({ screenWidth / 2, animVec.y, 1600, 1600 }, { 0, 0 }, 225, GRAY);
     DrawRectangle(0, 0, screenWidth, screenHeight, ColorAlpha(BLACK, 0.6f));
     DrawTextEx(font, "Game finished - Superb job!", { 300, animVec.y - 1240 }, 66, 0, RED);
     DrawTextEx(font, TextFormat("Time bonus: %d", timeBonus), { 490, animVec.y - 1140 }, 50, 0, WHITE);
