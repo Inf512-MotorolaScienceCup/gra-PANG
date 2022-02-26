@@ -908,7 +908,7 @@ Crab::Crab(Game* game, float x, float y, int heading)
     moveTexture = { 0, 0, position.rectangle.width, position.rectangle.height };
     frameCounter = 0;
 
-    speed.x = 1.7 * heading;
+    speed.x = 1.7f * heading;
     speed.y = 0;
 }
 
@@ -926,7 +926,6 @@ void Crab::Draw() {
         if (frameCounter++ % 10 == 0) {
             moveTexture.x = (moveTexture.x + moveTexture.width >= texture->width) ? moveTexture.x = 0 : moveTexture.x + moveTexture.width;
             frameCounter = 1;
-            std::cout << position.rectangle.x << "," << position.rectangle.y << "," << position.rectangle.width << "," << position.rectangle.height << std::endl;
         }
     }
 }

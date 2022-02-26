@@ -1580,6 +1580,9 @@ void Game::ReadGameData(std::ifstream& s) {
         case Sprite::Type::WEAPON:
             Spawn(new Weapon(this, s));
             break;
+        case Sprite::Type::CRAB:
+            Spawn(new Crab(this, s));
+            break;
         }
     }
 }
