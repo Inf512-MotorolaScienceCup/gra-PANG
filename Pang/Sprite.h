@@ -107,7 +107,6 @@ public:
         BALL2,
         BALL3,
         BALL4,
-        CRAB,
 
         NUM_KINDS
     };
