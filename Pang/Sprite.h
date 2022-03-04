@@ -64,7 +64,7 @@ public:
     int frameCounter;
 
 private:
-    Vector2 speed = { 0, 0 };
+    Vector2 speed;
     Color color = WHITE;
     Texture2D spriteSheet;
     Rectangle moveRightRec;
@@ -75,7 +75,6 @@ private:
     int cooldown = 0;
     bool climbing = false;
     bool collision = false;
-    //int zone = 10;
     bool onIce = false;
     short int changeColor = 0;
 };
@@ -122,8 +121,6 @@ public:
 
     void DrawFinish();
     void duality(Sprite*);
-
-    //Sprite* checkCollision();
 
 private:
     Game * game;

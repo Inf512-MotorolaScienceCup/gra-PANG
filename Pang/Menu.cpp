@@ -13,8 +13,6 @@ void Menu::Reload(std::vector<std::string> items) {
     if (graphics.size() > 0)
         graphics.clear();
 
-    
-
     if (type == Type::PAUSE_MENU) {
         float itemHeight = 50;
         float MENU_X = game->screenWidth / 2 - 50 * items.size();

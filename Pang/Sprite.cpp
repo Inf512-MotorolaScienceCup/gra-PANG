@@ -61,9 +61,6 @@ Player::Player(Game *game, std::ifstream& s)
 }
 
 void Player::Draw() {
-    //DrawRectangleRec(position.rectangle, GREEN);
-    //DrawRectangleRec(position.hitBox(), RED);
-
     if (frameCounter) {
         if (timeLeft()) {
             color = WHITE;
@@ -321,7 +318,6 @@ Block::Block(Game* game, std::ifstream& s)
 }
 
 void Block::Draw() {
-    // DrawRectangleRec(position.rectangle, color);    
     DrawTextureTiled(*texture, { 0, 0, 20, 20 }, position.rectangle, { 0, 0 }, 0, 1, WHITE);
 }
 
@@ -376,7 +372,6 @@ Enemy::Enemy(Game* game, float x, float y, float radius, Kind kind, int heading)
         : game(game), Sprite(game, Position(x, y, radius), Type::ENEMY), color(WHITE), sizeX(radius * 2), sizeY(radius * 2), kind(kind) {
     stand = { 0.0f, 0.0f, sizeX, sizeY };
     standExplode = { 0.0f, 0.0f, spriteExplode[kind].width / 12.0f, /*sizeY*/47 };
-    //rad = radius;
     switch (kind) {
     case BALL1:
         speed.x = 2.2f;
@@ -485,8 +480,6 @@ void Enemy::Save(std::ofstream& s) {
 }
 
 void Enemy::DrawFinish() {
-    //std::cout << "Cooldown: " << cooldown << std::endl;
-
     DrawTextureRec(spriteExplode[kind], standExplode, { position.center.x - sizeX / 2, position.center.y - sizeY / 2 }, WHITE);
     switch (kind) {
     case Kind::BALL1:
@@ -612,8 +605,6 @@ Weapon::Weapon(Game *game, std::ifstream& s)
 
 void Weapon::Draw() {
     if (state == State::ACTIVE) {
-        //DrawRectangleRec(position.rectangle, RED);
-        
         DrawTexture(*texture[0], position.rectangle.x, position.rectangle.y, WHITE);
         if (texture[1]) {
             if (!stopMoving) {
@@ -736,8 +727,6 @@ void Weapon::timeLeft() {
 Ladder::Ladder(Game *game, float x, float y, int numElements, float distanceToGround)
     : Sprite(game, Position(x, y, game->textures[LADDER].width, numElements * game->textures[LADDER].height), Type::LADDER), numElements(numElements),
       texture(&game->textures[LADDER]), distanceToGround(distanceToGround) {
-    //position.rectangle.width = texture->width;
-    //position.rectangle.height = numElements * texture->height;
 }
 
 Ladder::Ladder(Game *game, std::ifstream& s)
@@ -889,7 +878,6 @@ Ice::Ice(Game *game, std::ifstream& s)
 }
 
 void Ice::Draw() {
-    //DrawRectangle(position.rectangle.x, position.rectangle.y, position.rectangle.width, position.rectangle.height, RED);
     DrawTextureTiled(*texture, { 0, 0, 15, 30 }, position.rectangle, { 0, -7 }, 0, 1, WHITE);
 }
 

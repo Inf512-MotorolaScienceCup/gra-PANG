@@ -1218,14 +1218,12 @@ void Game::Draw() {
             ingameMenu.Draw();
             break;
         case State::LEVEL_FINISHED:
-            //DrawSequence("Great Job!");
             DrawEndLevel();
             break;
         case State::GAME_START:
             DrawGameStart();
             break;
         case State::GAME_OVER:
-            //DrawSequence("Game Over!");
             DrawGameOver();
             break;
         case State::GAME_FINISHED:
@@ -1246,7 +1244,6 @@ void Game::Draw() {
             overwriteMenu.Draw();
             break;
         case State::GAME_SAVED:
-            //DrawSequence("Game Saved");
             DrawGameSaved();
             break;
         case State::LOAD_MENU:
@@ -1283,7 +1280,6 @@ void Game::DrawPanel() {
     float y = wallThickness + 5;
 
     DrawRectangleRec({wallThickness, wallThickness, screenWidth - 2 * wallThickness, panelHeight}, ColorAlpha(BLACK, 0.6f));
-    //DrawFPS(wallThickness + 10, y);
     DrawTextEx(font, TextFormat("Level: %i", level), { 40, y }, 35, 0, WHITE);
     DrawTextEx(font, TextFormat("Score: %03i", score), { 200, y }, 35, 0, WHITE);
     DrawTextEx(font, TextFormat("Lives: %i", lives), { 970, y }, 35, 0, WHITE);
@@ -1553,7 +1549,7 @@ void Game::ReadGameData(std::ifstream& s) {
 
     size_t numSprites = 0;
     Read(s, &numSprites);
-
+    sprites.reserve(numSprites);
     for (int i = 0; i < numSprites; i++) {
         int type;
         Read(s, &type);

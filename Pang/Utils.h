@@ -18,8 +18,7 @@ void Read(std::ifstream& is, T* data) {
 struct Position {
     enum class Type {
         RECTANGLE,
-        CIRCLE,
-        // LINE
+        CIRCLE
     } type;
 
     Vector2 center;
@@ -50,8 +49,6 @@ struct Position {
             Read(input, &hbRectangle.y);
             Read(input, &hbRectangle.width);
             Read(input, &hbRectangle.height);
-        
-            //printf("Read x:%f y:%f x:%f y:%f\n", rectangle.x, rectangle.y, hbRectangle.x, hbRectangle.y);
         }
     }
 
@@ -76,8 +73,6 @@ struct Position {
             Write(output, &hbRectangle.y);
             Write(output, &hbRectangle.width);
             Write(output, &hbRectangle.height);
-
-            //printf("Write x:%f y:%f x:%f y:%f\n", rectangle.x, rectangle.y, hbRectangle.x, hbRectangle.y);
         }
     }
 };
