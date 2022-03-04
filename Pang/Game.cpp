@@ -18,6 +18,7 @@ Game::Game()
     loadMenu(this, FindLoadFiles(), Menu::Type::LOAD_MENU),
     modMenu(this, { "Mod 1", "Mod 2", "Mod 3", "Quit" }, Menu::Type::MAIN_MENU),
     diffLvlMenu(this, { "Easy", "Normal", "Hard", "Quit" }, Menu::Type::MAIN_MENU) {
+	SetTraceLogLevel(LOG_NONE);
     InitWindow(screenWidth, screenHeight, "Pang");
     InitAudioDevice();
     SetExitKey(KEY_F10);

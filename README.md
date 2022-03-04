@@ -1,5 +1,4 @@
 # Budowanie na Linux'ie
-## Pobierz releasowe binarki raylib do katalogu Pang/raylib
 ```
 mkdir build
 cd build
