@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.10)
 project(Pang)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+if (MSVC)
+   add_compile_options(/MT)
+endif()
 
 if(NOT RAYLIB_INCLUDE_DIR)
   set(RAYLIB_INCLUDE_DIR "raylib/include")

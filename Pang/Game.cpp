@@ -562,7 +562,6 @@ void Game::CheckCollision() {
     for (auto& weapon : GetSprites(Sprite::Type::WEAPON)) {
         for (auto& enemy : GetSprites(Sprite::Type::ENEMY)) {
             if (IsCollision(weapon, enemy)) {
-                std::cout << "WEAPON collided with ENEMY:" << std::endl;
                 weapon->Collision(enemy);
                 enemy->Collision(weapon);
                 auto& v = spriteMap[Sprite::Type::ENEMY];
@@ -630,7 +629,7 @@ void Game::MoveSprites() {
         sprites[i]->Move();
     }
     auto removed = remove_if(sprites.begin(), sprites.end(), [](Sprite* sprite) { return sprite->state == Sprite::State::FINISHED; });
-    std::for_each(removed, sprites.end(), [](Sprite* sprite) { std::cout << "REMOVE:" << (int)sprite->type << " ptr:" << sprite << std::endl; });
+    std::for_each(removed, sprites.end(), [](Sprite* sprite) { /*std::cout << "REMOVE:" << (int)sprite->type << " ptr:" << sprite << std::endl;*/ });
     sprites.erase(removed, sprites.end());
 }
 
@@ -1593,30 +1592,24 @@ bool Game::SaveGame(int fileNum) {
         WriteGameData(saveFile);
 
         saveFile.close();
-
-        std::cout << "Save file created";
         return true;
     } else {
-        std::cout << "Unable to open file";
         return false;
     }
 }
 
 void Game::LoadGame(int fileNum) {
     if (!DirectoryExists("saves")) {
-        std::cout << "No saves";
+        //std::cout << "No saves";
     } else {
         std::ifstream loadFile(TextFormat("saves/s%d.psf", fileNum), std::ios_base::binary);
         if (loadFile.is_open()) {
             ReadGameData(loadFile);
 
             loadFile.close();
-            std::cout << "Load complete\n";
             PlaySound(audio[LEVEL_START]);
             if (backMusic != NUM_MUSIC)
                 PlayMusicStream(music[backMusic]);
-        } else {
-            std::cout << "Unable to open file";
         }
     }
 }
@@ -1654,8 +1647,6 @@ void Game::RemoveSave(int i) {
         system(TextFormat("del saves\\s%d.psf", i));
         if (FileExists(TextFormat("saves/s%d.psf", i)))
             system(TextFormat("rm saves/s%d.psf", i));
-        else
-            printf("Success");
     }
     loadMenu.Reload(FindLoadFiles());
 }
@@ -1733,7 +1724,8 @@ void Game::AddScore(int score) {
 void Game::AddPowerup(float x, float y) {
     if (modNum == 1) return;
 
-    int chance = GetRandomValue(1, 4);
+    SetRandomSeed(time(nullptr));
+    int chance = GetRandomValue(1, 3);
     if (chance == 1) {
         int kindNum;
         if (modNum != 3) {

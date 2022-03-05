@@ -171,6 +171,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="Sprite.h" />
+    <ClInclude Include="Tests.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -178,6 +179,7 @@
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="Pang.cpp" />
     <ClCompile Include="Sprite.cpp" />
+    <ClCompile Include="Tests.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

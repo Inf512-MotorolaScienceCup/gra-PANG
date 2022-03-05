@@ -12,12 +12,10 @@ struct TestResult {
 	int run;
 };
 
-TestResult TestMoveBall(Game* game)
-{
+TestResult TestMoveBall(Game* game) {
 	//
 	// ZMIENNE POTRZEBNE DLA TESTOW
 	//
-
 	srand(time(NULL));
 
 	float x;
@@ -44,19 +42,16 @@ TestResult TestMoveBall(Game* game)
 	//
 
 	std::cout << "LOSOWO GENEROWANE TESTY DLA KULEK TYPU 1 \n";
-	for (int i = 0; i < num_tests; i++)
-	{
+	for (int i = 0; i < num_tests; i++) {
 		//GENEROWANIE LICZB "LOSOWYCH"
 		x = float((rand() % 100000) + 1) / 100;
 		y = float((rand() % 100000) + 1) / 100;
 
 		randHeading = (rand() % 2) + 1;
-		if (randHeading == 2)
-		{
+		if (randHeading == 2) {
 			heading = 1;
 		}
-		if (randHeading == 1)
-		{
+		if (randHeading == 1) {
 			heading = -1;
 		}
 
@@ -77,13 +72,11 @@ TestResult TestMoveBall(Game* game)
 		std::cout << "Position Y: " << ball->position.center.y << "\n";
 		std::cout << "Heading: " << heading << "\n \n";
 
-		if (ball->position.center.x == x + (heading * ball1.x) && ball->position.center.y == y + (ball1.y + gravity))
-		{
+		if (ball->position.center.x == x + (heading * ball1.x) && ball->position.center.y == y + (ball1.y + gravity)) {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " POZYTYWNY\n";
 			passedTests_b1++;
 		}
-		else
-		{
+		else {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " NEGATYWNY\n";
 		}
 
@@ -95,19 +88,16 @@ TestResult TestMoveBall(Game* game)
 	//
 
 	std::cout << "LOSOWO GENEROWANE TESTY DLA KULEK TYPU 2 \n";
-	for (int i = 0; i < num_tests; i++)
-	{
+	for (int i = 0; i < num_tests; i++) {
 		//GENEROWANIE LICZB "LOSOWYCH"
 		x = float((rand() % 100000) + 1) / 100;
 		y = float((rand() % 100000) + 1) / 100;
 
 		randHeading = (rand() % 2) + 1;
-		if (randHeading == 2)
-		{
+		if (randHeading == 2) {
 			heading = 1;
 		}
-		if (randHeading == 1)
-		{
+		if (randHeading == 1) {
 			heading = -1;
 		}
 
@@ -128,13 +118,11 @@ TestResult TestMoveBall(Game* game)
 		std::cout << "Position Y: " << ball->position.center.y << "\n";
 		std::cout << "Heading: " << heading << "\n \n";
 
-		if (ball->position.center.x == x + (heading * ball2.x) && ball->position.center.y == y + (ball2.y + gravity))
-		{
+		if (ball->position.center.x == x + (heading * ball2.x) && ball->position.center.y == y + (ball2.y + gravity)) {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " POZYTYWNY\n";
 			passedTests_b2++;
 		}
-		else
-		{
+		else {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " NEGATYWNY\n";
 		}
 
@@ -146,19 +134,16 @@ TestResult TestMoveBall(Game* game)
 	//
 
 	std::cout << "LOSOWO GENEROWANE TESTY DLA KULEK TYPU 3 \n";
-	for (int i = 0; i < num_tests; i++)
-	{
+	for (int i = 0; i < num_tests; i++) {
 		//GENEROWANIE LICZB "LOSOWYCH"
 		x = float((rand() % 100000) + 1) / 100;
 		y = float((rand() % 100000) + 1) / 100;
 
 		randHeading = (rand() % 2) + 1;
-		if (randHeading == 2)
-		{
+		if (randHeading == 2) {
 			heading = 1;
 		}
-		if (randHeading == 1)
-		{
+		if (randHeading == 1) {
 			heading = -1;
 		}
 
@@ -179,13 +164,11 @@ TestResult TestMoveBall(Game* game)
 		std::cout << "Position Y: " << ball->position.center.y << "\n";
 		std::cout << "Heading: " << heading << "\n \n";
 
-		if (ball->position.center.x == x + (heading * ball3.x) && ball->position.center.y == y + (ball3.y + gravity))
-		{
+		if (ball->position.center.x == x + (heading * ball3.x) && ball->position.center.y == y + (ball3.y + gravity)) {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " POZYTYWNY\n";
 			passedTests_b3++;
 		}
-		else
-		{
+		else {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " NEGATYWNY\n";
 		}
 
@@ -197,19 +180,16 @@ TestResult TestMoveBall(Game* game)
 	//
 
 	std::cout << "LOSOWO GENEROWANE TESTY DLA KULEK TYPU 4 \n";
-	for (int i = 0; i < num_tests; i++)
-	{
+	for (int i = 0; i < num_tests; i++) {
 		//GENEROWANIE LICZB "LOSOWYCH"
 		x = float((rand() % 100000) + 1) / 100;
 		y = float((rand() % 100000) + 1) / 100;
 
 		randHeading = (rand() % 2) + 1;
-		if (randHeading == 2)
-		{
+		if (randHeading == 2) {
 			heading = 1;
 		}
-		if (randHeading == 1)
-		{
+		if (randHeading == 1) {
 			heading = -1;
 		}
 
@@ -230,13 +210,11 @@ TestResult TestMoveBall(Game* game)
 		std::cout << "Position Y: " << ball->position.center.y << "\n";
 		std::cout << "Heading: " << heading << "\n \n";
 
-		if (ball->position.center.x == x + (heading * ball4.x) && ball->position.center.y == y + (ball4.y + gravity))
-		{
+		if (ball->position.center.x == x + (heading * ball4.x) && ball->position.center.y == y + (ball4.y + gravity)) {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " POZYTYWNY\n";
 			passedTests_b4++;
 		}
-		else
-		{
+		else {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " NEGATYWNY\n";
 		}
 		delete ball;
@@ -252,8 +230,7 @@ TestResult TestMoveBall(Game* game)
 	return result;
 }
 
-TestResult TestMoveCrab(Game* game)
-{
+TestResult TestMoveCrab(Game* game) {
 	//
 	// ZMIENNE POTRZEBNE DLA TESTOW
 	//
@@ -281,19 +258,16 @@ TestResult TestMoveCrab(Game* game)
 	//
 
 	std::cout << "LOSOWO GENEROWANE TESTY DLA KRABOW\n";
-	for (int i = 0; i < num_tests; i++)
-	{
+	for (int i = 0; i < num_tests; i++) {
 		//GENEROWANIE LICZB "LOSOWYCH"
 		x = float((rand() % 100000) + 1) / 100;
 		y = float((rand() % 100000) + 1) / 100;
 
 		randHeading = (rand() % 2) + 1;
-		if (randHeading == 2)
-		{
+		if (randHeading == 2) {
 			heading = 1;
 		}
-		if (randHeading == 1)
-		{
+		if (randHeading == 1) {
 			heading = -1;
 		}
 
@@ -312,13 +286,11 @@ TestResult TestMoveCrab(Game* game)
 		std::cout << "Position Y: " << crab->position.rectangle.y << "\n";
 		std::cout << "Heading: " << heading << "\n \n";
 
-		if (crab->position.rectangle.x == x + (crab1.x * heading) && crab->position.rectangle.y == y + crab1.y)
-		{
+		if (crab->position.rectangle.x == x + (crab1.x * heading) && crab->position.rectangle.y == y + crab1.y) {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " POZYTYWNY\n";
 			passedTests_c1++;
 		}
-		else
-		{
+		else {
 			std::cout << "WYNIK TESTU NR " << i + 1 << " NEGATYWNY\n";
 		}
 		delete crab;
