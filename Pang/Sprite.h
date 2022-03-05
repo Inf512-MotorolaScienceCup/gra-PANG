@@ -61,7 +61,7 @@ public:
     virtual void Save(std::ofstream&);
     void Shooting();
     bool timeLeft();
-    int frameCounter;
+    int frameCounter = 0;
 
 private:
     Vector2 speed;
