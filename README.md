@@ -7,7 +7,7 @@ Jako wzór obraliśmy gre Buster Bros z 1989 roku wydaną przez Mitchell Corpora
 Aby skompilować projekt należy go sklonować, a następnie uruchomić skrypt `build.bat`.
 
 ```sh
-https://github.com/Inf512-MotorolaScienceCup/gra-PANG.git
+git clone https://github.com/Inf512-MotorolaScienceCup/gra-PANG.git
 cd gra-PANG
 .\build.bat
 ```
