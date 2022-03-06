@@ -2,6 +2,6 @@
 ```
 mkdir build
 cd build
-cmake -S .. -B .
+cmake ..
 cmake --build . && ./pang
 ```
