@@ -306,13 +306,13 @@ public:
     short int levelTime;
     int elapsedLevelTime;
 
-    short int weaponType = 1;
+    short int weaponType;
     short int previousWeapon;
     short int shootingLeft;
     std::time_t lifeTime[3];
     short int timeLeft[3];
     bool stopTime = false;
-    short int laserCooldown;
+    short int laserCooldown = 0;
     short int speedBoost;
     short int multiWeapon = 0;
 };

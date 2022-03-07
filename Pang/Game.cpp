@@ -382,7 +382,11 @@ void Game::Update() {
 
         if (sequenceFrameCounter > frameCounter) return;
 
-        ChangeState(State::MAIN_MENU);
+        if (modNum == 1)
+            ChangeState(State::DIFFLVL_MENU);
+        else
+            ChangeState(State::MAIN_MENU);
+        backTexture = BACKGROUND_ANI2;
         break;
     case Game::State::GAME_SAVED:
         if (sequenceFrameCounter > frameCounter) return;
@@ -1798,6 +1802,7 @@ void Game::PickAction(Powerup::Kind kind) {
         AddScore(1000);
         break;
     case Powerup::Kind::WEAPON:
+        SetRandomSeed(time(nullptr));
         int change = GetRandomValue(2, 4);
         if (change == weaponType)
             weaponType = 1;
